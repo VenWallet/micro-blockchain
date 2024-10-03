@@ -7,6 +7,8 @@ import { NetworkModule } from './modules/network/network.module';
 import { WalletModule } from './modules/wallet/wallet.module';
 import { AppConfigModule } from './config/app.config';
 import { AppController } from './app.controller';
+import { BlockchainsController } from './modules/blockchains/blockchains.controller';
+import { BlockchainsModule } from './modules/blockchains/blockchains.module';
 
 @Module({
   imports: [
@@ -15,6 +17,7 @@ import { AppController } from './app.controller';
     TypeOrmModule.forRoot(config),
     NetworkModule,
     WalletModule,
+    BlockchainsModule,
   ],
   controllers: [AppController],
   providers: [],

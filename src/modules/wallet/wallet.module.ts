@@ -4,7 +4,7 @@ import { WalletService } from './wallet.service';
 import { WalletRepository } from './repositories/wallet.repository';
 import { WalletEntity } from './entities/wallet.entity';
 import { NetworkModule } from '../network/network.module';
-import { BlockchainsModule } from 'src/blockchains/blockchains.module';
+import { BlockchainsModule } from 'src/modules/blockchains/blockchains.module';
 import { WalletController } from './wallet.controller';
 
 @Module({

@@ -4,7 +4,7 @@ import { WalletRepository } from './repositories/wallet.repository';
 import { WalletEntity } from './entities/wallet.entity';
 import { CreateWalletsDto, UpdateWalletDto, WalletDto } from './dto/wallet.dto';
 import { NetworkService } from '../network/network.service';
-import { BlockchainsService } from 'src/blockchains/blockchains.service';
+import { BlockchainsService } from 'src/modules/blockchains/blockchains.service';
 
 @Injectable()
 export class WalletService {
