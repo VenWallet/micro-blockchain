@@ -1,6 +1,7 @@
 export enum IndexEnum {
   NEAR = 'near',
   ETHEREUM = 'eth',
+  BSC = 'bsc',
   //   BTC = 'BTC',
   //   BNB = 'BNB',
   //   SOL = 'SOL',

@@ -33,4 +33,7 @@ export class EnvironmentVariables {
 
   @IsString()
   INFURA_PROJECT_ID: string;
+
+  @IsString()
+  BSC_NETWORK: string;
 }

@@ -14,7 +14,7 @@ export class WalletEntity extends BaseEntity {
 
   @Column({
     nullable: false,
-    unique: true,
+    unique: false,
   })
   address!: string;
 

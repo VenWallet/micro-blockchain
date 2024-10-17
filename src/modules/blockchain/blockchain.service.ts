@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   forwardRef,
   HttpException,
   HttpStatus,
@@ -65,6 +66,12 @@ export class BlockchainService {
       // const mnemonic = CryptShared.decryptRsa(createWalletsDto.mnemonic);
       const mnemonic = createWalletsDto.mnemonic;
 
+      const wallet = await this.walletService.getUserIdByMnemonic(createWalletsDto.mnemonic);
+
+      if (wallet) {
+        throw new ConflictException('User already exists');
+      }
+
       const networks = await this.networkService.findAllActive();
 
       const wallets = await this.walletService.findByUserId(createWalletsDto.userId);
@@ -72,13 +79,15 @@ export class BlockchainService {
       const credentials = await this.getCredentialsByMnemonic(mnemonic);
 
       for (const credential of credentials) {
-        const network = networks.find((network) => network.name === credential.network);
+        const network = networks.find((network) => network.index === credential.index);
 
         if (!network) {
           throw new HttpException('Network not found', HttpStatus.NOT_FOUND);
         }
 
-        const walletFound = wallets.find((wallet) => wallet.address === credential.address);
+        const walletFound = wallets.find(
+          (wallet) => wallet.address === credential.address && wallet.network.index === network.index,
+        );
 
         if (!walletFound) {
           await this.walletService.create({
@@ -108,8 +117,6 @@ export class BlockchainService {
 
       const userId = importWalletsDto.userId;
 
-      console.log('userId', userId);
-
       const networks = await this.networkService.findAllActive();
 
       const wallets = await this.walletService.findByUserId(userId);
@@ -117,13 +124,15 @@ export class BlockchainService {
       const credentials = await this.getCredentialsByMnemonic(mnemonic);
 
       for (const credential of credentials) {
-        const network = networks.find((network) => network.name === credential.network);
+        const network = networks.find((network) => network.index === credential.index);
 
         if (!network) {
           throw new HttpException('Network not found', HttpStatus.NOT_FOUND);
         }
 
-        const walletFound = wallets.find((wallet) => wallet.address === credential.address);
+        const walletFound = wallets.find(
+          (wallet) => wallet.address === credential.address && wallet.network.index === network.index,
+        );
 
         if (!walletFound) {
           await this.walletService.create({
@@ -153,6 +162,7 @@ export class BlockchainService {
     network: IndexEnum,
   ): Promise<{
     network: NetworksEnum;
+    symbol: string;
     index: IndexEnum;
     balance: number;
     decimals: number;
@@ -164,7 +174,13 @@ export class BlockchainService {
 
       const balance = await service.getBalance(wallet.address);
 
-      return { network: wallet.network.name, index: wallet.network.index, balance, decimals: wallet.network.decimals };
+      return {
+        network: wallet.network.name,
+        symbol: wallet.network.symbol,
+        index: wallet.network.index,
+        balance,
+        decimals: wallet.network.decimals,
+      };
     } catch (error) {
       throw new ExceptionHandler(error);
     }
@@ -184,7 +200,8 @@ export class BlockchainService {
         network: wallet.network.name,
         indexNetwork: wallet.network.index,
         token: tokenFound.tokenData.name,
-        indexToken: tokenFound.tokenData.index,
+        index: tokenFound.tokenData.index,
+        symbol: tokenFound.tokenData.symbol,
         balance,
         decimals: tokenFound.decimals,
       };
@@ -197,11 +214,12 @@ export class BlockchainService {
     {
       network: NetworksEnum;
       index: IndexEnum;
+      symbol: string;
       balance: number;
       tokens: {
-        name: string;
+        token: string;
         symbol: string;
-        index: IndexEnum;
+        index: IndexTokenEnum;
         balance: number;
         decimals: number;
       }[];
@@ -211,12 +229,13 @@ export class BlockchainService {
       const balances: {
         network: NetworksEnum;
         index: IndexEnum;
+        symbol: string;
         balance: number;
         decimals: number;
         tokens: {
-          name: string;
+          token: string;
           symbol: string;
-          index: IndexEnum;
+          index: IndexTokenEnum;
           balance: number;
           decimals: number;
         }[];
@@ -235,9 +254,9 @@ export class BlockchainService {
           const tokensFound = await this.tokenService.findByNetwork(wallet.network.id);
 
           const balanceTokens: {
-            name: string;
+            token: string;
             symbol: string;
-            index: IndexEnum;
+            index: IndexTokenEnum;
             balance: number;
             decimals: number;
           }[] = [];
@@ -245,21 +264,23 @@ export class BlockchainService {
           for (const token of tokensFound) {
             const tokenBalance = await service.getBalanceToken(wallet.address, token.contract, token.decimals);
 
+            console.log('tokenBalance', tokenBalance);
+
             const item = {
-              name: token?.tokenData?.name,
+              token: token?.tokenData?.name,
               symbol: token?.tokenData?.symbol,
-              index: token?.network.index,
+              index: token?.tokenData.index,
               balance: tokenBalance,
               decimals: token?.decimals,
             };
 
-            console.log('item', item);
             balanceTokens.push(item);
           }
 
           balances.push({
             network: wallet.network.name,
             index: wallet.network.index,
+            symbol: wallet.network.symbol,
             balance,
             decimals: wallet.network.decimals,
             tokens: balanceTokens,
