@@ -1,28 +1,25 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import {
-  BadRequestException,
-  HttpException,
-  HttpStatus,
-  Inject,
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { HttpCustomService } from 'src/shared/http/http.service';
 import { AxiosRequestConfig } from 'axios';
 import { KeyPair, utils, Account, keyStores, Near } from 'near-api-js';
 import { functionCall } from 'near-api-js/lib/transaction';
-import { ExceptionHandler } from 'src/shared/handlers/exception.handler';
+import { ExceptionHandler } from 'src/helpers/handlers/exception.handler';
 import { NearUtils } from './near.utils';
 import { AccountService } from './account.service';
 import { NetworksEnum } from 'src/modules/network/enums/networks.enum';
-// import BN from 'bn.js';
+import { ConfigService } from '@nestjs/config';
+import { EnvironmentVariables } from '../../../../config/env';
+import { IndexEnum } from 'src/modules/network/enums/index.enum';
+import { ProtocolInterface } from '../procotol.inferface';
 const BN = require('bn.js');
 const nearSeed = require('near-seed-phrase');
 
 @Injectable()
-export class NearService {
+export class NearService implements ProtocolInterface {
+  private readonly configService: ConfigService<EnvironmentVariables>;
+
   constructor(private readonly nearUtils: NearUtils) {}
 
   async generateWallet() {
@@ -48,14 +45,20 @@ export class NearService {
     }
   }
 
-  async fromMnemonic(mnemonic: string) {
+  async fromMnemonic(mnemonic: string): Promise<{
+    network: NetworksEnum;
+    index: IndexEnum;
+    address: string;
+    privateKey: string;
+  }> {
     try {
       const walletSeed = await nearSeed.parseSeedPhrase(mnemonic);
       const keyPair = KeyPair.fromString(walletSeed.secretKey);
       const implicitAccountId = Buffer.from(keyPair.getPublicKey().data).toString('hex');
 
       const credential = {
-        name: NetworksEnum.NEAR,
+        network: NetworksEnum.NEAR,
+        index: IndexEnum.NEAR,
         address: implicitAccountId,
         privateKey: walletSeed.secretKey as string,
       };
@@ -87,7 +90,7 @@ export class NearService {
     }
   }
 
-  async getBalance(address: string) {
+  async getBalance(address: string): Promise<number> {
     try {
       let balanceTotal = 0;
 
@@ -103,6 +106,8 @@ export class NearService {
         };
       });
 
+      console.log('balanceAccount', balanceAccount);
+
       const valueStorage = Math.pow(10, 19);
       const valueYocto = Math.pow(10, 24);
       const storage = (balanceAccount.storage_usage * valueStorage) / valueYocto;
@@ -116,33 +121,28 @@ export class NearService {
     }
   }
 
-  async getBalanceTokenUSDT(address: string) {
+  async getBalanceToken(address: string, contractId: string, decimals: number): Promise<number> {
     try {
-      const srcToken = {
-        contract: 'usdt.tether-token.near',
-        decimals: 6,
-      };
-
       const keyStore = new keyStores.InMemoryKeyStore();
       const near = new Near(this.nearUtils.configNear(keyStore));
 
       const account = new AccountService(near.connection, address);
 
       const balance = await account.viewFunction({
-        contractId: srcToken.contract,
+        contractId: contractId,
         methodName: 'ft_balance_of',
         args: { account_id: address },
       });
 
       if (!balance) return 0;
 
-      return balance / Math.pow(10, srcToken.decimals);
+      return balance / Math.pow(10, decimals);
     } catch (error) {
       throw new ExceptionHandler(error);
     }
   }
 
-  async transfer(fromAddress: string, privateKey: string, toAddress: string, amount: number) {
+  async transfer(fromAddress: string, privateKey: string, toAddress: string, amount: number): Promise<string> {
     try {
       const balance = await this.getBalance(fromAddress);
 
@@ -151,7 +151,8 @@ export class NearService {
       const keyStore = new keyStores.InMemoryKeyStore();
 
       const keyPair = KeyPair.fromString(privateKey as utils.key_pair.KeyPairString);
-      keyStore.setKey(process.env.NEAR_ENV!, fromAddress, keyPair);
+
+      keyStore.setKey(this.configService.get('NEAR_ENV', { infer: true })!, fromAddress, keyPair);
 
       const near = new Near(this.nearUtils.configNear(keyStore));
 
@@ -171,11 +172,18 @@ export class NearService {
     }
   }
 
-  async transferToken(fromAddress: string, privateKey: string, toAddress: string, amount: number) {
+  async transferToken(
+    fromAddress: string,
+    privateKey: string,
+    toAddress: string,
+    amount: number,
+    contract: string,
+    decimals: number,
+  ): Promise<string> {
     try {
       const srcToken = {
-        contract: 'usdt.tether-token.near',
-        decimals: 6,
+        contract,
+        decimals,
       };
 
       if (!srcToken) {
@@ -185,7 +193,7 @@ export class NearService {
       const keyStore = new keyStores.InMemoryKeyStore();
 
       const keyPair = KeyPair.fromString(privateKey as utils.key_pair.KeyPairString);
-      keyStore.setKey(process.env.NEAR_ENV!, fromAddress, keyPair);
+      keyStore.setKey(this.configService.get('NEAR_ENV', { infer: true })!, fromAddress, keyPair);
       const near = new Near(this.nearUtils.configNear(keyStore));
 
       const account = new AccountService(near.connection, fromAddress);

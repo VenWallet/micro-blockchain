@@ -16,8 +16,8 @@ export class NetworkRepository {
     return await this.repository.save(entity);
   }
 
-  async create(NetworkDto: NetworkDto): Promise<NetworkEntity> {
-    const newEntity = this.repository.create(NetworkDto);
+  async create(networkDto: NetworkDto): Promise<NetworkEntity> {
+    const newEntity = this.repository.create(networkDto);
 
     return await this.repository.save(newEntity);
 
@@ -25,16 +25,17 @@ export class NetworkRepository {
   }
 
   async findAll(): Promise<NetworkEntity[]> {
-    return await this.repository.find();
+    return await this.repository.find({ relations: ['tokens', 'tokens.tokenData'] });
   }
 
   async findAllActive(): Promise<NetworkEntity[]> {
-    return await this.repository.find({ where: { isActive: true } });
+    return await this.repository.find({ where: { isActive: true }, relations: ['tokens', 'tokens.tokenData'] });
   }
 
   async findOne(id: string): Promise<NetworkEntity | null> {
     return await this.repository.findOne({
       where: { id },
+      relations: ['tokens'],
     });
   }
 

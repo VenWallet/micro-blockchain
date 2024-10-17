@@ -21,12 +21,7 @@ export class WalletDto {
 
 export class UpdateWalletDto extends PartialType(WalletDto) {}
 
-export class CreateWalletsDto {
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  userId: string;
-
+export class GetMnemonicDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()

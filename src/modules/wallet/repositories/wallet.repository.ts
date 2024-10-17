@@ -4,6 +4,7 @@ import { DeleteResult, Repository } from 'typeorm';
 import { plainToClass } from 'class-transformer';
 import { WalletEntity } from '../entities/wallet.entity';
 import { WalletDto } from '../dto/wallet.dto';
+import { IndexEnum } from 'src/modules/network/enums/index.enum';
 
 @Injectable()
 export class WalletRepository {
@@ -25,18 +26,33 @@ export class WalletRepository {
   }
 
   async findAll(): Promise<WalletEntity[]> {
-    return await this.repository.find();
+    return await this.repository.find({ relations: ['network'] });
   }
 
   async findOne(id: string): Promise<WalletEntity | null> {
     return await this.repository.findOne({
       where: { id },
+      relations: ['network'],
     });
   }
 
   async findByUserId(userId: string): Promise<WalletEntity[]> {
     return await this.repository.find({
       where: { userId },
+      relations: ['network'],
+    });
+  }
+
+  async findOneByAddress(address: string): Promise<WalletEntity | null> {
+    return await this.repository.findOne({
+      where: { address },
+    });
+  }
+
+  async findOneByUserIdAndIndex(userId: string, index: IndexEnum): Promise<WalletEntity | null> {
+    return await this.repository.findOne({
+      where: { userId, network: { index } },
+      relations: ['network'],
     });
   }
 

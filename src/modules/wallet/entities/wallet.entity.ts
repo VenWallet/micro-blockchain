@@ -9,7 +9,6 @@ export class WalletEntity extends BaseEntity {
   @Column({
     name: 'user_id',
     nullable: false,
-    unique: true,
   })
   userId!: string;
 

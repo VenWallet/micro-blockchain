@@ -1,7 +1,8 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { WalletService } from './wallet.service';
-import { WalletDto, UpdateWalletDto, CreateWalletsDto } from './dto/wallet.dto';
+import { WalletDto, UpdateWalletDto, GetMnemonicDto } from './dto/wallet.dto';
+import { get } from 'http';
 
 @ApiTags('Wallet')
 @Controller('wallet')
@@ -29,9 +30,14 @@ export class WalletController {
     return this.walletService.update(id, updateWalletDto);
   }
 
-  @Post('create-wallets')
-  createWallets(@Body() createWalletsDto: CreateWalletsDto) {
-    console.log(createWalletsDto);
-    return this.walletService.createWallets(createWalletsDto);
+  @Post('get-user-id-by-mnemonic')
+  getUserIdByMnemonic(@Body() getMnemonicDto: GetMnemonicDto) {
+    return this.walletService.getUserIdByMnemonic(getMnemonicDto.mnemonic);
   }
+
+  // @Post('create-wallets')
+  // createWallets(@Body() createWalletsDto: CreateWalletsDto) {
+  //   console.log(createWalletsDto);
+  //   return this.walletService.createWallets(createWalletsDto);
+  // }
 }

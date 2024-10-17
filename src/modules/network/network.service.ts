@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import { ExceptionHandler } from 'src/shared/handlers/exception.handler';
+import { ExceptionHandler } from 'src/helpers/handlers/exception.handler';
 import { NetworkRepository } from './repositories/network.repository';
 import { NetworkEntity } from './entities/network.entity';
 import { NetworkDto, UpdateNetworkDto } from './dto/network.dto';

@@ -7,17 +7,22 @@ import { NetworkModule } from './modules/network/network.module';
 import { WalletModule } from './modules/wallet/wallet.module';
 import { AppConfigModule } from './config/app.config';
 import { AppController } from './app.controller';
-import { BlockchainsController } from './modules/blockchains/blockchains.controller';
-import { BlockchainsModule } from './modules/blockchains/blockchains.module';
+import { BlockchainModule } from './modules/blockchain/blockchain.module';
+import { TokenDataModule } from './modules/tokenData/tokenData.module';
+import { TokenModule } from './modules/token/token.module';
+import { UtilsModule } from './shared/utils/utils.module';
 
 @Module({
   imports: [
     AppConfigModule,
     CacheModule.register({ isGlobal: true }),
     TypeOrmModule.forRoot(config),
+    UtilsModule,
     NetworkModule,
     WalletModule,
-    BlockchainsModule,
+    BlockchainModule,
+    TokenDataModule,
+    TokenModule,
   ],
   controllers: [AppController],
   providers: [],

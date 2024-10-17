@@ -1,17 +1,25 @@
-const nearSEED = require('near-seed-phrase');
+import { Wallet } from 'ethers';
+import { WalletService } from '../../modules/wallet/wallet.service';
+import { KeyPair } from 'near-api-js';
+import { WalletRepository } from '../../modules/wallet/repositories/wallet.repository';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { ExceptionHandler } from 'src/helpers/handlers/exception.handler';
+const nearSeed = require('near-seed-phrase');
 
+@Injectable()
 export class UtilsShared {
   static validateEmail = (email: string) => {
     const regex = /\S+@\S+\.\S+/;
     return regex.test(email);
   };
 
-  static getIdNear = async (mnemonic: string) => {
-    const walletSeed = await nearSEED.parseSeedPhrase(mnemonic);
-    const split = String(walletSeed.publicKey).split(':');
-    const id = String(split[1]);
-    return id;
-  };
+  static getAddressNearFromMnemonic(mnemonic: string): string {
+    const walletSeed = nearSeed.parseSeedPhrase(mnemonic);
+    const keyPair = KeyPair.fromString(walletSeed.secretKey);
+    const implicitAccountId = Buffer.from(keyPair.getPublicKey().data).toString('hex');
+
+    return implicitAccountId;
+  }
 
   static getLinkTransaction = (blockchain: string, transactionHash: string) => {
     switch (blockchain) {

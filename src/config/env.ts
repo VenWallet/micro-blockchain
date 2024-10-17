@@ -27,4 +27,10 @@ export class EnvironmentVariables {
 
   @IsInt()
   PORT_ORM!: number;
+
+  @IsString()
+  ETHEREUM_NETWORK: string;
+
+  @IsString()
+  INFURA_PROJECT_ID: string;
 }
