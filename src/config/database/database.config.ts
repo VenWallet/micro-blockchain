@@ -23,7 +23,7 @@ export class DatabaseConfig {
       migrationsRun: true,
       synchronize: true,
       ssl: {
-        rejectUnauthorized: false,
+        rejectUnauthorized: true,
       },
     };
   }
