@@ -32,13 +32,6 @@ COPY --from=builder /app/dist ./dist
 # Copiar el archivo .env al contenedor
 COPY .env .env
 
-# Establecer las variables de entorno desde el archivo .env
-ENV $(cat .env | xargs)
-
-# Establecer usuario no privilegiado para mayor seguridad
-# RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-# USER appuser
-
 # Exponer el puerto en el que la aplicación se ejecutará
 EXPOSE 3000
 
