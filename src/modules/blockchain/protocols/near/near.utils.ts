@@ -3,12 +3,14 @@ import { Action, createTransaction, functionCall } from 'near-api-js/lib/transac
 import { KeyPair, PublicKey } from 'near-api-js/lib/utils';
 import { ConnectedWalletAccount, Near, WalletConnection } from 'near-api-js';
 const BN = require('bn.js');
-import * as dotenv from 'dotenv';
 import { Injectable } from '@nestjs/common';
 import { AccountService } from './account.service';
-dotenv.config();
+import { EnvironmentVariables } from 'src/config/env';
+import { ConfigService } from '@nestjs/config';
 
-const NETWORK = process.env.NEAR_ENV || 'testnet';
+const configService = new ConfigService<EnvironmentVariables>();
+
+const NETWORK = configService.get('NEAR_ENV', { infer: true }) || 'testnet';
 
 @Injectable()
 export class NearUtils {
