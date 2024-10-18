@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-#   pull_request:
-#     branches:
-#       - mains
 
 jobs:
   build:
@@ -17,10 +14,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2. Crear el archivo .env con los secrets de GitHub
-      - name: Create .env file
+      # 2. Crear el archivo .env con los secrets de GitHub para micro-blockchain
+      - name: Create .env file for micro-blockchain
         run: |
-          echo NODE_ENV=${{ secrets.NODE_ENV }} >> .env
+          cat << EOF >> .env
+          NODE_ENV=${{ secrets.NODE_ENV }}
+          EOF
 
       # 3. Loguearse en Docker Hub
       - name: Log in to Docker Hub
@@ -29,10 +28,10 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # 4. Construir y etiquetar la imagen de Docker
+      # 4. Construir y etiquetar la imagen de Docker (incluyendo el archivo .env)
       - name: Build Docker image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/micro-blockchain:latest .
+          docker build --file Dockerfile -t ${{ secrets.DOCKER_USERNAME }}/micro-blockchain:latest .
           docker tag ${{ secrets.DOCKER_USERNAME }}/micro-blockchain:latest ${{ secrets.DOCKER_USERNAME }}/micro-blockchain:${{ github.sha }}
 
       # 5. Subir la imagen a Docker Hub
