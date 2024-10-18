@@ -20,7 +20,7 @@ export function validate(config: Record<string, unknown>) {
     ConfigModule.forRoot({
       cache: true,
       isGlobal: true,
-      // envFilePath: '.env.blockchain',
+      envFilePath: '.env.blockchain',
       validate,
     }),
   ],
