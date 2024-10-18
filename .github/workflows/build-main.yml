@@ -24,13 +24,28 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # 3. Construir y etiquetar la imagen de Docker
+      # 3. Crear un archivo .env usando secrets
+      - name: Create .env file
+        run: |
+          echo NODE_ENV=${{ secrets.NODE_ENV }} >> .env
+          echo NEAR_ENV=${{ secrets.NEAR_ENV }} >> .env
+          echo PORT=${{ secrets.PORT }} >> .env
+          echo HOST_ORM=${{ secrets.HOST_ORM }} >> .env
+          echo DATABASE_ORM=${{ secrets.DATABASE_ORM }} >> .env
+          echo USER_ORM=${{ secrets.USER_ORM }} >> .env
+          echo PASSWORD_ORM=${{ secrets.PASSWORD_ORM }} >> .env
+          echo PORT_ORM=${{ secrets.PORT_ORM }} >> .env
+          echo ETHEREUM_NETWORK=${{ secrets.ETHEREUM_NETWORK }} >> .env
+          echo INFURA_PROJECT_ID=${{ secrets.INFURA_PROJECT_ID }} >> .env
+          echo BSC_NETWORK=${{ secrets.BSC_NETWORK }} >> .env
+
+      # 4. Construir y etiquetar la imagen de Docker
       - name: Build Docker image
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/micro-blockchain:latest .
           docker tag ${{ secrets.DOCKER_USERNAME }}/micro-blockchain:latest ${{ secrets.DOCKER_USERNAME }}/micro-blockchain:${{ github.sha }}
 
-      # 4. Subir la imagen a Docker Hub
+      # 5. Subir la imagen a Docker Hub
       - name: Push Docker image
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/micro-blockchain:latest
