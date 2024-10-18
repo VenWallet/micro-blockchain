@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { BinanceService } from './binance.service';
-import { BinanceUtils } from './binance.utils';
+import { ArbitrumService } from './arbitrum.service';
+import { ArbitrumUtils } from './arbitrum.utils';
 
 @Module({
   imports: [],
-  exports: [BinanceService, BinanceUtils],
+  exports: [ArbitrumService, ArbitrumUtils],
   controllers: [],
-  providers: [BinanceService, BinanceUtils],
+  providers: [ArbitrumService, ArbitrumUtils],
 })
-export class BinanceModule {}
+export class ArbitrumModule {}

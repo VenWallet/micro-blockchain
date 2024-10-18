@@ -21,7 +21,7 @@ export class ArbitrumService implements ProtocolInterface {
   private provider: ethers.JsonRpcProvider;
 
   constructor(private readonly configService: ConfigService<EnvironmentVariables>) {
-    const ARBITRUM_NETWORK = this.configService.get('ARBITRUM_NETWORK', { infer: true })!;
+    const ARBITRUM_NETWORK = this.configService.get('BSC_NETWORK', { infer: true })!;
     const INFURA_PROJECT_ID = this.configService.get('INFURA_PROJECT_ID', { infer: true })!;
 
     // const nodeUrl =
