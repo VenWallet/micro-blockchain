@@ -29,6 +29,12 @@ RUN npm ci --only=production
 # Copiar los artefactos de la etapa de construcción
 COPY --from=builder /app/dist ./dist
 
+# Copiar el archivo .env al contenedor
+COPY .env .env
+
+# Establecer las variables de entorno desde el archivo .env
+ENV $(cat .env | xargs)
+
 # Establecer usuario no privilegiado para mayor seguridad
 # RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 # USER appuser
