@@ -21,16 +21,6 @@ jobs:
       - name: Create .env file
         run: |
           echo NODE_ENV=${{ secrets.NODE_ENV }} >> .env
-          echo NEAR_ENV=${{ secrets.NEAR_ENV }} >> .env
-          echo PORT=${{ secrets.PORT }} >> .env
-          echo HOST_ORM=${{ secrets.HOST_ORM }} >> .env
-          echo DATABASE_ORM=${{ secrets.DATABASE_ORM }} >> .env
-          echo USER_ORM=${{ secrets.USER_ORM }} >> .env
-          echo PASSWORD_ORM=${{ secrets.PASSWORD_ORM }} >> .env
-          echo PORT_ORM=${{ secrets.PORT_ORM }} >> .env
-          echo ETHEREUM_NETWORK=${{ secrets.ETHEREUM_NETWORK }} >> .env
-          echo INFURA_PROJECT_ID=${{ secrets.INFURA_PROJECT_ID }} >> .env
-          echo BSC_NETWORK=${{ secrets.BSC_NETWORK }} >> .env
 
       # 3. Loguearse en Docker Hub
       - name: Log in to Docker Hub
