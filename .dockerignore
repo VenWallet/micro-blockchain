@@ -4,6 +4,6 @@ dist
 npm-debug.log
 .coverage
 .coverage.*
-.env
+# .env
 .aws
 .env.blockchain
