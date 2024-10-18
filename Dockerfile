@@ -29,6 +29,9 @@ RUN npm ci --only=production
 # Copiar los artefactos de la etapa de construcción
 COPY --from=builder /app/dist ./dist
 
+# Listar los archivos en el directorio de trabajo para verificar si .env existe
+RUN echo "Archivos en el directorio:" && ls -la
+
 # Copiar el archivo .env al contenedor
 COPY .env .env
 
