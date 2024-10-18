@@ -3,7 +3,7 @@ name: Build and Push Docker image
 on:
   push:
     branches:
-      - main
+      - develop
 
 jobs:
   build:
@@ -24,13 +24,13 @@ jobs:
       # 3. Construir y etiquetar la imagen de Docker
       - name: Build Docker image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/micro-blockchain:latest .
-          docker tag ${{ secrets.DOCKER_USERNAME }}/micro-blockchain:latest ${{ secrets.DOCKER_USERNAME }}/micro-blockchain:${{ github.sha }}
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/micro-blockchain:test .
+          docker tag ${{ secrets.DOCKER_USERNAME }}/micro-blockchain:test ${{ secrets.DOCKER_USERNAME }}/micro-blockchain:${{ github.sha }}
 
       # 4. Subir la imagen a Docker Hub
       - name: Push Docker image
         run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/micro-blockchain:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/micro-blockchain:test
           docker push ${{ secrets.DOCKER_USERNAME }}/micro-blockchain:${{ github.sha }}
 
       # 2. Crear el archivo .env con los secrets de GitHub para micro-blockchain
