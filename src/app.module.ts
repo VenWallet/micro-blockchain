@@ -12,6 +12,9 @@ import { TokenModule } from './modules/token/token.module';
 import { UtilsModule } from './shared/utils/utils.module';
 import { DatabaseConfig } from './config/database/database.config';
 
+console.log('AppModule');
+console.log('(DatabaseConfig.getDataSourceOptions()', DatabaseConfig.getDataSourceOptions());
+
 @Module({
   imports: [
     AppConfigModule,
