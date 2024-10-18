@@ -8,6 +8,13 @@ on:
 #     branches:
 #       - main
 
+name: Build and Push Docker image
+
+on:
+  push:
+    branches:
+      - main
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,14 +24,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2. Loguearse en Docker Hub
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      # 3. Crear un archivo .env usando secrets
+      # 2. Crear el archivo .env con los secrets de GitHub
       - name: Create .env file
         run: |
           echo NODE_ENV=${{ secrets.NODE_ENV }} >> .env
@@ -38,6 +38,13 @@ jobs:
           echo ETHEREUM_NETWORK=${{ secrets.ETHEREUM_NETWORK }} >> .env
           echo INFURA_PROJECT_ID=${{ secrets.INFURA_PROJECT_ID }} >> .env
           echo BSC_NETWORK=${{ secrets.BSC_NETWORK }} >> .env
+
+      # 3. Loguearse en Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
       # 4. Construir y etiquetar la imagen de Docker
       - name: Build Docker image
