@@ -1,5 +1,5 @@
 import * as dotenv from 'dotenv';
-dotenv.config();
+dotenv.config({ path: '.env.blockchain' });
 import { DataSourceOptions } from 'typeorm';
 
 const config: DataSourceOptions = {
@@ -19,5 +19,7 @@ const config: DataSourceOptions = {
     rejectUnauthorized: false,
   },
 };
+
+console.log(config);
 
 export default config;
