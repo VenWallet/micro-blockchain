@@ -36,4 +36,7 @@ export class EnvironmentVariables {
 
   @IsString()
   BSC_NETWORK: string;
+
+  @IsString()
+  ARBITRUM_NETWORK: string;
 }
