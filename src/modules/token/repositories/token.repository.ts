@@ -33,6 +33,13 @@ export class TokenRepository {
     return await this.repository.find({ where: { network: { id: network } }, relations: ['tokenData', 'network'] });
   }
 
+  async findOneWithRelations(id: string): Promise<TokenEntity | null> {
+    return await this.repository.findOne({
+      where: { id },
+      relations: ['tokenData', 'network'],
+    });
+  }
+
   async findOne(id: string): Promise<TokenEntity | null> {
     return await this.repository.findOne({
       where: { id },

@@ -7,7 +7,6 @@ import { ConfigService } from '@nestjs/config';
 import { EnvironmentVariables } from './config/env';
 import { DatabaseConfig } from './config/database/database.config';
 
-console.log('(DatabaseConfig.getDataSourceOptions()', DatabaseConfig.getDataSourceOptions());
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 

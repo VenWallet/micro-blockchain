@@ -1,5 +1,6 @@
 import { IndexEnum } from 'src/modules/network/enums/index.enum';
 import { NetworksEnum } from 'src/modules/network/enums/networks.enum';
+import { TokensEnum } from 'src/modules/tokenData/enums/tokens.enum';
 
 export interface ProtocolInterface {
   fromMnemonic(mnemonic: string): Promise<{
@@ -20,4 +21,11 @@ export interface ProtocolInterface {
     contract: string,
     decimals: number,
   ): Promise<string>;
+  // getFeeTransaction(
+  //   network: IndexEnum,
+  //   token: string,
+  //   typeTxn: string,
+  //   amount: number | undefined,
+  //   address: string | undefined,
+  // ): Promise<number>;
 }

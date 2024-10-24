@@ -3,4 +3,7 @@ export enum NetworksEnum {
   ETHEREUM = 'Ethereum',
   BSC = 'BSC',
   ARBITRUM = 'Arbitrum',
+  TRON = 'Tron',
+  BITCOIN = 'Bitcoin',
+  SOLANA = 'Solana',
 }

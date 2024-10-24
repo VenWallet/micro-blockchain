@@ -5,11 +5,24 @@ import { NearModule } from './near/near.module';
 import { EthereumModule } from './ethereum/ethereum.module';
 import { BinanceModule } from './binance/binance.module';
 import { ArbitrumModule } from './arbitrum/arbitrum.module';
+import { TronModule } from './tron/tron.module';
+import { BitcoinModule } from './bitcoin/bitcoin.module';
+import { SolanaModule } from './solana/solana.module';
+import { ProtocolIndex } from './protocol.index';
 
 @Module({
-  imports: [NearModule, EthereumModule, BinanceModule, ArbitrumModule],
-  exports: [NearModule, EthereumModule, BinanceModule, ArbitrumModule],
+  imports: [NearModule, EthereumModule, BinanceModule, ArbitrumModule, TronModule, BitcoinModule, SolanaModule],
+  exports: [
+    ProtocolIndex,
+    NearModule,
+    EthereumModule,
+    BinanceModule,
+    ArbitrumModule,
+    TronModule,
+    BitcoinModule,
+    SolanaModule,
+  ],
   controllers: [],
-  providers: [],
+  providers: [ProtocolIndex],
 })
 export class ProtocolModule {}

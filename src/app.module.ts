@@ -11,9 +11,7 @@ import { TokenDataModule } from './modules/tokenData/tokenData.module';
 import { TokenModule } from './modules/token/token.module';
 import { UtilsModule } from './shared/utils/utils.module';
 import { DatabaseConfig } from './config/database/database.config';
-
-console.log('AppModule');
-console.log('(DatabaseConfig.getDataSourceOptions()', DatabaseConfig.getDataSourceOptions());
+import { HttpCustomModule } from './shared/http/http.module';
 
 @Module({
   imports: [
@@ -21,6 +19,7 @@ console.log('(DatabaseConfig.getDataSourceOptions()', DatabaseConfig.getDataSour
     CacheModule.register({ isGlobal: true }),
     TypeOrmModule.forRoot(DatabaseConfig.getDataSourceOptions()),
     UtilsModule,
+    HttpCustomModule,
     NetworkModule,
     WalletModule,
     BlockchainModule,

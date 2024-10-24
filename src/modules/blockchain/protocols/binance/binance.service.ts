@@ -24,11 +24,6 @@ export class BinanceService implements ProtocolInterface {
     const BSC_NETWORK = this.configService.get('BSC_NETWORK', { infer: true })!;
     const INFURA_PROJECT_ID = this.configService.get('INFURA_PROJECT_ID', { infer: true })!;
 
-    // const nodeUrl =
-    //   BSC_NETWORK === 'mainnet'
-    //     ? 'https://bsc-dataseed.binance.org/'
-    //     : 'https://data-seed-prebsc-1-s1.binance.org:8545/';
-
     const nodeUrl = `https://bsc-${BSC_NETWORK}.infura.io/v3/${INFURA_PROJECT_ID}`;
 
     this.web3 = new Web3(new Web3.providers.HttpProvider(nodeUrl));
