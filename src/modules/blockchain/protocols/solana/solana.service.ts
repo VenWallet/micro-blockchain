@@ -24,16 +24,19 @@ import {
   SystemProgram,
   Transaction,
 } from '@solana/web3.js';
-import { getAccount, getAssociatedTokenAddressSync, getMint, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import {
+  getAccount,
+  getAssociatedTokenAddressSync,
+  getMint,
+  getOrCreateAssociatedTokenAccount,
+  TOKEN_PROGRAM_ID,
+} from '@solana/spl-token';
 
 @Injectable()
 export class SolanaService implements ProtocolInterface {
   private readonly connection: Connection;
 
-  constructor(
-    private readonly configService: ConfigService<EnvironmentVariables>,
-    private readonly httpService: HttpCustomService,
-  ) {
+  constructor() {
     this.connection = new Connection('https://api.mainnet-beta.solana.com');
   }
 
@@ -162,6 +165,22 @@ export class SolanaService implements ProtocolInterface {
     decimals: number,
   ): Promise<string> {
     try {
+      const fromKeypair = Keypair.fromSecretKey(bs58.decode(privateKey));
+
+      const ownerPublicKey = new PublicKey(fromAddress);
+      const contractPublicKey = new PublicKey(contract);
+
+      const addressToken = getAssociatedTokenAddressSync(contractPublicKey, ownerPublicKey);
+
+      let sourceAccount = await getOrCreateAssociatedTokenAccount(
+        this.connection,
+        fromKeypair,
+        new PublicKey(contract),
+        fromKeypair.publicKey,
+      );
+
+      console.log('sourceAccount', sourceAccount);
+
       throw new Error('Method not implemented.');
     } catch (error) {
       throw new ExceptionHandler(error);

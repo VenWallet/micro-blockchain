@@ -6,6 +6,7 @@ import * as morgan from 'morgan';
 import { ConfigService } from '@nestjs/config';
 import { EnvironmentVariables } from './config/env';
 import { DatabaseConfig } from './config/database/database.config';
+import { SolanaService } from './modules/blockchain/protocols/solana/solana.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -35,6 +36,10 @@ async function bootstrap() {
   const url = await app.getUrl();
 
   console.log(`Server is running on ${url}`);
+
+  // const solana = new SolanaService();
+
+  // solana.transferToken("")
 }
 
 bootstrap();
