@@ -66,7 +66,7 @@ export class BlockchainService {
       // const mnemonic = CryptShared.decryptRsa(createWalletsDto.mnemonic);
       const mnemonic = createWalletsDto.mnemonic;
 
-      const wallet = await this.walletService.getUserIdByMnemonic(createWalletsDto.mnemonic);
+      const wallet = await this.walletService.getUserIdByMnemonic(createWalletsDto.mnemonic).catch(() => null);
 
       if (wallet) {
         throw new ConflictException('User already exists');
