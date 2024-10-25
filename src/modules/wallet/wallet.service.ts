@@ -31,7 +31,7 @@ export class WalletService {
     const wallet = await this.walletRepository.findOneByAddress(address);
 
     if (!wallet) {
-      throw new NotFoundException('Wallet not found');
+      throw new Error('Wallet not found');
     }
 
     return { userId: wallet.userId };
