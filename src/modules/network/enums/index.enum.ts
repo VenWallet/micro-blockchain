@@ -3,4 +3,7 @@ export enum IndexEnum {
   ETHEREUM = 'eth',
   BSC = 'bsc',
   ARBITRUM = 'arbitrum',
+  TRON = 'tron',
+  BITCOIN = 'bitcoin',
+  SOLANA = 'solana',
 }

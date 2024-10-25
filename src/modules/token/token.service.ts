@@ -36,6 +36,20 @@ export class TokenService {
     }
   }
 
+  async findOneWithRelations(id: string): Promise<TokenEntity> {
+    try {
+      const tokenFound = await this.tokenRepository.findOneWithRelations(id);
+
+      if (!tokenFound) {
+        throw new NotFoundException('Token not found');
+      }
+
+      return tokenFound;
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
   async findOne(id: string): Promise<TokenEntity> {
     try {
       const tokenFound = await this.tokenRepository.findOne(id);

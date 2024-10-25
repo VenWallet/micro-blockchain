@@ -15,7 +15,7 @@ import { CryptShared } from 'src/shared/utils/crypt.shared';
 import { IndexEnum } from '../network/enums/index.enum';
 import { WalletService } from '../wallet/wallet.service';
 import { NetworkService } from '../network/network.service';
-import { BlockchainIndexService } from './blockchain.index';
+import { ProtocolIndex } from './protocols/protocol.index';
 import { TokenService } from '../token/token.service';
 import { IndexTokenEnum } from '../tokenData/enums/indexToken.enum';
 import { UtilsShared } from 'src/shared/utils/utils.shared';
@@ -25,7 +25,7 @@ export class BlockchainService {
   constructor(
     private readonly walletService: WalletService,
     private readonly networkService: NetworkService,
-    private readonly blockchainIndex: BlockchainIndexService,
+    private readonly protocolIndex: ProtocolIndex,
     private readonly tokenService: TokenService,
   ) {} //
 
@@ -45,7 +45,7 @@ export class BlockchainService {
         privateKey: string;
       }[] = [];
 
-      for (const [name, service] of Object.entries(this.blockchainIndex.getBlockchainIndex())) {
+      for (const [name, service] of Object.entries(this.protocolIndex.getProtocolIndex())) {
         try {
           const credential = await service.fromMnemonic(mnemonic);
           credentials.push(credential);
@@ -151,7 +151,7 @@ export class BlockchainService {
 
   async isAddress(isAddressDto: IsAddressDto): Promise<boolean> {
     try {
-      return await this.blockchainIndex.getBlockchainService(isAddressDto.network).isAddress(isAddressDto.address);
+      return await this.protocolIndex.getProtocolService(isAddressDto.network).isAddress(isAddressDto.address);
     } catch (error) {
       throw new ExceptionHandler(error);
     }
@@ -170,7 +170,7 @@ export class BlockchainService {
     try {
       const wallet = await this.walletService.findOneByUserIdAndIndex(userId, network);
 
-      const service = this.blockchainIndex.getBlockchainService(network);
+      const service = this.protocolIndex.getProtocolService(network);
 
       const balance = await service.getBalance(wallet.address);
 
@@ -190,7 +190,7 @@ export class BlockchainService {
     try {
       const wallet = await this.walletService.findOneByUserIdAndIndex(userId, network);
 
-      const service = this.blockchainIndex.getBlockchainService(network);
+      const service = this.protocolIndex.getProtocolService(network);
 
       const tokenFound = await this.tokenService.findOneByNetworkAndTokenIndex(network, token);
 
@@ -241,15 +241,11 @@ export class BlockchainService {
         }[];
       }[] = [];
 
-      for (const [name, service] of Object.entries(this.blockchainIndex.getBlockchainIndex())) {
+      for (const [name, service] of Object.entries(this.protocolIndex.getProtocolIndex())) {
         try {
           const wallet = await this.walletService.findOneByUserIdAndIndex(userId, name as IndexEnum);
 
-          console.log('wallet', wallet);
-
           const balance = await service.getBalance(wallet.address);
-
-          console.log('balance', balance);
 
           const tokensFound = await this.tokenService.findByNetwork(wallet.network.id);
 
@@ -263,8 +259,6 @@ export class BlockchainService {
 
           for (const token of tokensFound) {
             const tokenBalance = await service.getBalanceToken(wallet.address, token.contract, token.decimals);
-
-            console.log('tokenBalance', tokenBalance);
 
             const item = {
               token: token?.tokenData?.name,
@@ -305,7 +299,7 @@ export class BlockchainService {
     try {
       const wallet = await this.walletService.findOneByUserIdAndIndex(transferDto.userId, transferDto.network);
 
-      const service = this.blockchainIndex.getBlockchainService(transferDto.network);
+      const service = this.protocolIndex.getProtocolService(transferDto.network);
 
       const txHash = await service.transfer(
         wallet.address,
@@ -324,7 +318,7 @@ export class BlockchainService {
     try {
       const wallet = await this.walletService.findOneByUserIdAndIndex(transferDto.userId, transferDto.network);
 
-      const service = this.blockchainIndex.getBlockchainService(transferDto.network);
+      const service = this.protocolIndex.getProtocolService(transferDto.network);
 
       const tokenFound = await this.tokenService.findOneByNetworkAndTokenIndex(transferDto.network, transferDto.token);
 

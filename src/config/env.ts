@@ -37,6 +37,12 @@ export class EnvironmentVariables {
   @IsString()
   BSC_NETWORK: string;
 
-  // @IsString()
-  // ARBITRUM_NETWORK: string;
+  @IsString()
+  ARBITRUM_NETWORK: string;
+
+  @IsString()
+  TRON_PRO_API_KEY: string;
+
+  @IsString()
+  BLOCKCYPHER: string;
 }

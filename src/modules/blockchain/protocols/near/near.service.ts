@@ -106,8 +106,6 @@ export class NearService implements ProtocolInterface {
         };
       });
 
-      console.log('balanceAccount', balanceAccount);
-
       const valueStorage = Math.pow(10, 19);
       const valueYocto = Math.pow(10, 24);
       const storage = (balanceAccount.storage_usage * valueStorage) / valueYocto;
