@@ -6,11 +6,6 @@ import { IndexEnum } from 'src/modules/network/enums/index.enum';
 import { IndexTokenEnum } from '../enums/indexToken.enum';
 
 export class TokenDataDto {
-  // @ApiProperty()
-  // @IsNotEmpty()
-  // @IsEnum(TokensEnum)
-  // name: TokensEnum;
-
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
@@ -20,11 +15,6 @@ export class TokenDataDto {
   @IsString()
   @IsNotEmpty()
   symbol: string;
-
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsEnum(IndexTokenEnum)
-  index: IndexTokenEnum;
 
   @ApiProperty()
   @IsString()

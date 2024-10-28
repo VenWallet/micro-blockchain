@@ -35,12 +35,8 @@ export class BlockchainController {
   }
 
   @Get('balance-token/:userId')
-  getBalanceToken(
-    @Param('userId') userId: string,
-    @Query('network') network: IndexEnum,
-    @Query('token') token: IndexTokenEnum,
-  ) {
-    return this.blockchainService.getBalanceToken(userId, network, token);
+  getBalanceToken(@Param('userId') userId: string, @Query('token') token: string) {
+    return this.blockchainService.getBalanceToken(userId, token);
   }
 
   @Get('balances/:userId')

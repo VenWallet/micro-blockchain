@@ -8,13 +8,6 @@ export class TokenDataEntity extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  // @Column({
-  //   type: 'enum',
-  //   enum: TokensEnum,
-  //   unique: true,
-  // })
-  // name!: TokensEnum;
-
   @Column({
     nullable: false,
     unique: true,
@@ -26,13 +19,6 @@ export class TokenDataEntity extends BaseEntity {
     unique: true,
   })
   symbol!: string;
-
-  @Column({
-    type: 'enum',
-    enum: IndexTokenEnum,
-    unique: true,
-  })
-  index!: IndexTokenEnum;
 
   @Column({
     nullable: true,

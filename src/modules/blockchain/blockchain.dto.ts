@@ -3,7 +3,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsUUID, IsEnum, IsNumber } from 'class-validator';
 import { NetworksEnum } from '../network/enums/networks.enum';
 import { IndexEnum } from '../network/enums/index.enum';
-import { IndexTokenEnum } from '../tokenData/enums/indexToken.enum';
 
 export class CreateWalletsDto {
   @ApiProperty()
@@ -71,9 +70,9 @@ export class TransferTokenDto {
   amount: number;
 
   @ApiProperty()
+  @IsString()
   @IsNotEmpty()
-  @IsEnum(IndexTokenEnum)
-  token: IndexTokenEnum;
+  token: string;
 }
 
 export class IsAddressDto {

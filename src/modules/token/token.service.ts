@@ -64,19 +64,19 @@ export class TokenService {
     }
   }
 
-  async findOneByNetworkAndTokenIndex(network: IndexEnum, token: IndexTokenEnum): Promise<TokenEntity> {
-    try {
-      const tokenFound = await this.tokenRepository.findOneByNetworkAndTokenIndex(network, token);
+  // async findOneByNetworkAndToken(network: IndexEnum, token: string): Promise<TokenEntity> {
+  //   try {
+  //     const tokenFound = await this.tokenRepository.findOneByNetworkAndTokenIndex(network, token);
 
-      if (!tokenFound) {
-        throw new NotFoundException('Token not found');
-      }
+  //     if (!tokenFound) {
+  //       throw new NotFoundException('Token not found');
+  //     }
 
-      return tokenFound;
-    } catch (error) {
-      throw new ExceptionHandler(error);
-    }
-  }
+  //     return tokenFound;
+  //   } catch (error) {
+  //     throw new ExceptionHandler(error);
+  //   }
+  // }
 
   async update(id: string, updateTokenDto: UpdateTokenDto): Promise<TokenEntity> {
     try {

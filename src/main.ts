@@ -36,10 +36,6 @@ async function bootstrap() {
   const url = await app.getUrl();
 
   console.log(`Server is running on ${url}`);
-
-  // const solana = new SolanaService();
-
-  // solana.transferToken("CTZVXp1a3TbFfWDc1hxt9UondCfSoQ5rm75iHX3NgSSC", "4Yy8uKgupGvkYtSRZJiPCeBJhSiEcGQoVD7K1kQRWmYmdjfQ2HgE13AZgebXsmBG2QkqYnFoyzjdNSNWFRuysN3i", )
 }
 
 bootstrap();

@@ -46,13 +46,6 @@ export class TokenRepository {
     });
   }
 
-  async findOneByNetworkAndTokenIndex(network: IndexEnum, token: IndexTokenEnum): Promise<TokenEntity | null> {
-    return await this.repository.findOne({
-      where: { network: { index: network }, tokenData: { index: token } },
-      relations: ['tokenData', 'network'],
-    });
-  }
-
   async update(id: string, updateData: Partial<TokenEntity>): Promise<void> {
     const updateResult = await this.repository.update({ id }, updateData);
     if (updateResult.affected === 0) {

@@ -186,21 +186,21 @@ export class BlockchainService {
     }
   }
 
-  async getBalanceToken(userId: string, network: IndexEnum, token: IndexTokenEnum) {
+  async getBalanceToken(userId: string, tokenId: string) {
     try {
-      const wallet = await this.walletService.findOneByUserIdAndIndex(userId, network);
+      const tokenFound = await this.tokenService.findOneWithRelations(tokenId);
 
-      const service = this.protocolIndex.getProtocolService(network);
+      const wallet = await this.walletService.findOneByUserIdAndIndex(userId, tokenFound.network.index);
 
-      const tokenFound = await this.tokenService.findOneByNetworkAndTokenIndex(network, token);
+      const service = this.protocolIndex.getProtocolService(tokenFound.network.index);
 
       const balance = await service.getBalanceToken(wallet.address, tokenFound.contract, tokenFound.decimals);
 
       return {
         network: wallet.network.name,
-        indexNetwork: wallet.network.index,
+        index: wallet.network.index,
         token: tokenFound.tokenData.name,
-        index: tokenFound.tokenData.index,
+        tokenId: tokenFound.id,
         symbol: tokenFound.tokenData.symbol,
         balance,
         decimals: tokenFound.decimals,
@@ -219,7 +219,7 @@ export class BlockchainService {
       tokens: {
         token: string;
         symbol: string;
-        index: IndexTokenEnum;
+        tokenId: string;
         balance: number;
         decimals: number;
       }[];
@@ -235,7 +235,7 @@ export class BlockchainService {
         tokens: {
           token: string;
           symbol: string;
-          index: IndexTokenEnum;
+          tokenId: string;
           balance: number;
           decimals: number;
         }[];
@@ -252,7 +252,7 @@ export class BlockchainService {
           const balanceTokens: {
             token: string;
             symbol: string;
-            index: IndexTokenEnum;
+            tokenId: string;
             balance: number;
             decimals: number;
           }[] = [];
@@ -261,11 +261,11 @@ export class BlockchainService {
             const tokenBalance = await service.getBalanceToken(wallet.address, token.contract, token.decimals);
 
             const item = {
-              token: token?.tokenData?.name,
-              symbol: token?.tokenData?.symbol,
-              index: token?.tokenData.index,
+              token: token.tokenData.name,
+              symbol: token.tokenData.symbol,
+              tokenId: token.id,
               balance: tokenBalance,
-              decimals: token?.decimals,
+              decimals: token.decimals,
             };
 
             balanceTokens.push(item);
@@ -316,26 +316,26 @@ export class BlockchainService {
 
   async transferToken(transferDto: TransferTokenDto) {
     try {
+      const token = await this.tokenService.findOneWithRelations(transferDto.token);
+
       const wallet = await this.walletService.findOneByUserIdAndIndex(transferDto.userId, transferDto.network);
 
       const service = this.protocolIndex.getProtocolService(transferDto.network);
-
-      const tokenFound = await this.tokenService.findOneByNetworkAndTokenIndex(transferDto.network, transferDto.token);
 
       const txHash = await service.transferToken(
         wallet.address,
         transferDto.pkEncrypt,
         transferDto.toAddress,
         transferDto.amount,
-        tokenFound.contract,
-        tokenFound.decimals,
+        token.contract,
+        token.decimals,
       );
 
       return {
         network: wallet.network.name,
-        networkIndex: wallet.network.index,
-        token: tokenFound.tokenData.name,
-        tokenIndex: tokenFound.tokenData.index,
+        index: wallet.network.index,
+        token: token.tokenData.name,
+        tokenId: token.id,
         hash: txHash,
       };
     } catch (error) {

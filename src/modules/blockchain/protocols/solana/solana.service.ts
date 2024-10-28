@@ -19,6 +19,7 @@ import {
   Connection,
   Keypair,
   LAMPORTS_PER_SOL,
+  ParsedAccountData,
   PublicKey,
   sendAndConfirmTransaction,
   SystemProgram,
@@ -165,19 +166,32 @@ export class SolanaService implements ProtocolInterface {
     decimals: number,
   ): Promise<string> {
     try {
-      const fromKeypair = Keypair.fromSecretKey(bs58.decode(privateKey));
+      console.log(await this.getNumberDecimals(contract));
 
-      const ownerPublicKey = new PublicKey(fromAddress);
       const contractPublicKey = new PublicKey(contract);
 
-      const addressToken = getAssociatedTokenAddressSync(contractPublicKey, ownerPublicKey);
+      // const fromPublicKey = new PublicKey(fromAddress);
+      const fromKeypair = Keypair.fromSecretKey(bs58.decode(privateKey));
+      const toPublicKey = new PublicKey(toAddress);
 
-      let sourceAccount = await getOrCreateAssociatedTokenAccount(
-        this.connection,
-        fromKeypair,
-        new PublicKey(contract),
-        fromKeypair.publicKey,
-      );
+      const sourceAccount = getAssociatedTokenAddressSync(contractPublicKey, fromKeypair.publicKey);
+
+      console.log('privateKey', privateKey);
+
+      // const ownerPublicKey = new PublicKey(fromAddress);
+      // const contractPublicKey = new PublicKey(contract);
+
+      // const addressToken = getAssociatedTokenAddressSync(contractPublicKey, ownerPublicKey);
+
+      contract = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+      console.log('contract', contract);
+
+      // let sourceAccount2 = await getOrCreateAssociatedTokenAccount(
+      //   this.connection,
+      //   fromKeypair,
+      //   new PublicKey(contract),
+      //   fromKeypair.publicKey,
+      // );
 
       console.log('sourceAccount', sourceAccount);
 
@@ -185,6 +199,12 @@ export class SolanaService implements ProtocolInterface {
     } catch (error) {
       throw new ExceptionHandler(error);
     }
+  }
+
+  private async getNumberDecimals(mintAddress: string): Promise<number> {
+    const info = await this.connection.getParsedAccountInfo(new PublicKey(mintAddress));
+    const result = (info.value?.data as ParsedAccountData).parsed.info.decimals as number;
+    return result;
   }
 
   // async getTransaction(transactionHash: string): Promise<any> {
