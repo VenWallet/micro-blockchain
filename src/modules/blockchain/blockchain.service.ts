@@ -298,6 +298,10 @@ export class BlockchainService {
               balanceTokens.push(item);
             }
 
+            if (hasBalance && balance === 0 && balanceTokens.length === 0) {
+              return;
+            }
+
             balances.push({
               network: wallet.network.name,
               index: wallet.network.index,
