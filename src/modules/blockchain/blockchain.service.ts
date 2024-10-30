@@ -210,7 +210,10 @@ export class BlockchainService {
     }
   }
 
-  async getBalances(userId: string): Promise<
+  async getBalances(
+    userId: string,
+    hasBalance: boolean,
+  ): Promise<
     {
       network: NetworksEnum;
       index: IndexEnum;
@@ -279,6 +282,10 @@ export class BlockchainService {
 
             for (const token of tokensFound) {
               const tokenBalance = await service.getBalanceToken(wallet.address, token.contract, token.decimals);
+
+              if (hasBalance && tokenBalance === 0) {
+                continue;
+              }
 
               const item = {
                 token: token.tokenData.name,

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Query, HttpCode, HttpStatus, ParseBoolPipe } from '@nestjs/common';
 import { ApiProperty, ApiTags } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import { NetworksEnum } from '../network/enums/networks.enum';
@@ -6,6 +6,7 @@ import { BlockchainService } from './blockchain.service';
 import { CreateWalletsDto, ImportWalletsDto, IsAddressDto, TransferDto, TransferTokenDto } from './blockchain.dto';
 import { IndexEnum } from '../network/enums/index.enum';
 import { IndexTokenEnum } from '../tokenData/enums/indexToken.enum';
+import { BooleanValidationPipe } from 'src/helpers/pipes/boolean-validate.pipe';
 
 @ApiTags('Blockchain')
 @Controller('blockchain')
@@ -40,8 +41,11 @@ export class BlockchainController {
   }
 
   @Get('balances/:userId')
-  getBalances(@Param('userId') userId: string) {
-    return this.blockchainService.getBalances(userId);
+  getBalances(
+    @Param('userId') userId: string,
+    @Query('hasBalance', new BooleanValidationPipe()) hasBalance: boolean = false,
+  ) {
+    return this.blockchainService.getBalances(userId, hasBalance);
   }
 
   @Post('transfer')
