@@ -241,53 +241,75 @@ export class BlockchainService {
         }[];
       }[] = [];
 
-      for (const [name, service] of Object.entries(this.protocolIndex.getProtocolIndex())) {
-        try {
-          const wallet = await this.walletService.findOneByUserIdAndIndex(userId, name as IndexEnum);
+      const protocols = Object.entries(this.protocolIndex.getProtocolIndex());
 
-          const balance = await service.getBalance(wallet.address);
+      // Ejecutamos la primera iteración de protocolos en paralelo
+      await Promise.all(
+        protocols.map(async ([name, service]) => {
+          try {
+            const wallet = await this.walletService.findOneByUserIdAndIndex(userId, name as IndexEnum);
 
-          const tokensFound = await this.tokenService.findByNetwork(wallet.network.id);
+            const [balance, tokensFound] = await Promise.all([
+              service.getBalance(wallet.address),
+              this.tokenService.findByNetwork(wallet.network.id),
+            ]);
 
-          const balanceTokens: {
-            token: string;
-            symbol: string;
-            tokenId: string;
-            balance: number;
-            decimals: number;
-          }[] = [];
+            // Iteramos sobre tokensFound usando Promise.all
+            // const balanceTokens = await Promise.all(
+            //   tokensFound.map(async (token) => {
+            //     const tokenBalance = await service.getBalanceToken(wallet.address, token.contract, token.decimals);
 
-          for (const token of tokensFound) {
-            const tokenBalance = await service.getBalanceToken(wallet.address, token.contract, token.decimals);
+            //     return {
+            //       token: token.tokenData.name,
+            //       symbol: token.tokenData.symbol,
+            //       tokenId: token.id,
+            //       balance: tokenBalance,
+            //       decimals: token.decimals,
+            //     };
+            //   }),
+            // );
 
-            const item = {
-              token: token.tokenData.name,
-              symbol: token.tokenData.symbol,
-              tokenId: token.id,
-              balance: tokenBalance,
-              decimals: token.decimals,
-            };
+            const balanceTokens: {
+              token: string;
+              symbol: string;
+              tokenId: string;
+              balance: number;
+              decimals: number;
+            }[] = [];
 
-            balanceTokens.push(item);
+            for (const token of tokensFound) {
+              const tokenBalance = await service.getBalanceToken(wallet.address, token.contract, token.decimals);
+
+              const item = {
+                token: token.tokenData.name,
+                symbol: token.tokenData.symbol,
+                tokenId: token.id,
+                balance: tokenBalance,
+                decimals: token.decimals,
+              };
+
+              balanceTokens.push(item);
+            }
+
+            balances.push({
+              network: wallet.network.name,
+              index: wallet.network.index,
+              symbol: wallet.network.symbol,
+              balance,
+              decimals: wallet.network.decimals,
+              tokens: balanceTokens,
+            });
+          } catch (error) {
+            console.error(`Failed to retrieve balance for ${name}:`, error);
+            throw new InternalServerErrorException(`Failed to retrieve balance for ${name}`);
           }
-
-          balances.push({
-            network: wallet.network.name,
-            index: wallet.network.index,
-            symbol: wallet.network.symbol,
-            balance,
-            decimals: wallet.network.decimals,
-            tokens: balanceTokens,
-          });
-        } catch (error) {
-          console.error(`Failed to retrieve balance for ${name}:`, error);
-          throw new InternalServerErrorException(`Failed to retrieve balance for ${name}`);
-        }
-      }
+        }),
+      );
 
       return balances;
     } catch (error) {
-      throw new ExceptionHandler(error);
+      console.error('Failed to retrieve balances:', error);
+      throw new InternalServerErrorException('Failed to retrieve balances');
     }
   }
 

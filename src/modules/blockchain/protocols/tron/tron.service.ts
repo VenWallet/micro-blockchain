@@ -1,14 +1,9 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { BadRequestException, HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
-import { KeyPair, utils, Account, keyStores, Near } from 'near-api-js';
-import { functionCall } from 'near-api-js/lib/transaction';
 import { ExceptionHandler } from 'src/helpers/handlers/exception.handler';
 import { NetworksEnum } from 'src/modules/network/enums/networks.enum';
 import { ethers, Wallet } from 'ethers';
-import Web3 from 'web3';
-import web3Utils from 'web3-utils';
-import { Web3Validator, isAddress } from 'web3-validator';
 import { ConfigService } from '@nestjs/config';
 import { EnvironmentVariables } from 'src/config/env';
 import { IndexEnum } from 'src/modules/network/enums/index.enum';

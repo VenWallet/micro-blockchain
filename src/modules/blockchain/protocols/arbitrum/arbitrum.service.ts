@@ -89,12 +89,9 @@ export class ArbitrumService implements ProtocolInterface {
 
   async getBalanceToken(address: string, contractId: string, decimals: number): Promise<number> {
     try {
-      // console.log('abi', abi);
       let contract = new this.web3.eth.Contract(abi, contractId);
 
       const balance: bigint = await contract.methods.balanceOf(address).call();
-
-      console.log(balance);
 
       let balanceTotal = 0;
 
@@ -180,8 +177,6 @@ export class ArbitrumService implements ProtocolInterface {
       const wallet = new ethers.Wallet(privateKey);
 
       const signer = await this.provider.getSigner();
-
-      console.log(srcToken.contract);
 
       const contractItem = new ethers.Contract(srcToken.contract, minABI, signer);
 

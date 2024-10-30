@@ -82,12 +82,9 @@ export class EthereumService implements ProtocolInterface {
 
   async getBalanceToken(address: string, contractId: string, decimals: number): Promise<number> {
     try {
-      // console.log('abi', abi);
       let contract = new this.web3.eth.Contract(abi, contractId);
 
       const balance: bigint = await contract.methods.balanceOf(address).call();
-
-      console.log(balance);
 
       let balanceTotal = 0;
 

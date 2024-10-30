@@ -88,8 +88,6 @@ export class SolanaService implements ProtocolInterface {
       // Obtiene el balance en lamports (1 SOL = 1,000,000,000 lamports)
       const balanceLamports = await this.connection.getBalance(publicKey);
 
-      console.log('BALANCE', balanceLamports);
-
       // Convierte de lamports a SOL
       const balance = balanceLamports / LAMPORTS_PER_SOL;
 

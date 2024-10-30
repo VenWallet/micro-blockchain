@@ -25,8 +25,6 @@ export class BitcoinUtils {
         config,
       });
 
-      console.log('DATA', response.data);
-
       if (response.data === 0 || response.data > 0) {
         const satoshi = response.data as number;
         const value_satoshi = 100000000;

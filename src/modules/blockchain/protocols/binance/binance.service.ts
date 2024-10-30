@@ -89,8 +89,6 @@ export class BinanceService implements ProtocolInterface {
 
       const balance: bigint = await contract.methods.balanceOf(address).call();
 
-      console.log(balance);
-
       let balanceTotal = 0;
 
       if (balance) {
@@ -175,8 +173,6 @@ export class BinanceService implements ProtocolInterface {
       const wallet = new ethers.Wallet(privateKey);
 
       const signer = await this.provider.getSigner();
-
-      console.log(srcToken.contract);
 
       const contractItem = new ethers.Contract(srcToken.contract, minABI, signer);
 
