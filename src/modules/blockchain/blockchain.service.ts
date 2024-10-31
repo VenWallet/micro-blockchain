@@ -10,7 +10,14 @@ import {
 } from '@nestjs/common';
 import { ExceptionHandler } from 'src/helpers/handlers/exception.handler';
 import { NetworksEnum } from 'src/modules/network/enums/networks.enum';
-import { CreateWalletsDto, ImportWalletsDto, IsAddressDto, TransferDto, TransferTokenDto } from './blockchain.dto';
+import {
+  CreateWalletsDto,
+  ImportWalletsDto,
+  IsAddressDto,
+  TransferDto,
+  TransferTokenDto,
+  PreviewSwapDto,
+} from './blockchain.dto';
 import { CryptShared } from 'src/shared/utils/crypt.shared';
 import { IndexEnum } from '../network/enums/index.enum';
 import { WalletService } from '../wallet/wallet.service';
@@ -19,6 +26,7 @@ import { ProtocolIndex } from './protocols/protocol.index';
 import { TokenService } from '../token/token.service';
 import { IndexTokenEnum } from '../tokenData/enums/indexToken.enum';
 import { UtilsShared } from 'src/shared/utils/utils.shared';
+import { net } from 'web3';
 
 @Injectable()
 export class BlockchainService {
@@ -371,6 +379,50 @@ export class BlockchainService {
         tokenId: token.id,
         hash: txHash,
       };
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async previewSwap(previewSwapDto: PreviewSwapDto) {
+    try {
+      const wallet = await this.walletService.findOneByUserIdAndIndex(
+        previewSwapDto.userId,
+        previewSwapDto.networkIndex,
+      );
+
+      const network = wallet.network;
+
+      const fromToken = await this.tokenService.findOneBySymbolNetworkId(previewSwapDto.fromCoin, network.id);
+
+      const toToken = await this.tokenService.findOneBySymbolNetworkId(previewSwapDto.toCoin, network.id);
+
+      console.log(fromToken, toToken);
+
+      if (!fromToken && !toToken) {
+        throw new NotFoundException('Tokens not found');
+      }
+
+      if (!fromToken && previewSwapDto.fromCoin !== network.symbol) {
+        throw new NotFoundException('From token not found');
+      }
+
+      if (!toToken && previewSwapDto.toCoin !== network.symbol) {
+        throw new NotFoundException('To token not found');
+      }
+
+      const service = this.protocolIndex.getProtocolService(previewSwapDto.networkIndex);
+
+      console.log('Paso');
+
+      const preview = await service.previewSwap(
+        fromToken?.contract || '',
+        toToken?.contract || '',
+        previewSwapDto.amount,
+        wallet.address,
+      );
+
+      return preview;
     } catch (error) {
       throw new ExceptionHandler(error);
     }

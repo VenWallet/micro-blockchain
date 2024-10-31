@@ -204,6 +204,10 @@ export class ArbitrumService implements ProtocolInterface {
     }
   }
 
+  previewSwap(fromCoin: string, toCoin: string, amount: number, address: string | undefined): Promise<any> {
+    throw new Error('Method not implemented.');
+  }
+
   // async getTransaction(transactionHash: string): Promise<any> {
   //   try {
   //     const transaction = await this.web3.eth.getTransaction(transactionHash);

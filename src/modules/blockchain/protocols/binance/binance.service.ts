@@ -84,7 +84,6 @@ export class BinanceService implements ProtocolInterface {
 
   async getBalanceToken(address: string, contractId: string, decimals: number): Promise<number> {
     try {
-      // console.log('abi', abi);
       let contract = new this.web3.eth.Contract(abi, contractId);
 
       const balance: bigint = await contract.methods.balanceOf(address).call();
@@ -198,6 +197,10 @@ export class BinanceService implements ProtocolInterface {
       console.log('ERROR TRANSFER', error);
       throw new ExceptionHandler(error);
     }
+  }
+
+  previewSwap(fromCoin: string, toCoin: string, amount: number, address: string | undefined): Promise<any> {
+    throw new Error('Method not implemented.');
   }
 
   // async getTransaction(transactionHash: string): Promise<any> {

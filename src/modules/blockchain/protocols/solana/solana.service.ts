@@ -199,6 +199,10 @@ export class SolanaService implements ProtocolInterface {
     }
   }
 
+  previewSwap(fromCoin: string, toCoin: string, amount: number, address: string | undefined): Promise<any> {
+    throw new Error('Method not implemented.');
+  }
+
   private async getNumberDecimals(mintAddress: string): Promise<number> {
     const info = await this.connection.getParsedAccountInfo(new PublicKey(mintAddress));
     const result = (info.value?.data as ParsedAccountData).parsed.info.decimals as number;

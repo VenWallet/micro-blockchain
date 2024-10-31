@@ -7,6 +7,18 @@ import { Injectable } from '@nestjs/common';
 import { AccountService } from './account.service';
 import { EnvironmentVariables } from 'src/config/env';
 import { ConfigService } from '@nestjs/config';
+import {
+  DCLSwap,
+  estimateSwap,
+  fetchAllPools,
+  getDCLPoolId,
+  getStablePools,
+  instantSwap,
+  Pool,
+  StablePool,
+  SwapOptions,
+} from '@ref-finance/ref-sdk';
+import axios from 'axios';
 
 const configService = new ConfigService<EnvironmentVariables>();
 
@@ -126,16 +138,125 @@ export class NearUtils {
     }
   }
 
-  // public async getNearConfig() {
-  //   const keyStore = new keyStores.InMemoryKeyStore();
+  public async getTxSwapRef(tokenMetadataA: any, tokenMetadataB: any, amount: number, address: string) {
+    const { ratedPools, unRatedPools, simplePools } = await fetchAllPools();
 
-  //   const keyPair = KeyPair.fromString(process.env.APOLO_CONTRACT_PRIVATE_KEY! || undefined);
-  //   keyStore.setKey(process.env.NEAR_ENV!, process.env.APOLO_CONTRACT_ADDRESS!, keyPair);
+    const stablePools: Pool[] = unRatedPools.concat(ratedPools);
 
-  //   const near = new Near(this.configNear(keyStore));
+    const stablePoolsDetail: StablePool[] = await getStablePools(stablePools);
 
-  //   const account = new AccountService(near.connection, process.env.APOLO_CONTRACT_ADDRESS!);
+    const options: SwapOptions = {
+      enableSmartRouting: true,
+      stablePools,
+      stablePoolsDetail,
+    };
 
-  //   return { near, account };
-  // }
+    const swapAlls = await estimateSwap({
+      tokenIn: tokenMetadataA,
+      tokenOut: tokenMetadataB,
+      amountIn: String(amount),
+      simplePools: simplePools,
+      options,
+    });
+
+    const transactionsRef = await instantSwap({
+      tokenIn: tokenMetadataA,
+      tokenOut: tokenMetadataB,
+      amountIn: String(amount),
+      swapTodos: swapAlls,
+      slippageTolerance: 0.01,
+      AccountId: address,
+    });
+
+    return transactionsRef;
+  }
+
+  public async getTxSwapDCL(tokenMetadataA: any, tokenMetadataB: any, amount: number) {
+    const nearUsd = await this.getNearPrice();
+
+    const fee = 2000;
+
+    const pool_ids = [getDCLPoolId(tokenMetadataA.id, tokenMetadataB.id, fee)];
+
+    const transactionsDcl = await DCLSwap({
+      swapInfo: {
+        amountA: String(amount),
+        tokenA: tokenMetadataA,
+        tokenB: tokenMetadataB,
+      },
+      Swap: {
+        pool_ids,
+        min_output_amount: String(Math.round(amount * nearUsd * 0.99 * Math.pow(10, tokenMetadataB.decimals))),
+      },
+      AccountId: tokenMetadataA.id,
+    });
+
+    return transactionsDcl;
+  }
+
+  async getNearPrice() {
+    try {
+      const nearPrice: any = await axios.get(
+        'https://api.coingecko.com/api/v3/simple/price?ids=NEAR&vs_currencies=USD',
+      );
+
+      if (!nearPrice.data.near.usd) throw new Error('Error near usd');
+      return nearPrice.data.near.usd;
+    } catch (error) {
+      const nearPrice = await axios.get('https://nearblocks.io/api/near-price');
+      if (!nearPrice.data.usd) throw new Error('Error near usd');
+      return nearPrice.data.usd;
+    }
+  }
+
+  getMinAmountOut(trxSwap: any, tokenOut: string) {
+    const transaction = trxSwap.find(
+      (element: {
+        functionCalls: {
+          methodName: string;
+        }[];
+      }) => element.functionCalls[0].methodName === 'ft_transfer_call',
+    );
+
+    if (!transaction) return false;
+
+    const argsMsg = JSON.parse(transaction.functionCalls[0].args.msg);
+
+    console.log(argsMsg);
+
+    if (Object.keys(argsMsg).includes('actions')) {
+      let minAmountOut = 0;
+      for (const action of argsMsg.actions) {
+        if (action.token_out === tokenOut) {
+          if (action.token_out === `wrap.${'near'}`) {
+            minAmountOut += Number(utils.format.formatNearAmount(action.min_amount_out));
+          } else {
+            console.log(Number(action.min_amount_out));
+            minAmountOut += Number(action.min_amount_out);
+          }
+        }
+      }
+      return minAmountOut;
+    } else if (Object.keys(argsMsg).includes('Swap')) {
+      if (tokenOut === `wrap.${'near'}`) {
+        return Number(utils.format.formatNearAmount(argsMsg.Swap.min_output_amount));
+      }
+      return Number(argsMsg.Swap.min_output_amount);
+    } else {
+      return 0;
+    }
+  }
 }
+
+// public async getNearConfig() {
+//   const keyStore = new keyStores.InMemoryKeyStore();
+
+//   const keyPair = KeyPair.fromString(process.env.APOLO_CONTRACT_PRIVATE_KEY! || undefined);
+//   keyStore.setKey(process.env.NEAR_ENV!, process.env.APOLO_CONTRACT_ADDRESS!, keyPair);
+
+//   const near = new Near(this.configNear(keyStore));
+
+//   const account = new AccountService(near.connection, process.env.APOLO_CONTRACT_ADDRESS!);
+
+//   return { near, account };
+//

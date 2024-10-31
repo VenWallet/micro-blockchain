@@ -98,3 +98,28 @@ export class ImportWalletsDto {
   @IsNotEmpty()
   userId: string;
 }
+
+export class PreviewSwapDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  userId: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  fromCoin: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  toCoin: string;
+
+  @ApiProperty()
+  @IsNumber()
+  amount: number;
+
+  @ApiProperty()
+  @IsEnum(IndexEnum)
+  networkIndex: IndexEnum;
+}

@@ -40,6 +40,13 @@ export class TokenRepository {
     });
   }
 
+  async findOneBySymbolNetworkId(symbol: string, networkId: string): Promise<TokenEntity | null> {
+    return await this.repository.findOne({
+      where: { tokenData: { symbol }, network: { id: networkId } },
+      relations: ['tokenData'],
+    });
+  }
+
   async findOne(id: string): Promise<TokenEntity | null> {
     return await this.repository.findOne({
       where: { id },

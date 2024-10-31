@@ -28,4 +28,6 @@ export interface ProtocolInterface {
   //   amount: number | undefined,
   //   address: string | undefined,
   // ): Promise<number>;
+  previewSwap(fromCoin: string, toCoin: string, amount: number, address: string | undefined): Promise<any>;
+  swap?(priceRoute: any, privateKey: string, address: string): Promise<any>;
 }

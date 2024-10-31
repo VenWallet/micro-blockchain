@@ -3,7 +3,14 @@ import { ApiProperty, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import { NetworksEnum } from '../network/enums/networks.enum';
 import { BlockchainService } from './blockchain.service';
-import { CreateWalletsDto, ImportWalletsDto, IsAddressDto, TransferDto, TransferTokenDto } from './blockchain.dto';
+import {
+  CreateWalletsDto,
+  ImportWalletsDto,
+  IsAddressDto,
+  PreviewSwapDto,
+  TransferDto,
+  TransferTokenDto,
+} from './blockchain.dto';
 import { IndexEnum } from '../network/enums/index.enum';
 import { IndexTokenEnum } from '../tokenData/enums/indexToken.enum';
 import { BooleanValidationPipe } from 'src/helpers/pipes/boolean-validate.pipe';
@@ -59,5 +66,11 @@ export class BlockchainController {
   @HttpCode(HttpStatus.OK)
   transferToken(@Body() transferTokenDto: TransferTokenDto) {
     return this.blockchainService.transferToken(transferTokenDto);
+  }
+
+  @Post('preview-swap')
+  @HttpCode(HttpStatus.OK)
+  previewSwap(@Body() previewSwapDto: PreviewSwapDto) {
+    return this.blockchainService.previewSwap(previewSwapDto);
   }
 }
