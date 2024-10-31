@@ -17,6 +17,7 @@ import {
   TransferDto,
   TransferTokenDto,
   PreviewSwapDto,
+  SwapDto,
 } from './blockchain.dto';
 import { CryptShared } from 'src/shared/utils/crypt.shared';
 import { IndexEnum } from '../network/enums/index.enum';
@@ -386,10 +387,7 @@ export class BlockchainService {
 
   async previewSwap(previewSwapDto: PreviewSwapDto) {
     try {
-      const wallet = await this.walletService.findOneByUserIdAndIndex(
-        previewSwapDto.userId,
-        previewSwapDto.networkIndex,
-      );
+      const wallet = await this.walletService.findOneByUserIdAndIndex(previewSwapDto.userId, previewSwapDto.network);
 
       const network = wallet.network;
 
@@ -411,7 +409,7 @@ export class BlockchainService {
         throw new NotFoundException('To token not found');
       }
 
-      const service = this.protocolIndex.getProtocolService(previewSwapDto.networkIndex);
+      const service = this.protocolIndex.getProtocolService(previewSwapDto.network);
 
       console.log('Paso');
 
@@ -421,6 +419,22 @@ export class BlockchainService {
         previewSwapDto.amount,
         wallet.address,
       );
+
+      return preview;
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async swap(swapDto: SwapDto) {
+    try {
+      const wallet = await this.walletService.findOneByUserIdAndIndex(swapDto.userId, swapDto.network);
+
+      const service = this.protocolIndex.getProtocolService(swapDto.network);
+
+      console.log('Paso');
+
+      const preview = await service.swap(swapDto.priceRoute, swapDto.pkEncrypt, wallet.address);
 
       return preview;
     } catch (error) {

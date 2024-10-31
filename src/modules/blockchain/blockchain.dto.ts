@@ -120,6 +120,42 @@ export class PreviewSwapDto {
   amount: number;
 
   @ApiProperty()
+  @IsNotEmpty()
   @IsEnum(IndexEnum)
-  networkIndex: IndexEnum;
+  network: IndexEnum;
+}
+
+export class SwapDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  userId: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  priceRoute: any;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  pkEncrypt: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsEnum(IndexEnum)
+  network: IndexEnum;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  fromCoin: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  toCoin: string;
+
+  @ApiProperty()
+  @IsNumber()
+  amount: number;
 }

@@ -8,6 +8,7 @@ import {
   ImportWalletsDto,
   IsAddressDto,
   PreviewSwapDto,
+  SwapDto,
   TransferDto,
   TransferTokenDto,
 } from './blockchain.dto';
@@ -72,5 +73,11 @@ export class BlockchainController {
   @HttpCode(HttpStatus.OK)
   previewSwap(@Body() previewSwapDto: PreviewSwapDto) {
     return this.blockchainService.previewSwap(previewSwapDto);
+  }
+
+  @Post('swap')
+  @HttpCode(HttpStatus.OK)
+  swap(@Body() swapDto: SwapDto) {
+    return this.blockchainService.swap(swapDto);
   }
 }

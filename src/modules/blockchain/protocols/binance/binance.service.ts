@@ -203,17 +203,7 @@ export class BinanceService implements ProtocolInterface {
     throw new Error('Method not implemented.');
   }
 
-  // async getTransaction(transactionHash: string): Promise<any> {
-  //   try {
-  //     const transaction = await this.web3.eth.getTransaction(transactionHash);
-
-  //     if (!transaction) {
-  //       throw new Error(`Error: Transaction not found`);
-  //     }
-
-  //     return transaction;
-  //   } catch (error) {
-  //     throw new ExceptionHandler(error);
-  //   }
-  // }
+  swap(priceRoute: any, privateKey: string, address: string): Promise<any> {
+    throw new Error('Method not implemented.');
+  }
 }
