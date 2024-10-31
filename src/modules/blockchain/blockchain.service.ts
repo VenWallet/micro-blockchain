@@ -420,6 +420,11 @@ export class BlockchainService {
         wallet.address,
       );
 
+      preview.priceRoute.networkId = network.id;
+      preview.priceRoute.fromToken = fromToken ? previewSwapDto.fromCoin : network.symbol;
+      preview.priceRoute.toToken = toToken ? previewSwapDto.toCoin : network.symbol;
+      preview.priceRoute.amount = previewSwapDto.amount;
+
       return preview;
     } catch (error) {
       throw new ExceptionHandler(error);
@@ -431,8 +436,6 @@ export class BlockchainService {
       const wallet = await this.walletService.findOneByUserIdAndIndex(swapDto.userId, swapDto.network);
 
       const service = this.protocolIndex.getProtocolService(swapDto.network);
-
-      console.log('Paso');
 
       const preview = await service.swap(swapDto.priceRoute, swapDto.pkEncrypt, wallet.address);
 

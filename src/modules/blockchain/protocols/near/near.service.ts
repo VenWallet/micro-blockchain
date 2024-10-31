@@ -230,7 +230,12 @@ export class NearService implements ProtocolInterface {
     }
   }
 
-  async previewSwap(fromContract: string, toContract: string, amount: number, address: string): Promise<any> {
+  async previewSwap(
+    fromContract: string,
+    toContract: string,
+    amount: number,
+    address: string,
+  ): Promise<{ dataSwap: any; priceRoute: any }> {
     try {
       const tokenIn = fromContract || 'wrap.near';
       const tokenOut = toContract || 'wrap.near';
@@ -261,14 +266,18 @@ export class NearService implements ProtocolInterface {
       txMain = transactionsRef;
       minAmountOut = minAmountRef;
 
-      if (!txMain || !minAmountOut) return;
+      if (!txMain || !minAmountOut) {
+        new ExceptionHandler(`Failed to create tx.`);
+      }
 
       const transaction = txMain.find(
         (element: { functionCalls: { methodName: string }[] }) =>
           element.functionCalls[0].methodName === 'ft_transfer_call',
       );
 
-      if (!transaction) return false;
+      if (!transaction) {
+        new ExceptionHandler(`Failed to create tx.`);
+      }
 
       const transfer: any = transaction.functionCalls[0].args;
       const amountIn = transfer.amount;
@@ -299,7 +308,10 @@ export class NearService implements ProtocolInterface {
         fee: String(porcentFee),
       };
 
-      return { dataSwap, priceRoute: { tokenIn, tokenOut, amountIn, minAmountOut: String(minAmountOut), txMain } };
+      return {
+        dataSwap,
+        priceRoute: { tokenIn, tokenOut, amountIn: String(amountIn), minAmountOut: String(minAmountOut), txMain },
+      };
     } catch (error) {
       throw new ExceptionHandler(error);
     }
@@ -363,7 +375,7 @@ export class NearService implements ProtocolInterface {
 
       if (priceRoute.tokenOut.includes('wrap.')) {
         const trx = await this.nearUtils.createTransactionFn(
-          priceRoute.minAmountOut,
+          priceRoute.tokenOut,
           [
             await functionCall(
               'near_withdraw',
