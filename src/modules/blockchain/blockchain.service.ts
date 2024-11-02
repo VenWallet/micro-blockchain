@@ -12,12 +12,12 @@ import { ExceptionHandler } from 'src/helpers/handlers/exception.handler';
 import { NetworksEnum } from 'src/modules/network/enums/networks.enum';
 import {
   CreateWalletsDto,
-  ImportWalletsDto,
   IsAddressDto,
   TransferDto,
   TransferTokenDto,
   PreviewSwapDto,
   SwapDto,
+  ImportWalletsFromMnemonicDto,
 } from './blockchain.dto';
 import { CryptShared } from 'src/shared/utils/crypt.shared';
 import { IndexEnum } from '../network/enums/index.enum';
@@ -113,7 +113,7 @@ export class BlockchainService {
     }
   }
 
-  async importWallets(importWalletsDto: ImportWalletsDto): Promise<
+  async importWalletsFromMnemonic(importWalletsFromMnemonicDto: ImportWalletsFromMnemonicDto): Promise<
     {
       network: string;
       address: string;
@@ -122,9 +122,9 @@ export class BlockchainService {
   > {
     try {
       // const mnemonic = CryptShared.decryptRsa(importWalletsDto.mnemonic);
-      const mnemonic = importWalletsDto.mnemonic;
+      const mnemonic = importWalletsFromMnemonicDto.mnemonic;
 
-      const userId = importWalletsDto.userId;
+      const userId = importWalletsFromMnemonicDto.userId;
 
       const networks = await this.networkService.findAllActive();
 
@@ -395,8 +395,6 @@ export class BlockchainService {
 
       const toToken = await this.tokenService.findOneBySymbolNetworkId(previewSwapDto.toCoin, network.id);
 
-      console.log(fromToken, toToken);
-
       if (!fromToken && !toToken) {
         throw new NotFoundException('Tokens not found');
       }
@@ -410,8 +408,6 @@ export class BlockchainService {
       }
 
       const service = this.protocolIndex.getProtocolService(previewSwapDto.network);
-
-      console.log('Paso');
 
       const preview = await service.previewSwap(
         fromToken?.contract || '',
@@ -437,7 +433,11 @@ export class BlockchainService {
 
       const service = this.protocolIndex.getProtocolService(swapDto.network);
 
-      const preview = await service.swap(swapDto.priceRoute, swapDto.pkEncrypt, wallet.address);
+      console.log(swapDto.mnemonic);
+
+      const pkEncrypt = '123';
+
+      const preview = await service.swap(swapDto.priceRoute, pkEncrypt, wallet.address);
 
       return preview;
     } catch (error) {

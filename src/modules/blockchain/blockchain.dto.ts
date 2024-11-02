@@ -88,7 +88,7 @@ export class IsAddressDto {
   network: IndexEnum;
 }
 
-export class ImportWalletsDto {
+export class ImportWalletsFromMnemonicDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
@@ -179,16 +179,16 @@ export class SwapDto {
   @IsNotEmpty()
   userId: string;
 
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  mnemonic: string;
+
   @ApiProperty({ type: PriceRouteDto })
   @IsNotEmpty()
   @ValidateNested()
   @Type(() => PriceRouteDto)
   priceRoute: PriceRouteDto;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  pkEncrypt: string;
 
   @ApiProperty()
   @IsNotEmpty()

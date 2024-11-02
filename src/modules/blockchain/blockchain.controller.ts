@@ -5,7 +5,7 @@ import { NetworksEnum } from '../network/enums/networks.enum';
 import { BlockchainService } from './blockchain.service';
 import {
   CreateWalletsDto,
-  ImportWalletsDto,
+  ImportWalletsFromMnemonicDto,
   IsAddressDto,
   PreviewSwapDto,
   SwapDto,
@@ -26,10 +26,10 @@ export class BlockchainController {
     return this.blockchainService.createWallets(createWalletsDto);
   }
 
-  @Post('import-wallets')
+  @Post('import-wallets-from-mnemonic')
   @HttpCode(HttpStatus.OK)
-  importWallets(@Body() importWalletsDto: ImportWalletsDto) {
-    return this.blockchainService.importWallets(importWalletsDto);
+  importWalletsFromMnemonic(@Body() importWalletsFromMnemonic: ImportWalletsFromMnemonicDto) {
+    return this.blockchainService.importWalletsFromMnemonic(importWalletsFromMnemonic);
   }
 
   @Post('is-address')
