@@ -1,9 +1,10 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CoreService } from './core.service';
+import { HttpCustomModule } from 'src/shared/http/http.module';
 
 @Module({
-  imports: [],
+  imports: [HttpCustomModule],
   exports: [CoreService],
   controllers: [],
   providers: [CoreService],

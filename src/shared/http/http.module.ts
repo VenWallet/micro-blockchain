@@ -7,7 +7,7 @@ import { HttpClient } from './http.client';
 @Module({
   imports: [HttpModule],
   controllers: [],
-  providers: [HttpCustomService, HttpClient],
-  exports: [HttpCustomModule, HttpModule, HttpCustomService, HttpClient],
+  providers: [HttpCustomService],
+  exports: [HttpCustomModule, HttpModule, HttpCustomService],
 })
 export class HttpCustomModule {}
