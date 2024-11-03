@@ -26,7 +26,7 @@ export class TransferDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  pkEncrypt: string;
+  privateKey: string;
 
   @ApiProperty()
   @IsNotEmpty()
@@ -53,7 +53,7 @@ export class TransferTokenDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  pkEncrypt: string;
+  privateKey: string;
 
   @ApiProperty()
   @IsNotEmpty()
@@ -182,7 +182,7 @@ export class SwapDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  mnemonic: string;
+  privateKey: string;
 
   @ApiProperty({ type: PriceRouteDto })
   @IsNotEmpty()

@@ -1,0 +1,10 @@
+export enum MovementTypeEnum {
+  LOGIN = 'LOGIN',
+  TRANSFER = 'TRANSFER',
+  SWAP = 'SWAP',
+  BRIDGE = 'BRIDGE',
+  WITHDRAWAL = 'WITHDRAWAL',
+  DEPOSIT = 'DEPOSIT',
+  PURCHASE = 'PURCHASE',
+  SALE = 'SALE',
+}

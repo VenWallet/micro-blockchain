@@ -12,6 +12,7 @@ import { TokenModule } from './modules/token/token.module';
 import { UtilsModule } from './shared/utils/utils.module';
 import { DatabaseConfig } from './config/database/database.config';
 import { HttpCustomModule } from './shared/http/http.module';
+import { ExternalModule } from './external/external.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { HttpCustomModule } from './shared/http/http.module';
     BlockchainModule,
     TokenDataModule,
     TokenModule,
+    ExternalModule,
   ],
   controllers: [AppController],
   providers: [],

@@ -345,7 +345,7 @@ export class BlockchainService {
 
       const txHash = await service.transfer(
         wallet.address,
-        transferDto.pkEncrypt,
+        transferDto.privateKey,
         transferDto.toAddress,
         transferDto.amount,
       );
@@ -366,7 +366,7 @@ export class BlockchainService {
 
       const txHash = await service.transferToken(
         wallet.address,
-        transferDto.pkEncrypt,
+        transferDto.privateKey,
         transferDto.toAddress,
         transferDto.amount,
         token.contract,
@@ -433,13 +433,9 @@ export class BlockchainService {
 
       const service = this.protocolIndex.getProtocolService(swapDto.network);
 
-      console.log(swapDto.mnemonic);
+      const swap = await service.swap(swapDto.priceRoute, swapDto.privateKey, wallet.address);
 
-      const pkEncrypt = '123';
-
-      const preview = await service.swap(swapDto.priceRoute, pkEncrypt, wallet.address);
-
-      return preview;
+      return swap;
     } catch (error) {
       throw new ExceptionHandler(error);
     }
