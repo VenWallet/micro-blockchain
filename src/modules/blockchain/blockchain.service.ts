@@ -28,6 +28,10 @@ import { TokenService } from '../token/token.service';
 import { IndexTokenEnum } from '../tokenData/enums/indexToken.enum';
 import { UtilsShared } from 'src/shared/utils/utils.shared';
 import { net } from 'web3';
+import { CoreServiceExternal } from '../../external/core-service.external';
+import { MovementDto } from 'src/external/dto/core.dto';
+import { MovementTypeEnum } from 'src/external/enums/movementType.enum';
+import { StatusEnum } from 'src/external/enums/status.enum';
 
 @Injectable()
 export class BlockchainService {
@@ -36,6 +40,7 @@ export class BlockchainService {
     private readonly networkService: NetworkService,
     private readonly protocolIndex: ProtocolIndex,
     private readonly tokenService: TokenService,
+    private readonly coreServiceExternal: CoreServiceExternal,
   ) {} //
 
   private async getCredentialsByMnemonic(mnemonic: string): Promise<
@@ -350,6 +355,22 @@ export class BlockchainService {
         transferDto.amount,
       );
 
+      const movement: MovementDto = {
+        userId: transferDto.userId,
+        movementType: MovementTypeEnum.TRANSFER,
+        movementDate: new Date(),
+        status: StatusEnum.COMPLETED,
+        amount: transferDto.amount,
+        currency: wallet.network.symbol,
+        transactionHash: txHash,
+        fromAccount: wallet.address,
+        toAccount: transferDto.toAddress,
+        fromNetwork: wallet.network.name,
+        toNetwork: wallet.network.name,
+      };
+
+      this.coreServiceExternal.createMovement(movement);
+
       return { network: wallet.network.name, index: wallet.network.index, hash: txHash };
     } catch (error) {
       throw new ExceptionHandler(error);
@@ -372,6 +393,22 @@ export class BlockchainService {
         token.contract,
         token.decimals,
       );
+
+      const movement: MovementDto = {
+        userId: transferDto.userId,
+        movementType: MovementTypeEnum.TRANSFER,
+        movementDate: new Date(),
+        status: StatusEnum.COMPLETED,
+        amount: transferDto.amount,
+        currency: token.tokenData.symbol,
+        transactionHash: txHash,
+        fromAccount: wallet.address,
+        toAccount: transferDto.toAddress,
+        fromNetwork: wallet.network.name,
+        toNetwork: wallet.network.name,
+      };
+
+      this.coreServiceExternal.createMovement(movement);
 
       return {
         network: wallet.network.name,
@@ -434,6 +471,22 @@ export class BlockchainService {
       const service = this.protocolIndex.getProtocolService(swapDto.network);
 
       const swap = await service.swap(swapDto.priceRoute, swapDto.privateKey, wallet.address);
+
+      const movement: MovementDto = {
+        userId: swapDto.userId,
+        movementType: MovementTypeEnum.SWAP,
+        movementDate: new Date(),
+        status: StatusEnum.COMPLETED,
+        amount: swapDto.priceRoute.amount,
+        currency: swapDto.priceRoute.fromToken + ' / ' + swapDto.priceRoute.toToken,
+        transactionHash: swap.transactionHash,
+        fromAccount: wallet.address,
+        toAccount: wallet.address,
+        fromNetwork: wallet.network.name,
+        toNetwork: wallet.network.name,
+      };
+
+      this.coreServiceExternal.createMovement(movement);
 
       return swap;
     } catch (error) {

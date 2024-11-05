@@ -23,7 +23,7 @@ import { HttpClient } from 'src/shared/http/http.client';
 import { MovementDto } from './dto/core.dto';
 
 @Injectable()
-export class CoreService {
+export class CoreServiceExternal {
   private readonly httpClient: HttpClient;
 
   constructor() {
