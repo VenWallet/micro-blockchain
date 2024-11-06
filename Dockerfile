@@ -7,7 +7,7 @@ WORKDIR /app
 # Copiar archivos necesarios para instalar dependencias
 COPY package*.json ./
 
-# Instalar dependencias
+# Instalar dependencias con force
 RUN npm ci --force
 
 # Copiar el código fuente
