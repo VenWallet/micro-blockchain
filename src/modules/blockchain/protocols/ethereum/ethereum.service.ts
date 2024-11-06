@@ -15,10 +15,13 @@ import { EnvironmentVariables } from 'src/config/env';
 import { IndexEnum } from 'src/modules/network/enums/index.enum';
 import * as abi from '../abi.json';
 import { ProtocolInterface } from '../procotol.inferface';
+import { constructSimpleSDK, OptimalRate, SimpleFetchSDK } from '@paraswap/sdk';
+import axios from 'axios';
 
 @Injectable()
 export class EthereumService implements ProtocolInterface {
   private readonly web3: Web3;
+  private readonly paraSwap: SimpleFetchSDK;
 
   constructor(private readonly configService: ConfigService<EnvironmentVariables>) {
     const ETHEREUM_NETWORK = this.configService.get('ETHEREUM_NETWORK', { infer: true })!;
@@ -27,6 +30,11 @@ export class EthereumService implements ProtocolInterface {
     const nodeUrl = `https://${ETHEREUM_NETWORK}.infura.io/v3/${INFURA_PROJECT_ID}`;
 
     this.web3 = new Web3(new Web3.providers.HttpProvider(nodeUrl));
+
+    this.paraSwap = constructSimpleSDK({
+      chainId: 1,
+      axios,
+    });
   }
 
   async fromMnemonic(mnemonic: string): Promise<{
@@ -207,8 +215,72 @@ export class EthereumService implements ProtocolInterface {
     }
   }
 
-  previewSwap(fromCoin: string, toCoin: string, amount: number, address: string | undefined): Promise<any> {
-    throw new Error('Method not implemented.');
+  async previewSwap(fromToken: any, toToken: any, amount: number, address: string | undefined): Promise<any> {
+    try {
+      if (!fromToken && !toToken) {
+        throw new Error(`Error: You must select a token to swap`);
+      }
+
+      if (!fromToken) {
+        fromToken = {
+          decimals: 18,
+          contract: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+        };
+      }
+      if (!toToken) {
+        toToken = {
+          decimals: 18,
+          contract: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+        };
+      }
+
+      let value = Math.pow(10, fromToken.decimals);
+      const srcAmount = amount * value;
+
+      const priceRoute: OptimalRate = await this.paraSwap.swap.getRate({
+        srcToken: fromToken.contract,
+        destToken: toToken.contract,
+        amount: srcAmount.toLocaleString('fullwide', { useGrouping: false }),
+      });
+
+      const response = await axios.get(
+        'https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=ZAXW568KING2VVBGAMBU7399KH7NBB8QX6',
+      );
+      let wei = response.data.result.SafeGasPrice;
+
+      let feeTransfer = '0';
+      let porcentFee = 0;
+
+      const feeGas = this.web3.utils.fromWei(String(Number(priceRoute.gasCost) * wei), 'gwei');
+
+      const srcFee = String(Number(feeTransfer) + Number(feeGas));
+
+      let fee2 = String(Number(srcFee) * porcentFee);
+
+      const swapRate = String(
+        Number(priceRoute.destAmount) /
+          Math.pow(10, toToken.decimals) /
+          (Number(priceRoute.srcAmount) / Math.pow(10, fromToken.decimals)),
+      );
+
+      const dataSwap = {
+        exchange: priceRoute.bestRoute[0].swaps[0].swapExchanges[0].exchange,
+        fromAmount: priceRoute.srcAmount,
+        fromDecimals: fromToken.decimals,
+        toAmount: priceRoute.destAmount,
+        toDecimals: toToken.decimals,
+        block: priceRoute.blockNumber,
+        swapRate,
+        contract: priceRoute.contractAddress,
+        fee: srcFee,
+        fee2: fee2,
+        feeTotal: String(Number(srcFee) + Number(fee2)),
+      };
+
+      return { dataSwap, priceRoute };
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
   }
 
   swap(priceRoute: any, privateKey: string, address: string): Promise<any> {

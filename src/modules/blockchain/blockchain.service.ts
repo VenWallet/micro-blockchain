@@ -447,8 +447,8 @@ export class BlockchainService {
       const service = this.protocolIndex.getProtocolService(previewSwapDto.network);
 
       const preview = await service.previewSwap(
-        fromToken?.contract || '',
-        toToken?.contract || '',
+        fromToken ? { contract: fromToken.contract, decimals: fromToken.decimals } : null,
+        toToken ? { contract: toToken.contract, decimals: toToken.decimals } : null,
         previewSwapDto.amount,
         wallet.address,
       );

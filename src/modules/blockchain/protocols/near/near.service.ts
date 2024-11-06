@@ -231,14 +231,14 @@ export class NearService implements ProtocolInterface {
   }
 
   async previewSwap(
-    fromContract: string,
-    toContract: string,
+    fromToken: any,
+    toToken: any,
     amount: number,
     address: string,
   ): Promise<{ dataSwap: any; priceRoute: any }> {
     try {
-      const tokenIn = fromContract || 'wrap.near';
-      const tokenOut = toContract || 'wrap.near';
+      const tokenIn = fromToken?.contract || 'wrap.near';
+      const tokenOut = toToken?.contract || 'wrap.near';
 
       const tokensMetadata = await ftGetTokensMetadata([tokenIn, tokenOut]);
 
