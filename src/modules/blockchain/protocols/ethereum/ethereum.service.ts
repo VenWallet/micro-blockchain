@@ -251,7 +251,7 @@ export class EthereumService implements ProtocolInterface {
       let feeTransfer = '0';
       let porcentFee = 0;
 
-      const feeGas = this.web3.utils.fromWei(String(Number(priceRoute.gasCost) * wei), 'gwei');
+      const feeGas = this.web3.utils.fromWei(String((Number(priceRoute.gasCost) * wei).toFixed(0)), 'gwei');
 
       const srcFee = String(Number(feeTransfer) + Number(feeGas));
 
@@ -283,7 +283,44 @@ export class EthereumService implements ProtocolInterface {
     }
   }
 
-  swap(priceRoute: any, privateKey: string, address: string): Promise<any> {
-    throw new Error('Method not implemented.');
+  async swap(priceRoute: any, privateKey: string, address: string): Promise<any> {
+    try {
+      const signer = this.web3.eth.accounts.privateKeyToAccount(privateKey);
+
+      const txParams = await this.paraSwap.swap.buildTx({
+        srcToken: priceRoute.srcToken,
+        destToken: priceRoute.destToken,
+        srcAmount: priceRoute.srcAmount,
+        destAmount: priceRoute.destAmount,
+        priceRoute: priceRoute,
+        userAddress: address,
+      });
+
+      const txSigned = await signer.signTransaction(txParams);
+
+      if (!txSigned.rawTransaction) throw new Error(`Failed to sign swap.`);
+
+      const result = await this.web3.eth.sendSignedTransaction(txSigned.rawTransaction);
+
+      // setTimeout(() => {
+      //   console.log("sleep");
+      // }, 20000);
+
+      const transactionHash = result.transactionHash;
+
+      if (!transactionHash) throw new Error(`Failed to send swap, transaction Hash.`);
+
+      const srcAmount = String(Number(priceRoute.srcAmount) / Math.pow(10, priceRoute.srcDecimals));
+      const destAmount = String(Number(priceRoute.destAmount) / Math.pow(10, priceRoute.destDecimals));
+
+      return {
+        transactionHash,
+        srcAmount: srcAmount,
+        destAmount: destAmount,
+        block: priceRoute.blockNumber,
+      };
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
   }
 }
