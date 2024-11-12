@@ -54,6 +54,7 @@ export class AppController {
       return { data: response };
     } catch (error) {
       console.log(error);
+      return { error: error };
     }
   }
 }
