@@ -1,7 +1,7 @@
 import { Controller, Get, InternalServerErrorException, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import crypto from 'crypto';
 import axios from 'axios';
+const crypto = require('crypto');
 
 @ApiTags('Health')
 @Controller()
