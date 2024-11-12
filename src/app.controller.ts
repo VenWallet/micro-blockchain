@@ -1,4 +1,4 @@
-import { Controller, Get, Post } from '@nestjs/common';
+import { Controller, Get, InternalServerErrorException, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import crypto from 'crypto';
 import axios from 'axios';
@@ -54,7 +54,7 @@ export class AppController {
       return { data: response };
     } catch (error) {
       console.log(error);
-      return { error: error };
+      throw new InternalServerErrorException(error.message || error || 'Internal Server Error');
     }
   }
 }
