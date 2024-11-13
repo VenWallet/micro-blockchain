@@ -1,11 +1,11 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { BadRequestException, HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
-import { KeyPair, utils, Account, keyStores, Near } from 'near-api-js';
+import { KeyPair, Account, keyStores, Near } from 'near-api-js';
 import { functionCall } from 'near-api-js/lib/transaction';
 import { ExceptionHandler } from 'src/helpers/handlers/exception.handler';
 import { NetworksEnum } from 'src/modules/network/enums/networks.enum';
-import { ethers, Wallet } from 'ethers';
+import { ethers, Wallet, parseUnits } from 'ethers';
 import Web3 from 'web3';
 import web3Utils from 'web3-utils';
 import { Web3Validator, isAddress } from 'web3-validator';
@@ -170,32 +170,28 @@ export class ArbitrumService implements ProtocolInterface {
 
       const feeData = await this.provider.getFeeData();
 
-      const gasPrice = feeData.gasPrice;
-
       const minABI = abi;
 
-      const wallet = new ethers.Wallet(privateKey);
+      const signer = await new ethers.Wallet(privateKey, this.provider);
 
-      const signer = await this.provider.getSigner();
-
-      const contractItem = new ethers.Contract(srcToken.contract, minABI, signer);
+      const contractItem: any = new ethers.Contract(srcToken.contract, minABI, signer);
 
       let value = Math.pow(10, srcToken.decimals);
       let srcAmount = amount * value;
 
-      const gasLimit = (contractItem.estimateGas as any).transfer(
+      const data = contractItem.interface.encodeFunctionData('transfer', [
         toAddress,
         srcAmount.toLocaleString('fullwide', { useGrouping: false }),
-      );
+      ]);
 
-      const tx = await contractItem.transfer(toAddress, srcAmount.toLocaleString('fullwide', { useGrouping: false }), {
-        gasLimit: gasLimit,
-        gasPrice: gasPrice,
+      const tx = await signer.sendTransaction({
+        to: srcToken.contract,
+        from: signer.address,
+        value: parseUnits('0.000', 'ether'),
+        data: data,
       });
 
-      console.log('PASOOO');
-
-      if (!tx.hash) throw new Error(`Error tx hash.`);
+      console.log('TX', tx);
 
       return tx.hash as string;
     } catch (error) {

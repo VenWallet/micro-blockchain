@@ -51,7 +51,9 @@ export class AppController {
       // Send GET request to check deposit history
       const response = await axios.get(url, { headers });
 
-      return { data: response };
+      console.log(response.data);
+
+      return { data: response.data };
     } catch (error) {
       console.log(error);
       throw new InternalServerErrorException(error.message || error || 'Internal Server Error');
