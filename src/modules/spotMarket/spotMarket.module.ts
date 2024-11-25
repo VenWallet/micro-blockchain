@@ -1,6 +1,6 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { SpotMarketController } from './SpotMarket.controller';
+import { SpotMarketController } from './spotMarket.controller';
 import { WalletModule } from '../wallet/wallet.module';
 import { NetworkModule } from '../network/network.module';
 import { TokenModule } from '../token/token.module';
