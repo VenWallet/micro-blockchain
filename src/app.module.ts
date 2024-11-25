@@ -13,12 +13,17 @@ import { UtilsModule } from './shared/utils/utils.module';
 import { DatabaseConfig } from './config/database/database.config';
 import { HttpCustomModule } from './shared/http/http.module';
 import { ExternalModule } from './external/external.module';
+import { SpotMarketModule } from './modules/spotMarket/spotMarket.module';
+import { TasksModule } from './tasks/tasks.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
     AppConfigModule,
     CacheModule.register({ isGlobal: true }),
     TypeOrmModule.forRoot(DatabaseConfig.getDataSourceOptions()),
+    ScheduleModule.forRoot(),
+    TasksModule,
     UtilsModule,
     HttpCustomModule,
     NetworkModule,
@@ -27,6 +32,7 @@ import { ExternalModule } from './external/external.module';
     TokenDataModule,
     TokenModule,
     ExternalModule,
+    SpotMarketModule,
   ],
   controllers: [AppController],
   providers: [],

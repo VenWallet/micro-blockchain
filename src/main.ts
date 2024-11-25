@@ -7,6 +7,10 @@ import { ConfigService } from '@nestjs/config';
 import { EnvironmentVariables } from './config/env';
 import { DatabaseConfig } from './config/database/database.config';
 import { SolanaService } from './modules/blockchain/protocols/solana/solana.service';
+import { EthereumService } from './modules/blockchain/protocols/ethereum/ethereum.service';
+import { ArbitrumService } from './modules/blockchain/protocols/arbitrum/arbitrum.service';
+import { BitcoinService } from './modules/blockchain/protocols/bitcoin/bitcoin.service';
+import { BinanceService } from './modules/blockchain/protocols/binance/binance.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

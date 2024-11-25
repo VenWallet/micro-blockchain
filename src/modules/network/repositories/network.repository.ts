@@ -4,6 +4,7 @@ import { DeleteResult, Repository } from 'typeorm';
 import { plainToClass } from 'class-transformer';
 import { NetworkEntity } from '../entities/network.entity';
 import { NetworkDto } from '../dto/network.dto';
+import { IndexEnum } from '../enums/index.enum';
 
 @Injectable()
 export class NetworkRepository {
@@ -35,6 +36,13 @@ export class NetworkRepository {
   async findOne(id: string): Promise<NetworkEntity | null> {
     return await this.repository.findOne({
       where: { id },
+      relations: ['tokens'],
+    });
+  }
+
+  async findOneByIndex(index: IndexEnum): Promise<NetworkEntity | null> {
+    return await this.repository.findOne({
+      where: { index },
       relations: ['tokens'],
     });
   }

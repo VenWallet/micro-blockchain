@@ -45,4 +45,13 @@ export class EnvironmentVariables {
 
   @IsString()
   BLOCKCYPHER: string;
+
+  @IsString()
+  BINANCE_API_KEY: string;
+
+  @IsString()
+  BINANCE_API_SECRET: string;
+
+  @IsString()
+  TATUM_API_KEY: string;
 }

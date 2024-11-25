@@ -90,9 +90,11 @@ export class TronService implements ProtocolInterface {
 
       let balanceTotal = 0;
 
+      console.log('balance', balance);
+
       if (balance) {
         let value = Math.pow(10, decimals);
-        balanceTotal = balance / value;
+        balanceTotal = Number(balance) / value;
         if (!balanceTotal) {
           balanceTotal = 0;
         }
@@ -190,6 +192,42 @@ export class TronService implements ProtocolInterface {
       return transaction;
     } catch (error) {
       console.log('ERROR TRANSFER', error);
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async getFeeTransfer(): Promise<number> {
+    try {
+      const TRX_PER_BYTE = 0.002;
+
+      const transactionSizeBytes = 250;
+
+      // Calcula el costo en TRX
+      const feeInTRX = transactionSizeBytes * TRX_PER_BYTE;
+
+      return feeInTRX;
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async getFeeTransferToken(): Promise<number> {
+    try {
+      const TRX_PER_BYTE = 0.002; // Costo en TRX por byte de Bandwidth
+      const TRX_PER_ENERGY = 0.000002; // Costo en TRX por unidad de Energy
+      const APPROX_BANDWIDTH_BYTES = 700; // Tamaño promedio de transacción TRC-20
+      const APPROX_ENERGY_USED = 20_000; // Consumo promedio de Energy para USDT
+
+      const bandwidthCost = APPROX_BANDWIDTH_BYTES * TRX_PER_BYTE;
+
+      // Costo por Energy (si no hay suficiente gratuito)
+      const energyCost = APPROX_ENERGY_USED * TRX_PER_ENERGY;
+
+      // Costo total estimado
+      const totalFee = bandwidthCost + energyCost;
+
+      return totalFee;
+    } catch (error) {
       throw new ExceptionHandler(error);
     }
   }

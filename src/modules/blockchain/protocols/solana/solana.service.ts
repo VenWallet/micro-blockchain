@@ -16,6 +16,7 @@ import bs58 from 'bs58';
 import { HttpCustomService } from 'src/shared/http/http.service';
 import { derivePath } from 'ed25519-hd-key';
 import {
+  clusterApiUrl,
   Connection,
   Keypair,
   LAMPORTS_PER_SOL,
@@ -24,8 +25,10 @@ import {
   sendAndConfirmTransaction,
   SystemProgram,
   Transaction,
+  TransactionMessage,
 } from '@solana/web3.js';
 import {
+  createTransferInstruction,
   getAccount,
   getAssociatedTokenAddressSync,
   getMint,
@@ -194,6 +197,90 @@ export class SolanaService implements ProtocolInterface {
       console.log('sourceAccount', sourceAccount);
 
       throw new Error('Method not implemented.');
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async getFeeTransfer(): Promise<number> {
+    try {
+      const connection = new Connection(clusterApiUrl('mainnet-beta'));
+
+      // Crea un remitente ficticio para calcular el mensaje
+      const payer = Keypair.generate();
+
+      // Define un mensaje de transacción simple (transferencia de SOL)
+      const recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+      const transferInstruction = SystemProgram.transfer({
+        fromPubkey: payer.publicKey, // Dirección ficticia
+        toPubkey: new PublicKey('11111111111111111111111111111111'), // Dirección genérica
+        lamports: 1, // Cantidad mínima para simular
+      });
+
+      // Crea un mensaje de transacción basado en el bloque reciente
+      const message = new TransactionMessage({
+        payerKey: payer.publicKey,
+        recentBlockhash: recentBlockhash,
+        instructions: [transferInstruction],
+      }).compileToV0Message();
+
+      // Obtén el costo de la transacción en lamports
+      const { value: feeInLamports } = await connection.getFeeForMessage(message);
+
+      if (feeInLamports === null) {
+        throw new Error('No se pudo obtener el costo de la transacción.');
+      }
+
+      // Convierte de lamports a SOL
+      const feeInSOL = feeInLamports / 1_000_000_000; // 1 SOL = 1,000,000,000 lamports
+      return feeInSOL;
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async getFeeTransferToken(): Promise<number> {
+    try {
+      const connection = new Connection(clusterApiUrl('mainnet-beta'));
+
+      // Generar claves ficticias para simulación
+      const payer = Keypair.generate(); // Paga los fees
+      const sourceTokenAccount = Keypair.generate().publicKey; // Cuenta de origen
+      const destinationTokenAccount = Keypair.generate().publicKey; // Cuenta destino
+
+      // Cantidad a transferir (en la unidad mínima del token, bigInt si es necesario)
+      const amount = 1; // Mínima cantidad para la simulación
+
+      // Obtén el último blockhash
+      const recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+      // Instrucción para transferir tokens SPL
+      const transferInstruction = createTransferInstruction(
+        sourceTokenAccount, // Cuenta de origen
+        destinationTokenAccount, // Cuenta destino
+        payer.publicKey, // Propietario de la cuenta de origen
+        amount, // Cantidad de tokens a transferir
+        [], // Multisigners (vacío para este caso)
+        TOKEN_PROGRAM_ID, // Programa de tokens SPL
+      );
+
+      // Crea el mensaje de transacción
+      const message = new TransactionMessage({
+        payerKey: payer.publicKey,
+        recentBlockhash: recentBlockhash,
+        instructions: [transferInstruction],
+      }).compileToV0Message();
+
+      // Calcula el costo de la transacción en lamports
+      const { value: feeInLamports } = await connection.getFeeForMessage(message);
+
+      if (feeInLamports === null) {
+        throw new Error('No se pudo calcular el costo de la transacción.');
+      }
+
+      // Convierte de lamports a SOL
+      const feeInSOL = feeInLamports / 1_000_000_000; // 1 SOL = 1,000,000,000 lamports
+      return feeInSOL;
     } catch (error) {
       throw new ExceptionHandler(error);
     }

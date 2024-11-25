@@ -348,12 +348,16 @@ export class BlockchainService {
 
       const service = this.protocolIndex.getProtocolService(transferDto.network);
 
+      console.log('wallet', wallet);
+
       const txHash = await service.transfer(
         wallet.address,
         transferDto.privateKey,
         transferDto.toAddress,
         transferDto.amount,
       );
+
+      console.log('txHash', txHash);
 
       const movement: MovementDto = {
         userId: transferDto.userId,
@@ -417,6 +421,28 @@ export class BlockchainService {
         tokenId: token.id,
         hash: txHash,
       };
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async getFeeTransfer(userId: string, network: IndexEnum, amount?: number) {
+    try {
+      const wallet = await this.walletService.findOneByUserIdAndIndex(userId, network);
+
+      const service = this.protocolIndex.getProtocolService(network);
+
+      return await service.getFeeTransfer(amount, wallet.address);
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async getFeeTransferToken(network: IndexEnum) {
+    try {
+      const service = this.protocolIndex.getProtocolService(network);
+
+      return service.getFeeTransferToken();
     } catch (error) {
       throw new ExceptionHandler(error);
     }

@@ -174,6 +174,27 @@ export class BitcoinService implements ProtocolInterface {
     }
   }
 
+  async getFeeTransfer(
+    amount: number = 0.0003,
+    address: string = '15krWJTAriVnmXgZZzPENV3ohh2AwdQDgH',
+  ): Promise<number> {
+    try {
+      const fee = await this.bitcoinUtils.newTxFee(amount, address);
+
+      return fee;
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async getFeeTransferToken(): Promise<number> {
+    try {
+      throw new Error('Method not implemented.');
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
   previewSwap(fromCoin: string, toCoin: string, amount: number, address: string | undefined): Promise<any> {
     throw new Error('Method not implemented.');
   }

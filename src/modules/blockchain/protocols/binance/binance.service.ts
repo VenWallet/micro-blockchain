@@ -5,7 +5,7 @@ import { KeyPair, utils, Account, keyStores, Near } from 'near-api-js';
 import { functionCall } from 'near-api-js/lib/transaction';
 import { ExceptionHandler } from 'src/helpers/handlers/exception.handler';
 import { NetworksEnum } from 'src/modules/network/enums/networks.enum';
-import { ethers, Wallet } from 'ethers';
+import { ethers, parseUnits, Wallet } from 'ethers';
 import Web3 from 'web3';
 import web3Utils from 'web3-utils';
 import { Web3Validator, isAddress } from 'web3-validator';
@@ -14,6 +14,7 @@ import { EnvironmentVariables } from 'src/config/env';
 import { IndexEnum } from 'src/modules/network/enums/index.enum';
 import * as abi from '../abi.json';
 import { ProtocolInterface } from '../procotol.inferface';
+import axios from 'axios';
 
 @Injectable()
 export class BinanceService implements ProtocolInterface {
@@ -24,7 +25,7 @@ export class BinanceService implements ProtocolInterface {
     const BSC_NETWORK = this.configService.get('BSC_NETWORK', { infer: true })!;
     const INFURA_PROJECT_ID = this.configService.get('INFURA_PROJECT_ID', { infer: true })!;
 
-    const nodeUrl = `https://bsc-${BSC_NETWORK}.infura.io/v3/${INFURA_PROJECT_ID}`;
+    const nodeUrl = `https://bsc-dataseed1.binance.org:443`;
 
     this.web3 = new Web3(new Web3.providers.HttpProvider(nodeUrl));
 
@@ -115,16 +116,18 @@ export class BinanceService implements ProtocolInterface {
         throw new Error(`Error: You do not have enough funds to make the transfer`);
       }
 
+      this.web3.eth.accounts.wallet.add(privateKey);
+
       const gasPrice = await this.web3.eth.getGasPrice();
-      const gasLimit = 21000;
+      const gasLimit = 60000;
       const nonce = await this.web3.eth.getTransactionCount(fromAddress);
+
+      const srcAmount = (amount * Math.pow(10, 18)).toFixed(0);
 
       const rawTransaction = {
         from: fromAddress,
         to: toAddress,
-        value: this.web3.utils.toHex(
-          this.web3.utils.toWei(amount.toLocaleString('fullwide', { useGrouping: false }), 'ether'),
-        ),
+        value: srcAmount,
         gasPrice: this.web3.utils.toHex(gasPrice),
         gasLimit: this.web3.utils.toHex(gasLimit),
         nonce: nonce,
@@ -169,32 +172,61 @@ export class BinanceService implements ProtocolInterface {
 
       const minABI = abi;
 
-      const wallet = new ethers.Wallet(privateKey);
+      const signer = await new ethers.Wallet(privateKey, this.provider);
 
-      const signer = await this.provider.getSigner();
-
-      const contractItem = new ethers.Contract(srcToken.contract, minABI, signer);
-
+      const contractItem: any = new ethers.Contract(srcToken.contract, minABI, signer);
       let value = Math.pow(10, srcToken.decimals);
       let srcAmount = amount * value;
-
-      const gasLimit = (contractItem.estimateGas as any).transfer(
+      const data = contractItem.interface.encodeFunctionData('transfer', [
         toAddress,
         srcAmount.toLocaleString('fullwide', { useGrouping: false }),
-      );
-
-      const tx = await contractItem.transfer(toAddress, srcAmount.toLocaleString('fullwide', { useGrouping: false }), {
-        gasLimit: gasLimit,
-        gasPrice: gasPrice,
+      ]);
+      const tx = await signer.sendTransaction({
+        to: srcToken.contract,
+        from: signer.address,
+        value: parseUnits('0.000', 'ether'),
+        data: data,
+        gasLimit: 55000,
       });
 
-      console.log('PASOOO');
-
-      if (!tx.hash) throw new Error(`Error tx hash.`);
-
+      console.log('TX', tx);
       return tx.hash as string;
     } catch (error) {
       console.log('ERROR TRANSFER', error);
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async getFeeTransfer(): Promise<number> {
+    try {
+      const response = await axios.get(
+        'https://api.bscscan.com/api?module=gastracker&action=gasoracle&apikey=3SU1MAWAPX8X39UD6U8JBGTQ5C67EVVRSM',
+      );
+      const wei = response.data.result.SafeGasPrice;
+
+      if (!wei) throw new Error(`Error getting gas price`);
+
+      const gasLimit = 21000;
+
+      return Number(this.web3.utils.fromWei(String(gasLimit * wei), 'gwei'));
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async getFeeTransferToken(): Promise<number> {
+    try {
+      const response = await axios.get(
+        'https://api.bscscan.com/api?module=gastracker&action=gasoracle&apikey=3SU1MAWAPX8X39UD6U8JBGTQ5C67EVVRSM',
+      );
+      const wei = response.data.result.SafeGasPrice;
+
+      if (!wei) throw new Error(`Error getting gas price`);
+
+      const gasLimit = 55000;
+
+      return Number(this.web3.utils.fromWei(String(gasLimit * wei), 'gwei'));
+    } catch (error) {
       throw new ExceptionHandler(error);
     }
   }

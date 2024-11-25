@@ -19,9 +19,10 @@ const nearSeed = require('near-seed-phrase');
 
 @Injectable()
 export class NearService implements ProtocolInterface {
-  private readonly configService: ConfigService<EnvironmentVariables>;
-
-  constructor(private readonly nearUtils: NearUtils) {}
+  constructor(
+    private readonly nearUtils: NearUtils,
+    private readonly configService: ConfigService<EnvironmentVariables>,
+  ) {}
 
   async generateWallet() {
     try {
@@ -143,17 +144,29 @@ export class NearService implements ProtocolInterface {
     try {
       const balance = await this.getBalance(fromAddress);
 
+      console.log('amountInYocto1');
+
       if (balance < amount) throw new Error(`Error: You do not have enough funds to make the transfer`);
 
       const keyStore = new keyStores.InMemoryKeyStore();
 
-      const keyPair = KeyPair.fromString(privateKey as utils.key_pair.KeyPairString);
+      console.log('amountInYocto2', privateKey);
+
+      const keyPair = KeyPair.fromString(privateKey as any);
+
+      console.log('amountInYocto2.1', keyPair);
+
+      console.log(this.configService.get('NEAR_ENV', { infer: true })!, fromAddress, keyPair);
 
       keyStore.setKey(this.configService.get('NEAR_ENV', { infer: true })!, fromAddress, keyPair);
+
+      console.log('amountInYocto3');
 
       const near = new Near(this.nearUtils.configNear(keyStore));
 
       const account = new AccountService(near.connection, fromAddress);
+
+      console.log('amountInYocto4');
 
       const amountInYocto = utils.format.parseNearAmount(String(amount));
 
@@ -226,6 +239,22 @@ export class NearService implements ProtocolInterface {
       return result.transaction.hash as string;
     } catch (error) {
       console.log('ERROR TRANSFER', error);
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async getFeeTransfer(): Promise<number> {
+    try {
+      return 0.001;
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async getFeeTransferToken(): Promise<number> {
+    try {
+      return 0.001;
+    } catch (error) {
       throw new ExceptionHandler(error);
     }
   }

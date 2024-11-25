@@ -215,6 +215,40 @@ export class EthereumService implements ProtocolInterface {
     }
   }
 
+  async getFeeTransfer(): Promise<number> {
+    try {
+      const response = await axios.get(
+        'https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=ZAXW568KING2VVBGAMBU7399KH7NBB8QX6',
+      );
+      const wei = response.data.result.SafeGasPrice as string;
+
+      if (!wei) throw new Error(`Error getting gas price`);
+
+      let gasLimit = 21000;
+
+      return Number(this.web3.utils.fromWei(gasLimit * Number(Number(wei).toFixed(2)), 'gwei'));
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async getFeeTransferToken(): Promise<number> {
+    try {
+      const response = await axios.get(
+        'https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=ZAXW568KING2VVBGAMBU7399KH7NBB8QX6',
+      );
+      const wei = response.data.result.SafeGasPrice as string;
+
+      if (!wei) throw new Error(`Error getting gas price`);
+
+      let gasLimit = 55000;
+
+      return Number(this.web3.utils.fromWei(gasLimit * Number(Number(wei).toFixed(2)), 'gwei'));
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
   async previewSwap(fromToken: any, toToken: any, amount: number, address: string | undefined): Promise<any> {
     try {
       if (!fromToken && !toToken) {

@@ -16,44 +16,35 @@ export class AppController {
   @Get('health')
   async testApi() {
     try {
+      const asset = 'USDT';
       const apiKey = process.env.BINANCE_API_KEY;
       const apiSecret = process.env.BINANCE_API_SECRET;
 
       if (!apiKey || !apiSecret) {
-        throw new Error('API Key and Secret not found');
+        throw new Error('API Key and Secret are required');
       }
 
-      let asset;
-      let startTime;
-      let endTime;
-      let status;
-
       const timestamp = Date.now();
-      let queryString = `timestamp=${timestamp}`;
-
-      if (asset) queryString += `&asset=${asset}`;
-      if (startTime) queryString += `&startTime=${startTime}`;
-      if (endTime) queryString += `&endTime=${endTime}`;
-      if (status !== undefined) queryString += `&status=${status}`;
-
-      // Generate signature
+      const queryString = `timestamp=${timestamp}`;
       const signature = crypto.createHmac('sha256', apiSecret).update(queryString).digest('hex');
 
-      const url = `https://api.binance.com/sapi/v1/capital/deposit/hisrec?${queryString}&signature=${signature}`;
+      const url = `https://api.binance.com/sapi/v1/capital/config/getall?${queryString}&signature=${signature}`;
 
-      console.log(url);
-
-      // Set headers with API Key
       const headers = {
         'X-MBX-APIKEY': apiKey,
       };
 
-      // Send GET request to check deposit history
       const response = await axios.get(url, { headers });
-
       console.log(response.data);
 
-      return { data: response.data };
+      const filteredAsset = response.data.find((coin) => coin.coin === asset);
+
+      if (!filteredAsset) {
+        console.log(`Asset ${asset} not found.`);
+        return null;
+      }
+
+      return { data: filteredAsset };
     } catch (error) {
       console.log(error);
       throw new InternalServerErrorException(error.message || error || 'Internal Server Error');

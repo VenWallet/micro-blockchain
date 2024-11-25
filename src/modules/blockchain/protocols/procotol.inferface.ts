@@ -21,13 +21,8 @@ export interface ProtocolInterface {
     contract: string,
     decimals: number,
   ): Promise<string>;
-  // getFeeTransaction(
-  //   network: IndexEnum,
-  //   token: string,
-  //   typeTxn: string,
-  //   amount: number | undefined,
-  //   address: string | undefined,
-  // ): Promise<number>;
-  previewSwap(fromToken: any, toToken: any, amount: number, address: string | undefined): Promise<any>;
-  swap(priceRoute: any, privateKey: string, address: string): Promise<{ dataSwap: any; priceRoute: any }>;
+  getFeeTransfer(amount?: number, address?: string): Promise<number>;
+  getFeeTransferToken?(amount: number | undefined, address: string | undefined): Promise<number>;
+  previewSwap?(fromToken: any, toToken: any, amount: number, address: string | undefined): Promise<any>;
+  swap?(priceRoute: any, privateKey: string, address: string): Promise<{ dataSwap: any; priceRoute: any }>;
 }
