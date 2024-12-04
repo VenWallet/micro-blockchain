@@ -24,6 +24,10 @@ import { SpotMarketStatusEnum } from './enums/spotMarketStatus.enum';
 import { SpotMarketRepository } from './repositories/spotMarket.repository';
 import { ExchangeTypeEnum } from './enums/exchangeType.enum';
 import { BinanceApiService } from 'src/providers/binance-api/binance-api.service';
+import * as path from 'path';
+
+const filePath = path.resolve(process.cwd(), 'exchangeInfo.json');
+const exchangeInfo = fs.readFileSync(filePath, 'utf8');
 
 @Injectable()
 export class SpotMarketService {
@@ -137,8 +141,7 @@ export class SpotMarketService {
       const feeWithdraw = Number(toNetworkConfig.withdrawFee);
 
       if (exchangeType !== ExchangeTypeEnum.BRIGDE) {
-        const data = fs.readFileSync('./exchangeInfo.json', 'utf8');
-        const jsonData = JSON.parse(data);
+        const jsonData = JSON.parse(exchangeInfo);
 
         const symbol = jsonData.symbols.find(
           (s) =>
@@ -367,8 +370,7 @@ export class SpotMarketService {
       }
 
       if (exchangeType !== ExchangeTypeEnum.BRIGDE) {
-        const data = fs.readFileSync('./exchangeInfo.json', 'utf8');
-        const jsonData = JSON.parse(data);
+        const jsonData = JSON.parse(exchangeInfo);
 
         const symbol = jsonData.symbols.find(
           (s) =>
@@ -450,8 +452,7 @@ export class SpotMarketService {
 
         return { amountReceived, fees };
       } else {
-        const data = fs.readFileSync('./exchangeInfo.json', 'utf8');
-        const jsonData = JSON.parse(data);
+        const jsonData = JSON.parse(exchangeInfo);
 
         const symbol = jsonData.symbols.find(
           (s) =>
