@@ -87,14 +87,14 @@ export class BinanceService implements ProtocolInterface {
     try {
       let contract = new this.web3.eth.Contract(abi, contractId);
 
-      const balance: bigint = await contract.methods.balanceOf(address).call();
+      const balance: number = await contract.methods.balanceOf(address).call();
 
       let balanceTotal = 0;
 
       if (balance) {
-        const value = BigInt(Math.pow(10, decimals));
+        const value = Math.pow(10, decimals);
 
-        balanceTotal = Number(balance / value);
+        balanceTotal = Number(Number(balance) / Number(value));
 
         if (!balanceTotal) {
           balanceTotal = 0;
@@ -174,22 +174,18 @@ export class BinanceService implements ProtocolInterface {
 
       const signer = await new ethers.Wallet(privateKey, this.provider);
 
-      const contractItem: any = new ethers.Contract(srcToken.contract, minABI, signer);
+      const contractItem = new ethers.Contract(srcToken.contract, minABI, signer);
+
       let value = Math.pow(10, srcToken.decimals);
       let srcAmount = amount * value;
-      const data = contractItem.interface.encodeFunctionData('transfer', [
-        toAddress,
-        srcAmount.toLocaleString('fullwide', { useGrouping: false }),
-      ]);
-      const tx = await signer.sendTransaction({
-        to: srcToken.contract,
-        from: signer.address,
-        value: parseUnits('0.000', 'ether'),
-        data: data,
-        gasLimit: 55000,
+
+      const tx = await contractItem.transfer(toAddress, srcAmount.toLocaleString('fullwide', { useGrouping: false }), {
+        gasLimit: 80000,
+        gasPrice: gasPrice, //3000000000n,
       });
 
-      console.log('TX', tx);
+      if (!tx.hash) throw new Error(`Error tx hash.`);
+
       return tx.hash as string;
     } catch (error) {
       console.log('ERROR TRANSFER', error);

@@ -11,6 +11,7 @@ import { EthereumService } from './modules/blockchain/protocols/ethereum/ethereu
 import { ArbitrumService } from './modules/blockchain/protocols/arbitrum/arbitrum.service';
 import { BitcoinService } from './modules/blockchain/protocols/bitcoin/bitcoin.service';
 import { BinanceService } from './modules/blockchain/protocols/binance/binance.service';
+import { TasksService } from './tasks/tasks.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -40,6 +41,10 @@ async function bootstrap() {
   const url = await app.getUrl();
 
   console.log(`Server is running on ${url}`);
+
+  // const service = app.get(TasksService);
+
+  // console.log(await service.withdraw('USDC', '0x95Ffb8cE9E6B2657Bca6Dd432c246e8FA504fB9E', 23.76, 'BSC', 6));
 }
 
 bootstrap();

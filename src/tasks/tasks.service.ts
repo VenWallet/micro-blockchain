@@ -20,7 +20,7 @@ export class TasksService {
     private readonly binanceApiService: BinanceApiService,
   ) {}
 
-  // @Cron('*/1 * * * *')
+  @Cron('*/1 * * * *')
   async SpotMarketTask() {
     try {
       const spotMarkets = await this.spotMarketRepository.findPendings();
@@ -29,16 +29,20 @@ export class TasksService {
         return;
       }
 
-      const data = fs.readFileSync('exchangeInfo.json', 'utf8');
+      const data = fs.readFileSync('./exchangeInfo.json', 'utf8');
       const jsonData = JSON.parse(data);
 
       const deposits = await this.binanceApiService.getDeposits();
 
+      // console.log('deposits', deposits);
+
       for (const spotMarket of spotMarkets) {
         try {
-          console.log(spotMarket);
+          // console.log(spotMarket);
 
           const deposit = deposits.find((d) => d.txId === spotMarket.hash);
+
+          console.log(deposit);
 
           if (!deposit) {
             continue;
@@ -62,11 +66,14 @@ export class TasksService {
 
             const network = wallet.network;
 
+            const toNetworkSymbol =
+              network.symbol === 'BNB' ? 'BSC' : network.symbol === 'ARB' ? 'ARBITRUM' : network.symbol;
+
             const withdrawData = await this.withdraw(
               spotMarket.toCoin,
               wallet.address,
               Number(spotMarket.amount),
-              network.symbol,
+              toNetworkSymbol,
               network.decimals,
             );
 
@@ -83,6 +90,8 @@ export class TasksService {
                 (s.baseAsset === spotMarket.toCoin && s.quoteAsset === spotMarket.fromCoin),
             );
 
+            console.log('symbol', symbol);
+
             if (!symbol?.symbol) {
               await this.spotMarketRepository.update(spotMarket.id, { status: SpotMarketStatusEnum.CANCELLED });
               continue;
@@ -94,49 +103,88 @@ export class TasksService {
               return null;
             });
 
-            const price = response?.data?.price ? parseFloat(response.data.price) : null;
-
-            if (!price) {
-              continue;
-            }
-
             const side = spotMarket.fromCoin === symbol.baseAsset ? 'SELL' : 'BUY';
 
-            let quantity = side === 'SELL' ? Number(spotMarket.amount) * price : Number(spotMarket.amount) / price;
+            let price: number | null = 0;
 
+            if (side === 'BUY') {
+              price = response?.data?.price ? parseFloat(response.data.price) : null;
+
+              if (!price) {
+                continue;
+              }
+            }
+
+            const quantity = side === 'SELL' ? Number(spotMarket.amount) : Number(spotMarket.amount) / price;
+
+            console.log('quantity', quantity);
             // Ajustar la cantidad al stepSize definido
             const stepSize = parseFloat(symbol.filters.find((f) => f.filterType === 'LOT_SIZE')?.stepSize || '0.1');
 
-            // Función para ajustar la cantidad al stepSize
-            function adjustQuantity(qty, step) {
-              return Math.floor(qty / step) * step; // Redondear hacia abajo al múltiplo más cercano
-            }
+            // // Función para ajustar la cantidad al stepSize
+            // function adjustQuantity(qty, step) {
+            //   return Math.floor(qty / step) * step; // Redondear hacia abajo al múltiplo más cercano
+            // }
 
-            quantity = adjustQuantity(quantity, stepSize);
+            // const quantityFinal = adjustQuantity(quantity, stepSize * 2);
 
-            const orderData = await this.trade(pair, side, quantity);
+            const adjustedQuantity = Math.floor(quantity / stepSize) * stepSize;
+
+            console.log('adjustedQuantity', adjustedQuantity);
+
+            const orderData = await this.trade(pair, side, Number(adjustedQuantity));
+            // const orderData = {
+            //   symbol: 'NEARUSDT',
+            //   orderId: 3420040618,
+            //   orderListId: -1,
+            //   clientOrderId: 'AceHsJgWMYdXohGqSXpgXu',
+            //   transactTime: 1733165641057,
+            //   price: '0.00000000',
+            //   origQty: '3.50000000',
+            //   executedQty: '3.50000000',
+            //   cummulativeQuoteQty: '23.64950000',
+            //   status: 'FILLED',
+            //   timeInForce: 'GTC',
+            //   type: 'MARKET',
+            //   side: 'BUY',
+            //   workingTime: 1733165641057,
+            //   fills: [
+            //     {
+            //       price: '6.75700000',
+            //       qty: '3.50000000',
+            //       commission: '0.00350000',
+            //       commissionAsset: 'NEAR',
+            //       tradeId: 225585905,
+            //     },
+            //   ],
+            //   selfTradePreventionMode: 'EXPIRE_MAKER',
+            // };
+
+            console.log('orderData', orderData);
 
             if (orderData.status !== 'FILLED') {
               await this.spotMarketRepository.update(spotMarket.id, {
                 status: SpotMarketStatusEnum.FAILED,
                 symbol: pair,
                 side: side,
-                price: price.toString(),
-                quantity: orderData.executedQty,
+                price: orderData.fills[0].price,
+                quantity: side === 'BUY' ? orderData.cummulativeQuoteQty : orderData.executedQty,
                 orderData: orderData,
               });
+
+              continue;
             }
 
             await this.spotMarketRepository.update(spotMarket.id, {
-              status: SpotMarketStatusEnum.PENDING,
+              status: SpotMarketStatusEnum.PROCESSING,
               symbol: pair,
               side: side,
-              price: price.toString(),
-              quantity: orderData.executedQty,
+              price: orderData.fills[0].price,
+              quantity: side === 'BUY' ? orderData.cummulativeQuoteQty : orderData.executedQty,
               orderData: orderData,
             });
 
-            const wallet = await this.walletRepository.findOneByUserIdAndIndex(
+            const wallet: any = await this.walletRepository.findOneByUserIdAndIndex(
               spotMarket.userId,
               spotMarket.toNetwork as IndexEnum,
             );
@@ -147,28 +195,39 @@ export class TasksService {
 
             const network = wallet.network;
 
-            const withdrawData = await this.withdraw(
-              spotMarket.toCoin,
-              wallet.address,
-              Number(spotMarket.amount),
-              network.symbol,
-              network.decimals,
-            );
+            const toNetworkSymbol =
+              network.symbol === 'BNB' ? 'BSC' : network.symbol === 'ARB' ? 'ARBITRUM' : network.symbol;
 
-            console.log('withdrawData', withdrawData);
+            setTimeout(async () => {
+              try {
+                const withdrawData = await this.withdraw(
+                  spotMarket.toCoin,
+                  wallet.address,
+                  side === 'BUY' ? Number(orderData.executedQty) : Number(orderData.cummulativeQuoteQty),
+                  toNetworkSymbol,
+                  network.decimals,
+                );
 
-            await this.spotMarketRepository.update(spotMarket.id, {
-              status: SpotMarketStatusEnum.COMPLETED,
-              withdrawData: withdrawData,
-            });
+                console.log('withdrawData', withdrawData);
+
+                await this.spotMarketRepository.update(spotMarket.id, {
+                  status: SpotMarketStatusEnum.COMPLETED,
+                  withdrawData: withdrawData,
+                });
+
+                console.log('Retiro ejecutado exitosamente.');
+              } catch (error) {
+                console.error('Error al ejecutar el retiro:', error);
+              }
+            }, 10000);
           }
         } catch (error) {
-          console.log(error);
+          // console.log('error', error);
           continue;
         }
       }
     } catch (error) {
-      console.log(error.data);
+      console.log('error', error?.data || error.response.data);
     }
   }
 
@@ -180,15 +239,15 @@ export class TasksService {
       if (!apiKey || !apiSecret) {
         throw new Error('API Key and Secret not found');
       }
-
       const timestamp = Date.now();
-      const queryString = `symbol=${symbol}&side=${side}&type=MARKET&quantity=${quantity}&timestamp=${timestamp}`;
+      const queryString = `symbol=${symbol}&side=${side}&type=MARKET&quantity=${quantity.toFixed(6)}&timestamp=${timestamp}`;
 
       // Generate signature
       const signature = crypto.createHmac('sha256', apiSecret).update(queryString).digest('hex');
 
       const url = `https://api.binance.com/api/v3/order?${queryString}&signature=${signature}`;
 
+      console.log('url', url);
       // Set headers with API Key
       const headers = {
         'X-MBX-APIKEY': apiKey,
@@ -209,18 +268,12 @@ export class TasksService {
 
       return orderData;
     } catch (error) {
-      console.log(error);
+      console.log(error?.data || error.response.data || error);
       throw new Error(error.message || error || 'Internal Server Error');
     }
   }
 
-  private async withdraw(
-    asset: string,
-    address: string,
-    amount: number,
-    network: string,
-    decimals: number,
-  ): Promise<any> {
+  async withdraw(asset: string, address: string, amount: number, network: string, decimals: number): Promise<any> {
     try {
       const apiKey = process.env.BINANCE_API_KEY;
       const apiSecret = process.env.BINANCE_API_SECRET;
@@ -229,7 +282,7 @@ export class TasksService {
         throw new Error('API Key and Secret not found');
       }
 
-      const amountAfterFee = (amount * 0.99).toFixed(6);
+      const amountAfterFee = (amount * 0.999).toFixed(6);
 
       const timestamp = Date.now();
       let queryString = `coin=${asset}&address=${address}&amount=${amountAfterFee}&timestamp=${timestamp}&network=${network}`;

@@ -99,4 +99,27 @@ export class BinanceApiService {
       throw new Error(error.message || error || 'Internal Server Error');
     }
   }
+
+  async getTickerPrice(symbol: string) {
+    try {
+      const url = `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`;
+
+      const response = await this.httpService.request<any>({
+        method: 'GET',
+        url,
+      });
+
+      const price = response?.data?.price ? parseFloat(response.data.price) : null;
+
+      if (!price) {
+        console.log(`Price not found for ${symbol}`);
+        throw new NotFoundException(`Price not found for ${symbol}`);
+      }
+
+      return price;
+    } catch (error) {
+      console.log(error);
+      throw new Error(error.message || error || 'Internal Server Error');
+    }
+  }
 }

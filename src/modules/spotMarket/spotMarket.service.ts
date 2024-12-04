@@ -134,8 +134,10 @@ export class SpotMarketService {
         throw new NotFoundException('Withdraw not enabled');
       }
 
+      const feeWithdraw = Number(toNetworkConfig.withdrawFee);
+
       if (exchangeType !== ExchangeTypeEnum.BRIGDE) {
-        const data = fs.readFileSync('exchangeInfo.json', 'utf8');
+        const data = fs.readFileSync('./exchangeInfo.json', 'utf8');
         const jsonData = JSON.parse(data);
 
         const symbol = jsonData.symbols.find(
@@ -151,12 +153,50 @@ export class SpotMarketService {
         if (!symbol.orderTypes.includes(createSpotMarketDto.typeOrder)) {
           throw new NotFoundException('Order type not found');
         }
-      } else {
-        if (createSpotMarketDto.amount < Number(toNetworkConfig.withdrawMin)) {
-          throw new NotFoundException('Amount is less than withdraw min');
+
+        if (!symbol?.symbol) {
+          throw new NotFoundException('Pair not found');
         }
 
-        if (createSpotMarketDto.amount > Number(toNetworkConfig.withdrawMax)) {
+        if (symbol.status !== 'TRADING') {
+          throw new NotFoundException('Pair not available');
+        }
+
+        const pair = symbol.symbol;
+
+        const price = await this.binanceApiService.getTickerPrice(pair);
+
+        const side = createSpotMarketDto.fromCoin === symbol.baseAsset ? 'SELL' : 'BUY';
+
+        const stepSize = parseFloat(symbol.filters.find((f) => f.filterType === 'LOT_SIZE')?.stepSize || '0.1');
+
+        let quantity = side === 'SELL' ? createSpotMarketDto.amount * price : createSpotMarketDto.amount / price;
+
+        quantity = Math.floor(quantity / stepSize) * stepSize;
+
+        console.log('quantity', quantity);
+
+        const feeWallet = quantity * 0.002;
+
+        const feeTotal = feeWithdraw + feeWallet;
+
+        const amountReceived = quantity - feeTotal;
+
+        if (amountReceived < Number(toNetworkConfig.withdrawMin)) {
+          throw new NotFoundException('Amount is less than withdraw min, after fees');
+        }
+      } else {
+        const feeWallet = createSpotMarketDto.amount * 0.001;
+
+        const feeTotal = feeWithdraw + feeWallet;
+
+        const amountReceived = createSpotMarketDto.amount - feeTotal;
+
+        if (amountReceived < Number(toNetworkConfig.withdrawMin)) {
+          throw new NotFoundException('Amount is less than withdraw min, after fees');
+        }
+
+        if (amountReceived > Number(toNetworkConfig.withdrawMax)) {
           throw new NotFoundException('Amount is greater than withdraw max');
         }
       }
@@ -193,6 +233,8 @@ export class SpotMarketService {
           amount: createSpotMarketDto.amount,
           token: fromToken.id,
         };
+
+        console.log('transferTokenDto', transferTokenDto);
 
         const transferToken = await this.blockchainService.transferToken(transferTokenDto);
 
@@ -325,7 +367,7 @@ export class SpotMarketService {
       }
 
       if (exchangeType !== ExchangeTypeEnum.BRIGDE) {
-        const data = fs.readFileSync('exchangeInfo.json', 'utf8');
+        const data = fs.readFileSync('./exchangeInfo.json', 'utf8');
         const jsonData = JSON.parse(data);
 
         const symbol = jsonData.symbols.find(
@@ -340,6 +382,10 @@ export class SpotMarketService {
 
         if (!symbol.orderTypes.includes(previewSpotMarketDto.typeOrder)) {
           throw new NotFoundException('Order type not found');
+        }
+
+        if (symbol.status !== 'TRADING') {
+          throw new NotFoundException('Pair not available');
         }
       } else {
         if (previewSpotMarketDto.amount < Number(toNetworkConfig.withdrawMin)) {
@@ -368,6 +414,8 @@ export class SpotMarketService {
         feeDeposit = await this.blockchainService.getFeeTransferToken(fromNetwork.index);
       }
 
+      console.log('toNetworkConfig', toNetworkConfig);
+
       const feeWithdraw = Number(toNetworkConfig.withdrawFee);
 
       const fees = [
@@ -384,7 +432,7 @@ export class SpotMarketService {
       ];
 
       if (exchangeType === ExchangeTypeEnum.BRIGDE) {
-        const feeWallet = previewSpotMarketDto.amount * 0.01;
+        const feeWallet = previewSpotMarketDto.amount * 0.001;
 
         fees.push({
           coin: previewSpotMarketDto.toCoin,
@@ -394,20 +442,61 @@ export class SpotMarketService {
 
         const feeTotal = feeWithdraw + feeWallet;
 
-        if (previewSpotMarketDto.amount - feeTotal < Number(toNetworkConfig.withdrawMin)) {
+        const amountReceived = previewSpotMarketDto.amount - feeTotal;
+
+        if (amountReceived < Number(toNetworkConfig.withdrawMin)) {
           throw new NotFoundException('Amount is less than withdraw min, after fees');
         }
+
+        return { amountReceived, fees };
       } else {
-        const feeWallet = previewSpotMarketDto.amount * 0.01;
+        const data = fs.readFileSync('./exchangeInfo.json', 'utf8');
+        const jsonData = JSON.parse(data);
+
+        const symbol = jsonData.symbols.find(
+          (s) =>
+            (s.baseAsset === previewSpotMarketDto.fromCoin && s.quoteAsset === previewSpotMarketDto.toCoin) ||
+            (s.baseAsset === previewSpotMarketDto.toCoin && s.quoteAsset === previewSpotMarketDto.fromCoin),
+        );
+
+        console.log('symbol', symbol);
+
+        if (!symbol?.symbol) {
+          throw new NotFoundException('Pair not found');
+        }
+
+        const pair = symbol.symbol;
+
+        const price = await this.binanceApiService.getTickerPrice(pair);
+
+        const side = previewSpotMarketDto.fromCoin === symbol.baseAsset ? 'SELL' : 'BUY';
+
+        let quantity = side === 'SELL' ? previewSpotMarketDto.amount * price : previewSpotMarketDto.amount / price;
+
+        const stepSize = parseFloat(symbol.filters.find((f) => f.filterType === 'LOT_SIZE')?.stepSize || '0.1');
+
+        quantity = Math.floor(quantity / stepSize) * stepSize;
+
+        console.log('quantity', quantity);
+
+        const feeWallet = quantity * 0.002;
 
         fees.push({
           coin: previewSpotMarketDto.toCoin,
           name: 'Wallet Fee',
           amount: feeWallet,
         });
-      }
 
-      return fees;
+        const feeTotal = feeWithdraw + feeWallet;
+
+        const amountReceived = quantity - feeTotal;
+
+        if (amountReceived < Number(toNetworkConfig.withdrawMin)) {
+          throw new NotFoundException('Amount is less than withdraw min, after fees');
+        }
+
+        return { amountReceived, fees };
+      }
     } catch (error) {
       throw new ExceptionHandler(error);
     }

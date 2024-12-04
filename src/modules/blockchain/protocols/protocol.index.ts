@@ -22,9 +22,9 @@ export class ProtocolIndex {
 
   private protocolIndex = {
     [IndexEnum.NEAR]: this.nearService,
-    [IndexEnum.ETHEREUM]: this.ethereumService,
+    // [IndexEnum.ETHEREUM]: this.ethereumService,
     [IndexEnum.BSC]: this.binanceService,
-    [IndexEnum.ARBITRUM]: this.arbitrumService,
+    // [IndexEnum.ARBITRUM]: this.arbitrumService,
     [IndexEnum.TRON]: this.tronService,
     [IndexEnum.BITCOIN]: this.bitcoinService,
     [IndexEnum.SOLANA]: this.solanaService,
