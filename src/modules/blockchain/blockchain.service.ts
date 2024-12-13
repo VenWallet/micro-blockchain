@@ -271,21 +271,6 @@ export class BlockchainService {
               this.tokenService.findByNetwork(wallet.network.id),
             ]);
 
-            // Iteramos sobre tokensFound usando Promise.all
-            // const balanceTokens = await Promise.all(
-            //   tokensFound.map(async (token) => {
-            //     const tokenBalance = await service.getBalanceToken(wallet.address, token.contract, token.decimals);
-
-            //     return {
-            //       token: token.tokenData.name,
-            //       symbol: token.tokenData.symbol,
-            //       tokenId: token.id,
-            //       balance: tokenBalance,
-            //       decimals: token.decimals,
-            //     };
-            //   }),
-            // );
-
             const balanceTokens: {
               token: string;
               symbol: string;
@@ -338,7 +323,10 @@ export class BlockchainService {
     }
   }
 
-  async transfer(transferDto: TransferDto): Promise<{
+  async transfer(
+    transferDto: TransferDto,
+    isMarket?: boolean,
+  ): Promise<{
     network: NetworksEnum;
     index: IndexEnum;
     hash: string;
@@ -359,21 +347,23 @@ export class BlockchainService {
 
       console.log('txHash', txHash);
 
-      const movement: MovementDto = {
-        userId: transferDto.userId,
-        movementType: MovementTypeEnum.TRANSFER,
-        movementDate: new Date(),
-        status: StatusEnum.COMPLETED,
-        amount: transferDto.amount,
-        currency: wallet.network.symbol,
-        transactionHash: txHash,
-        fromAccount: wallet.address,
-        toAccount: transferDto.toAddress,
-        fromNetwork: wallet.network.name,
-        toNetwork: wallet.network.name,
-      };
+      if (!isMarket) {
+        const movement: MovementDto = {
+          userId: transferDto.userId,
+          movementType: MovementTypeEnum.TRANSFER,
+          movementDate: new Date(),
+          status: StatusEnum.COMPLETED,
+          amount: transferDto.amount,
+          currency: wallet.network.symbol,
+          transactionHash: txHash,
+          fromAccount: wallet.address,
+          toAccount: transferDto.toAddress,
+          fromNetwork: wallet.network.name,
+          toNetwork: wallet.network.name,
+        };
 
-      this.coreServiceExternal.createMovement(movement);
+        this.coreServiceExternal.createMovement(movement);
+      }
 
       return { network: wallet.network.name, index: wallet.network.index, hash: txHash };
     } catch (error) {
@@ -381,7 +371,7 @@ export class BlockchainService {
     }
   }
 
-  async transferToken(transferDto: TransferTokenDto) {
+  async transferToken(transferDto: TransferTokenDto, isMarket?: boolean) {
     try {
       const token = await this.tokenService.findOneWithRelations(transferDto.token);
 
@@ -398,21 +388,23 @@ export class BlockchainService {
         token.decimals,
       );
 
-      const movement: MovementDto = {
-        userId: transferDto.userId,
-        movementType: MovementTypeEnum.TRANSFER,
-        movementDate: new Date(),
-        status: StatusEnum.COMPLETED,
-        amount: transferDto.amount,
-        currency: token.tokenData.symbol,
-        transactionHash: txHash,
-        fromAccount: wallet.address,
-        toAccount: transferDto.toAddress,
-        fromNetwork: wallet.network.name,
-        toNetwork: wallet.network.name,
-      };
+      if (!isMarket) {
+        const movement: MovementDto = {
+          userId: transferDto.userId,
+          movementType: MovementTypeEnum.TRANSFER,
+          movementDate: new Date(),
+          status: StatusEnum.COMPLETED,
+          amount: transferDto.amount,
+          currency: token.tokenData.symbol,
+          transactionHash: txHash,
+          fromAccount: wallet.address,
+          toAccount: transferDto.toAddress,
+          fromNetwork: wallet.network.name,
+          toNetwork: wallet.network.name,
+        };
 
-      this.coreServiceExternal.createMovement(movement);
+        this.coreServiceExternal.createMovement(movement);
+      }
 
       return {
         network: wallet.network.name,
