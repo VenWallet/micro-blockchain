@@ -325,7 +325,7 @@ export class BlockchainService {
 
   async transfer(
     transferDto: TransferDto,
-    isMarket?: boolean,
+    movement: boolean = true,
   ): Promise<{
     network: NetworksEnum;
     index: IndexEnum;
@@ -347,7 +347,7 @@ export class BlockchainService {
 
       console.log('txHash', txHash);
 
-      if (!isMarket) {
+      if (movement) {
         const movement: MovementDto = {
           userId: transferDto.userId,
           movementType: MovementTypeEnum.TRANSFER,
@@ -371,7 +371,7 @@ export class BlockchainService {
     }
   }
 
-  async transferToken(transferDto: TransferTokenDto, isMarket?: boolean) {
+  async transferToken(transferDto: TransferTokenDto, movement: boolean = true) {
     try {
       const token = await this.tokenService.findOneWithRelations(transferDto.token);
 
@@ -388,7 +388,7 @@ export class BlockchainService {
         token.decimals,
       );
 
-      if (!isMarket) {
+      if (!movement) {
         const movement: MovementDto = {
           userId: transferDto.userId,
           movementType: MovementTypeEnum.TRANSFER,

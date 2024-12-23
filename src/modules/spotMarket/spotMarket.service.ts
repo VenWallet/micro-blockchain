@@ -215,7 +215,7 @@ export class SpotMarketService {
           amount: createSpotMarketDto.amount,
         };
 
-        const transfer = await this.blockchainService.transfer(transferDto, true);
+        const transfer = await this.blockchainService.transfer(transferDto, false);
 
         hash = transfer.hash;
       } else {
@@ -239,7 +239,7 @@ export class SpotMarketService {
 
         console.log('transferTokenDto', transferTokenDto);
 
-        const transferToken = await this.blockchainService.transferToken(transferTokenDto, true);
+        const transferToken = await this.blockchainService.transferToken(transferTokenDto, false);
 
         hash = transferToken.hash;
       }
