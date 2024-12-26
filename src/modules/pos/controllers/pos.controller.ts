@@ -1,29 +1,63 @@
 import { Controller, Get, Post, Body, Patch, Param, Query, HttpCode, HttpStatus, ParseBoolPipe } from '@nestjs/common';
 import { ApiProperty, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
-import { NetworksEnum } from '../../network/enums/networks.enum';
-import { IndexEnum } from '../../network/enums/index.enum';
-import { IndexTokenEnum } from '../../tokenData/enums/indexToken.enum';
 import { PosSettingsService } from '../services/posSettings.service';
-import { PosSettingsDto, UpdatePosSettingsDto } from '../dto/pos.dto';
+import {
+  PaymentRequestDto,
+  PaymentRequestPayDto,
+  PosLinkDto,
+  PosSettingsDto,
+  UpdatePosLinkDto,
+  UpdatePosSettingsDto,
+} from '../dto/pos.dto';
+import { PosLinkService } from '../services/posLink.service';
+import { PaymentRequestService } from '../services/paymentRequest.service';
 
 @ApiTags('Pos')
 @Controller('pos')
 export class PosSettingsController {
-  constructor(private readonly posSettingsService: PosSettingsService) {}
+  constructor(
+    private readonly posSettingsService: PosSettingsService,
+    private readonly posLinkService: PosLinkService,
+    private readonly paymentRequestService: PaymentRequestService,
+  ) {}
 
   @Post('settings')
-  previewSpotMarket(@Body() posSettingsDto: PosSettingsDto) {
+  createPosSettings(@Body() posSettingsDto: PosSettingsDto) {
     return this.posSettingsService.createPosSettings(posSettingsDto);
   }
 
   @Patch('settings/:userId')
-  createSpotMarket(@Body() updatePosSettingsDto: UpdatePosSettingsDto, @Param('userId') userId: string) {
+  updatePosSettings(@Body() updatePosSettingsDto: UpdatePosSettingsDto, @Param('userId') userId: string) {
     return this.posSettingsService.update(userId, updatePosSettingsDto);
   }
 
   @Get('settings/:userId')
-  getSpotMarket(@Param('userId') userId: string) {
-    return this.posSettingsService.findOne(userId);
+  getPosSettings(@Param('userId') userId: string) {
+    return this.posSettingsService.findOneByUserId(userId);
+  }
+
+  @Post('link')
+  createPosLink(@Body() posLinkDto: PosLinkDto) {
+    return this.posLinkService.createPosLink(posLinkDto);
+  }
+
+  @Patch('link/:userId')
+  updatePosLink(@Param('userId') userId: string, @Body() updatePosLinkDto: UpdatePosLinkDto) {
+    return this.posLinkService.update(userId, updatePosLinkDto);
+  }
+
+  @Get('link/:userId')
+  getPosLink(@Param('userId') userId: string) {
+    return this.posLinkService.findOneByUserId(userId);
+  }
+
+  @Post('payment-request')
+  createPaymentRequest(@Body() paymentRequestDto: PaymentRequestDto) {
+    return this.paymentRequestService.createPaymentRequest(paymentRequestDto);
+  }
+
+  @Post('payment-request/pay')
+  paymentRequestPay(@Body() paymentRequestPayDto: PaymentRequestPayDto) {
+    return this.paymentRequestService.paymentRequestPay(paymentRequestPayDto);
   }
 }

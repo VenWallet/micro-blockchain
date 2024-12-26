@@ -13,6 +13,9 @@ export class EnvironmentVariables {
   @IsInt()
   PORT!: number;
 
+  @IsInt()
+  PORT_WS!: number;
+
   @IsString()
   HOST_ORM!: string;
 

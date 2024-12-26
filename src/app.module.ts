@@ -17,7 +17,6 @@ import { SpotMarketModule } from './modules/spotMarket/spotMarket.module';
 import { TasksModule } from './tasks/tasks.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PosSettingsModule } from './modules/pos/pos.module';
-
 @Module({
   imports: [
     AppConfigModule,

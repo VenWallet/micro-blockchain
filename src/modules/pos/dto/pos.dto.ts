@@ -30,3 +30,85 @@ export class PosSettingsDto {
 }
 
 export class UpdatePosSettingsDto extends PartialType(PosSettingsDto) {}
+
+export class CreatePosLinkDto {
+  @ApiProperty()
+  @IsUUID()
+  @IsNotEmpty()
+  userId: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  title: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  description: string;
+}
+
+export class PosLinkDto extends CreatePosLinkDto {
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  image: string;
+}
+
+export class UpdatePosLinkDto extends PartialType(PosLinkDto) {}
+
+export class ConnectPosLinkDto {
+  @ApiProperty()
+  @IsUUID()
+  @IsNotEmpty()
+  userId: string;
+
+  @ApiProperty()
+  @IsUUID()
+  @IsNotEmpty()
+  posLinkId: string;
+}
+
+export class PaymentRequestDto {
+  @ApiProperty()
+  @IsUUID()
+  @IsNotEmpty()
+  userId: string;
+
+  @ApiProperty()
+  @IsUUID()
+  @IsOptional()
+  network: string;
+
+  @ApiProperty()
+  @IsUUID()
+  @IsOptional()
+  token: string;
+
+  @ApiProperty()
+  @IsNumber()
+  @IsNotEmpty()
+  amount: number;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  note: string;
+}
+
+export class PaymentRequestPayDto {
+  @ApiProperty()
+  @IsUUID()
+  @IsNotEmpty()
+  userId: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  privateKey: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  paymentRequestId: string;
+}

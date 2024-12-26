@@ -28,7 +28,7 @@ export class PosSettingsService {
     }
   }
 
-  async findOne(userId: string): Promise<PosSettingsEntity | null> {
+  async findOneByUserId(userId: string): Promise<PosSettingsEntity | null> {
     try {
       return await this.posSettingsRepository.findOneByUserId(userId);
     } catch (error) {
