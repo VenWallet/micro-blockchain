@@ -18,10 +18,12 @@ import { ConfigService } from '@nestjs/config';
 import { EnvironmentEnum } from 'src/shared/enums/environment.enum';
 import { EnvironmentVariables } from 'src/config/env';
 import { PosLinkRepository } from '../repositories/posLink.repository';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 const configService = new ConfigService<EnvironmentVariables>();
 
-@WebSocketGateway(Number(process.env.PORT_WS!), {
+@WebSocketGateway(Number(process.env.PORT_WS!) || 3100, {
   namespace: 'pos',
   cors: { origin: '*' },
 })
