@@ -11,10 +11,10 @@ export class EnvironmentVariables {
   NEAR_ENV: NearEnvEnum;
 
   @IsInt()
-  PORT!: number;
+  PORT_WS!: number;
 
   @IsInt()
-  PORT_WS!: number;
+  PORT!: number;
 
   @IsString()
   HOST_ORM!: string;
