@@ -17,19 +17,23 @@ import { PaymentRequestEntity } from '../entities/paymentRequest.entity';
 import { ConfigService } from '@nestjs/config';
 import { EnvironmentEnum } from 'src/shared/enums/environment.enum';
 import { EnvironmentVariables } from 'src/config/env';
+import { PosLinkRepository } from '../repositories/posLink.repository';
 
 const configService = new ConfigService<EnvironmentVariables>();
 
 @WebSocketGateway(Number(process.env.PORT_WS!), {
-  namespace: 'payment-requests',
+  namespace: 'pos',
   cors: { origin: '*' },
 })
 @Injectable()
-export class PaymentRequestSocket implements OnGatewayConnection, OnGatewayDisconnect {
+export class PosSocket implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
-  constructor(private readonly paymentRequestRepository: PaymentRequestRepository) {}
+  constructor(
+    private readonly posLinkRepository: PosLinkRepository,
+    private readonly paymentRequestRepository: PaymentRequestRepository,
+  ) {}
 
   handleConnection(client: Socket) {
     console.log(`Cliente conectado: ${client.id}`);
@@ -77,7 +81,45 @@ export class PaymentRequestSocket implements OnGatewayConnection, OnGatewayDisco
     }
   }
 
-  notifyUser(socketId: string, event: string, data: any) {
+  @SubscribeMessage('pos-link:connect')
+  async handlePosLinkConnect(@MessageBody() body: any, @ConnectedSocket() client: Socket) {
+    try {
+      const bodyData = JSON.parse(body);
+
+      if (!bodyData?.paymentRequestId) {
+        client.emit('pos-link:error', {
+          status: 'error',
+          message: 'No se envió el ID de la solicitud de pago.',
+        });
+        return;
+      }
+
+      const posLink = await this.posLinkRepository.findOne(bodyData.posLinkId);
+
+      if (!posLink) {
+        client.emit('pos-link:error', {
+          status: 'error',
+          message: 'No se encontró la solicitud.',
+        });
+        return;
+      }
+
+      await this.posLinkRepository.update(posLink.id, { socketId: client.id });
+
+      client.emit('pos-link:connected', {
+        status: 'success',
+        paymentRequest: posLink,
+      });
+    } catch (error) {
+      console.error('Error handlePaymentRequestPay:', error);
+      client.emit('pos-link:error', {
+        status: 'error',
+        message: 'No se pudo crear la solicitud de pago.',
+      });
+    }
+  }
+
+  emitEvent(socketId: string, event: string, data: any) {
     if (socketId) {
       this.server.to(socketId).emit(event, data);
     } else {

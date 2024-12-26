@@ -17,6 +17,7 @@ import { BlockchainService } from '../../blockchain/blockchain.service';
 import { TransferDto, TransferTokenDto } from 'src/modules/blockchain/blockchain.dto';
 import { WalletService } from 'src/modules/wallet/wallet.service';
 import { TokenService } from 'src/modules/token/token.service';
+import { PosSocket } from '../sockets/pos.socket';
 
 @Injectable()
 export class PaymentRequestService {
@@ -25,6 +26,7 @@ export class PaymentRequestService {
     private readonly blockchainService: BlockchainService,
     private readonly walletService: WalletService,
     private readonly tokenService: TokenService,
+    private readonly posSocket: PosSocket,
   ) {}
 
   async createPaymentRequest(createPaymentRequestDto: PaymentRequestDto) {
@@ -46,6 +48,7 @@ export class PaymentRequestService {
 
     try {
       await this.paymentRequestRepository.update(paymentRequest.id, { status: PaymentStatusEnum.PROCESSING });
+      paymentRequest.status = PaymentStatusEnum.PROCESSING;
 
       const isNative: boolean = !!paymentRequest.token;
 
@@ -97,6 +100,8 @@ export class PaymentRequestService {
       if (!hash) {
         throw new InternalServerErrorException('Hash not found');
       }
+
+      await this.posSocket.emitEvent(paymentRequest.socketId, 'payment-request:pay-status', paymentRequest);
 
       await this.paymentRequestRepository.update(paymentRequest.id, { status: PaymentStatusEnum.PAID, hash });
 
