@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Query, HttpCode, HttpStatus,
 import { ApiProperty, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { PosSettingsService } from '../services/posSettings.service';
 import {
+  ConnectPosLinkDto,
   PaymentRequestDto,
   PaymentRequestPayDto,
   PosLinkDto,
@@ -39,6 +40,11 @@ export class PosSettingsController {
   @Post('link')
   createPosLink(@Body() posLinkDto: PosLinkDto) {
     return this.posLinkService.createPosLink(posLinkDto);
+  }
+
+  @Post('link/connect')
+  connectPosLink(@Body() connectPosLinkDto: ConnectPosLinkDto) {
+    return this.posLinkService.connectPosLink(connectPosLinkDto);
   }
 
   @Patch('link/:userId')
