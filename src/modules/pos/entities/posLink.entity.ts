@@ -40,6 +40,13 @@ export class PosLinkEntity extends BaseEntity {
   @Column({
     name: 'user_linked',
     nullable: true,
+    unique: true,
   })
   userLinked: string;
+
+  @Column({
+    name: 'socket_id',
+    nullable: true,
+  })
+  socketId: string;
 }

@@ -13,10 +13,14 @@ import { ExceptionHandler } from 'src/helpers/handlers/exception.handler';
 import { PosLinkRepository } from '../repositories/posLink.repository';
 import { PosLinkEntity } from '../entities/posLink.entity';
 import { ConnectPosLinkDto, PosLinkDto, UpdatePosLinkDto } from '../dto/pos.dto';
+import { PosLinkSocket } from '../sockets/posLink.socket';
 
 @Injectable()
 export class PosLinkService {
-  constructor(private readonly posLinkRepository: PosLinkRepository) {}
+  constructor(
+    private readonly posLinkRepository: PosLinkRepository,
+    private readonly posLinkSocket: PosLinkSocket,
+  ) {}
 
   async createPosLink(posLinkDto: PosLinkDto) {
     try {
@@ -39,6 +43,8 @@ export class PosLinkService {
       posLinkFound.userLinked = connectPosLinkDto.userId;
 
       const posLinkUpdated = await this.posLinkRepository.save(posLinkFound);
+
+      await this.posLinkSocket.notifyUser(posLinkUpdated.socketId, 'pos-link:connected', posLinkUpdated);
 
       return posLinkUpdated;
     } catch (error) {

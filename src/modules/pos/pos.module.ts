@@ -10,10 +10,11 @@ import { PosLinkRepository } from './repositories/posLink.repository';
 import { PosLinkService } from './services/posLink.service';
 import { PosLinkEntity } from './entities/posLink.entity';
 import { PaymentRequestEntity } from './entities/paymentRequest.entity';
-import { PaymentRequestSocket } from './paymentRequest.socket';
+import { PaymentRequestSocket } from './sockets/paymentRequest.socket';
 import { BlockchainModule } from '../blockchain/blockchain.module';
 import { TokenModule } from '../token/token.module';
 import { WalletModule } from '../wallet/wallet.module';
+import { PosLinkSocket } from './sockets/posLink.socket';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { WalletModule } from '../wallet/wallet.module';
     PosLinkRepository,
     PosLinkService,
     PaymentRequestSocket,
+    PosLinkSocket,
   ],
   controllers: [PosSettingsController],
   providers: [
@@ -40,6 +42,7 @@ import { WalletModule } from '../wallet/wallet.module';
     PosLinkRepository,
     PosLinkService,
     PaymentRequestSocket,
+    PosLinkSocket,
   ],
 })
 export class PosSettingsModule {}

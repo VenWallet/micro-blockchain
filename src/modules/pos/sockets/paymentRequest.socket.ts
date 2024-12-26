@@ -11,16 +11,16 @@ import { Server, Socket } from 'socket.io';
 import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { PaymentRequestDto } from './dto/pos.dto';
-import { PaymentRequestRepository } from './repositories/paymentRequest.repository';
-import { PaymentRequestEntity } from './entities/paymentRequest.entity';
+import { PaymentRequestDto } from '../dto/pos.dto';
+import { PaymentRequestRepository } from '../repositories/paymentRequest.repository';
+import { PaymentRequestEntity } from '../entities/paymentRequest.entity';
 import { ConfigService } from '@nestjs/config';
 import { EnvironmentEnum } from 'src/shared/enums/environment.enum';
 import { EnvironmentVariables } from 'src/config/env';
 
 const configService = new ConfigService<EnvironmentVariables>();
 
-@WebSocketGateway(configService.get('PORT_WS'), {
+@WebSocketGateway(Number(process.env.PORT_WS!), {
   namespace: 'payment-requests',
   cors: { origin: '*' },
 })
