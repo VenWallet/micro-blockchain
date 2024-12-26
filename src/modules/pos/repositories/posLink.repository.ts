@@ -2,7 +2,7 @@ import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, Repository } from 'typeorm';
 import { plainToClass } from 'class-transformer';
-import { PosLinkEntity } from '../entities/PosLink.entity';
+import { PosLinkEntity } from '../entities/posLink.entity';
 import { PosLinkDto } from '../dto/pos.dto';
 
 @Injectable()

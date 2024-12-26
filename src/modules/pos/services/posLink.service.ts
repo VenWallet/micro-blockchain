@@ -10,8 +10,8 @@ import {
 } from '@nestjs/common';
 import { CoreServiceExternal } from 'src/external/core-service.external';
 import { ExceptionHandler } from 'src/helpers/handlers/exception.handler';
-import { PosLinkRepository } from '../repositories/PosLink.repository';
-import { PosLinkEntity } from '../entities/PosLink.entity';
+import { PosLinkRepository } from '../repositories/posLink.repository';
+import { PosLinkEntity } from '../entities/posLink.entity';
 import { ConnectPosLinkDto, PosLinkDto, UpdatePosLinkDto } from '../dto/pos.dto';
 
 @Injectable()
