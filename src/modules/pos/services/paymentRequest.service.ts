@@ -50,7 +50,7 @@ export class PaymentRequestService {
       await this.paymentRequestRepository.update(paymentRequest.id, { status: PaymentStatusEnum.PROCESSING });
       paymentRequest.status = PaymentStatusEnum.PROCESSING;
 
-      const isNative: boolean = !!paymentRequest.token;
+      const isNative: boolean = paymentRequest.token ? false : true;
 
       const userWallet = await this.walletService.findOneByUserIdAndIndex(
         paymentRequestPayDto.userId,
