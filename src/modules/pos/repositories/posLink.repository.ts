@@ -38,6 +38,12 @@ export class PosLinkRepository {
     });
   }
 
+  async findOneByUserLinked(userLinked: string): Promise<PosLinkEntity | null> {
+    return await this.repository.findOne({
+      where: { userLinked },
+    });
+  }
+
   async findOneByUserId(userId: string): Promise<PosLinkEntity | null> {
     return await this.repository.findOne({
       where: { userId },
