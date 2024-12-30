@@ -53,8 +53,8 @@ export class PosSettingsController {
   }
 
   @Get('link/:userId')
-  getPosLink(@Param('userId') userId: string) {
-    return this.posLinkService.findOneByUserId(userId);
+  getPosLinkByUserId(@Param('userId') userId: string) {
+    return this.posLinkService.findByUserId(userId);
   }
 
   @Post('payment-request')

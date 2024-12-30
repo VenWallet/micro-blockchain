@@ -32,6 +32,12 @@ export class PosLinkRepository {
     });
   }
 
+  async findByUserId(userId: string): Promise<PosLinkEntity[]> {
+    return await this.repository.find({
+      where: { userId },
+    });
+  }
+
   async findOneByUserId(userId: string): Promise<PosLinkEntity | null> {
     return await this.repository.findOne({
       where: { userId },
