@@ -88,10 +88,10 @@ export class PosSocket implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       const bodyData = JSON.parse(body);
 
-      if (!bodyData?.paymentRequestId) {
+      if (!bodyData?.posLinkId) {
         client.emit('pos-link:error', {
           status: 'error',
-          message: 'No se envió el ID de la solicitud de pago.',
+          message: 'No se envió el ID del PosLink.',
         });
         return;
       }
@@ -101,7 +101,7 @@ export class PosSocket implements OnGatewayConnection, OnGatewayDisconnect {
       if (!posLink) {
         client.emit('pos-link:error', {
           status: 'error',
-          message: 'No se encontró la solicitud.',
+          message: 'No se encontró el PosLink.',
         });
         return;
       }
@@ -116,7 +116,7 @@ export class PosSocket implements OnGatewayConnection, OnGatewayDisconnect {
       console.error('Error handlePaymentRequestPay:', error);
       client.emit('pos-link:error', {
         status: 'error',
-        message: 'No se pudo crear la solicitud de pago.',
+        message: 'Error in handlePosLinkConnect.',
       });
     }
   }
