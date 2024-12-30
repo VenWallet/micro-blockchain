@@ -116,7 +116,7 @@ export class PosSocket implements OnGatewayConnection, OnGatewayDisconnect {
       console.error('Error handlePaymentRequestPay:', error);
       client.emit('pos-link:error', {
         status: 'error',
-        message: 'Error in handlePosLinkConnect.',
+        message: 'Error in handlePosLinkConnect.' + error?.message || error,
       });
     }
   }
