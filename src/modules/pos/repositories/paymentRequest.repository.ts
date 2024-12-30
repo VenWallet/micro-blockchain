@@ -36,7 +36,7 @@ export class PaymentRequestRepository {
   async findOne(id: string): Promise<PaymentRequestEntity | null> {
     return await this.repository.findOne({
       where: { id },
-      relations: ['network', 'token'],
+      relations: ['network', 'token', 'token.tokenData'],
     });
   }
 
