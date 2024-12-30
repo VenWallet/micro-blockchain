@@ -49,6 +49,12 @@ export class PaymentRequestEntity extends BaseEntity {
   status: PaymentStatusEnum;
 
   @Column({
+    nullable: true,
+    default: false,
+  })
+  isPaid: boolean;
+
+  @Column({
     name: 'socket_id',
     nullable: true,
   })

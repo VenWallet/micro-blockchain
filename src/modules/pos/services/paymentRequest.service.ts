@@ -101,9 +101,13 @@ export class PaymentRequestService {
         throw new InternalServerErrorException('Hash not found');
       }
 
-      await this.posSocket.emitEvent(paymentRequest.socketId, 'payment-request:pay-status', paymentRequest);
+      await this.paymentRequestRepository.update(paymentRequest.id, { isPaid: true, hash });
 
-      await this.paymentRequestRepository.update(paymentRequest.id, { status: PaymentStatusEnum.PAID, hash });
+      await this.posSocket.emitEvent(
+        paymentRequest.socketId,
+        'payment-request:pay-status',
+        await this.paymentRequestRepository.findOne(paymentRequestPayDto.paymentRequestId),
+      );
 
       return hash;
     } catch (error) {
