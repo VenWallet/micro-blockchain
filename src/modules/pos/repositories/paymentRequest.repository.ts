@@ -20,8 +20,6 @@ export class PaymentRequestRepository {
     try {
       const newEntity = plainToClass(PaymentRequestEntity, paymentRequestDto);
 
-      console.log('newEntity: ', newEntity);
-
       return await this.repository.save(newEntity);
     } catch (error) {
       console.log('error: ', error);

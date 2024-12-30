@@ -53,7 +53,7 @@ export class PaymentRequestService {
       const isNative: boolean = paymentRequest.token ? false : true;
 
       const userWallet = await this.walletService.findOneByUserIdAndIndex(
-        paymentRequestPayDto.userId,
+        paymentRequest.userId,
         paymentRequest.network.index,
       );
 
