@@ -40,6 +40,14 @@ export class PosLinkService {
         throw new NotFoundException('PosLink not found');
       }
 
+      if (posLinkFound.userLinked) {
+        throw new ConflictException('PosLink already connected');
+      }
+
+      if (!posLinkFound.socketId) {
+        throw new InternalServerErrorException('PosLink socketId not found');
+      }
+
       posLinkFound.userLinked = connectPosLinkDto.userId;
 
       const posLinkUpdated = await this.posLinkRepository.save(posLinkFound);
