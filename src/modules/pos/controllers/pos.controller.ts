@@ -3,6 +3,7 @@ import { ApiProperty, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { PosSettingsService } from '../services/posSettings.service';
 import {
   ConnectPosLinkDto,
+  GetAmountMinMaxDto,
   PaymentRequestDto,
   PaymentRequestPayDto,
   PosLinkDto,
@@ -65,5 +66,10 @@ export class PosSettingsController {
   @Post('payment-request/pay')
   paymentRequestPay(@Body() paymentRequestPayDto: PaymentRequestPayDto) {
     return this.paymentRequestService.paymentRequestPay(paymentRequestPayDto);
+  }
+
+  @Post('payment-request/amount-min-max')
+  getAmountMixMax(@Body() getAmountMinMaxDto: GetAmountMinMaxDto) {
+    return this.paymentRequestService.getAmountMinMax(getAmountMinMaxDto);
   }
 }
