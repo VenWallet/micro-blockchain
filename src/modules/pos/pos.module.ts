@@ -14,6 +14,7 @@ import { BlockchainModule } from '../blockchain/blockchain.module';
 import { TokenModule } from '../token/token.module';
 import { WalletModule } from '../wallet/wallet.module';
 import { PosSocket } from './sockets/pos.socket';
+import { NetworkModule } from '../network/network.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { PosSocket } from './sockets/pos.socket';
     BlockchainModule,
     TokenModule,
     WalletModule,
+    NetworkModule,
   ],
   exports: [
     PosSettingsService,

@@ -126,6 +126,12 @@ export class PaymentRequestService {
       return hash;
     } catch (error) {
       await this.paymentRequestRepository.update(paymentRequest.id, { status: PaymentStatusEnum.FAILED });
+
+      await this.posSocket.emitEvent(
+        paymentRequest.socketId,
+        'payment-request:pay-status',
+        await this.paymentRequestRepository.findOne(paymentRequestPayDto.paymentRequestId),
+      );
       throw new ExceptionHandler(error);
     }
   }
