@@ -294,6 +294,10 @@ export class PaymentRequestService {
         if (symbol.status !== 'TRADING') {
           throw new NotFoundException('Pair not available');
         }
+
+        data.withdrawMin = toNetworkConfig.withdrawMin;
+
+        data.withdrawMax = toNetworkConfig.withdrawMax;
       } else {
         data.withdrawMin = toNetworkConfig.withdrawMin;
 
