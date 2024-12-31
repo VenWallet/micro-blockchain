@@ -15,6 +15,7 @@ import { TokenModule } from '../token/token.module';
 import { WalletModule } from '../wallet/wallet.module';
 import { PosSocket } from './sockets/pos.socket';
 import { NetworkModule } from '../network/network.module';
+import { BinanceApiModule } from 'src/providers/binance-api/binance-api.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { NetworkModule } from '../network/network.module';
     TokenModule,
     WalletModule,
     NetworkModule,
+    BinanceApiModule,
   ],
   exports: [
     PosSettingsService,

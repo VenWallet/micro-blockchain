@@ -99,7 +99,7 @@ export class SpotMarketService {
       if (fromNetwork.symbol === toNetwork.symbol) {
         exchangeType = ExchangeTypeEnum.SWAP;
       } else if (createSpotMarketDto.fromCoin === createSpotMarketDto.toCoin) {
-        exchangeType = ExchangeTypeEnum.BRIGDE;
+        exchangeType = ExchangeTypeEnum.BRIDGE;
       }
 
       const fromCoinConfig = await this.binanceApiService.getAssetConfig(createSpotMarketDto.fromCoin);
@@ -140,7 +140,7 @@ export class SpotMarketService {
 
       const feeWithdraw = Number(toNetworkConfig.withdrawFee);
 
-      if (exchangeType !== ExchangeTypeEnum.BRIGDE) {
+      if (exchangeType !== ExchangeTypeEnum.BRIDGE) {
         const jsonData = JSON.parse(exchangeInfo);
 
         const symbol = jsonData.symbols.find(
@@ -330,7 +330,7 @@ export class SpotMarketService {
       if (fromNetwork.symbol === toNetwork.symbol) {
         exchangeType = ExchangeTypeEnum.SWAP;
       } else if (previewSpotMarketDto.fromCoin === previewSpotMarketDto.toCoin) {
-        exchangeType = ExchangeTypeEnum.BRIGDE;
+        exchangeType = ExchangeTypeEnum.BRIDGE;
       }
 
       const fromCoinConfig = await this.binanceApiService.getAssetConfig(previewSpotMarketDto.fromCoin);
@@ -369,7 +369,7 @@ export class SpotMarketService {
         throw new NotFoundException('Withdraw not enabled');
       }
 
-      if (exchangeType !== ExchangeTypeEnum.BRIGDE) {
+      if (exchangeType !== ExchangeTypeEnum.BRIDGE) {
         const jsonData = JSON.parse(exchangeInfo);
 
         const symbol = jsonData.symbols.find(
@@ -433,7 +433,7 @@ export class SpotMarketService {
         },
       ];
 
-      if (exchangeType === ExchangeTypeEnum.BRIGDE) {
+      if (exchangeType === ExchangeTypeEnum.BRIDGE) {
         const feeWallet = previewSpotMarketDto.amount * 0.001;
 
         fees.push({

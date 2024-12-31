@@ -35,7 +35,7 @@ export class PosSettingsRepository {
   async findOneByUserId(userId: string): Promise<PosSettingsEntity | null> {
     return await this.repository.findOne({
       where: { userId },
-      relations: ['network', 'token', 'network_ext', 'token_ext'],
+      relations: ['network', 'token', 'network_ext', 'token_ext', 'token_ext.tokenData', 'token.tokenData'],
     });
   }
 

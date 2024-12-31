@@ -29,6 +29,13 @@ import { IndexEnum } from 'src/modules/network/enums/index.enum';
 import { ExchangeTypeEnum } from 'src/modules/spotMarket/enums/exchangeType.enum';
 import { PosLinkRepository } from '../repositories/posLink.repository';
 import { PosSettingsRepository } from '../repositories/posSettings.repository';
+import * as path from 'path';
+import * as fs from 'fs';
+import { OrderTypeEnum } from 'src/modules/spotMarket/enums/orderType.enum';
+import { BinanceApiService } from 'src/providers/binance-api/binance-api.service';
+
+const filePath = path.resolve(process.cwd(), 'exchangeInfo.json');
+const exchangeInfo = fs.readFileSync(filePath, 'utf8');
 
 @Injectable()
 export class PaymentRequestService {
@@ -41,6 +48,7 @@ export class PaymentRequestService {
     private readonly posSocket: PosSocket,
     private readonly networkRepository: NetworkRepository,
     private readonly posSettingsRepository: PosSettingsRepository,
+    private readonly binanceApiService: BinanceApiService,
   ) {}
 
   async createPaymentRequest(createPaymentRequestDto: PaymentRequestDto) {
@@ -149,22 +157,47 @@ export class PaymentRequestService {
 
   async getAmountMinMax(getAmountMinMaxDto: GetAmountMinMaxDto) {
     try {
+      let data: any = {};
+
       const network = await this.networkRepository.findOneByIndex(getAmountMinMaxDto.network as IndexEnum);
 
       if (!network) {
         throw new NotFoundException('Network not found');
       }
 
+      const isNative: boolean = getAmountMinMaxDto.token ? false : true;
+
+      let fromNetwork;
+      let fromCoin;
+
+      if (isNative) {
+        fromNetwork = network;
+        fromCoin = network.symbol;
+      } else {
+        const token = await this.tokenService.findOneWithRelations(getAmountMinMaxDto.token!);
+
+        if (!token) {
+          throw new NotFoundException('Token not found');
+        }
+
+        fromNetwork = network;
+        fromCoin = token.tokenData.symbol;
+      }
+
       let toNetwork;
       let toCoin;
 
-      const posLinked = await this.posLinkRepository.findOneByUserId(getAmountMinMaxDto.userId);
+      const posLinked = await this.posLinkRepository.findOneByUserLinked(getAmountMinMaxDto.userId);
 
       if (posLinked) {
         const posSettings = await this.posSettingsRepository.findOneByUserId(posLinked.userId);
 
         if (!posSettings) {
           throw new NotFoundException('PosSettings not found');
+        }
+
+        if (!posSettings.network_ext || !posSettings.token_ext) {
+          throw new NotFoundException('PosSettings Network Ext or Token Ext not found');
         }
 
         toNetwork = posSettings.network_ext;
@@ -189,19 +222,85 @@ export class PaymentRequestService {
           toCoin = posSettings.network.symbol;
         }
       }
+      console.log('fromNetwork', fromNetwork);
+      console.log('fromCoin', fromCoin);
 
       console.log('toNetwork', toNetwork);
       console.log('toCoin', toCoin);
 
-      // const isNative: boolean = getAmountMinMaxDto.token ? false : true;
+      let exchangeType = ExchangeTypeEnum.EXCHANGE;
 
-      // let exchangeType = ExchangeTypeEnum.EXCHANGE;
+      if (fromNetwork.symbol === toNetwork.symbol && fromCoin === toCoin) {
+        exchangeType = ExchangeTypeEnum.SAME;
+      } else if (fromNetwork.symbol === toNetwork.symbol) {
+        exchangeType = ExchangeTypeEnum.SWAP;
+      } else if (fromCoin === toCoin) {
+        exchangeType = ExchangeTypeEnum.BRIDGE;
+      }
 
-      // if (network.symbol === toNetwork.symbol) {
-      //   exchangeType = ExchangeTypeEnum.SWAP;
-      // } else if (previewSpotMarketDto.fromCoin === previewSpotMarketDto.toCoin) {
-      //   exchangeType = ExchangeTypeEnum.BRIGDE;
-      // }
+      console.log('exchangeType', exchangeType);
+
+      const fromCoinConfig = await this.binanceApiService.getAssetConfig(fromCoin);
+
+      const networkSymbol =
+        fromNetwork.symbol === 'BNB' ? 'BSC' : fromNetwork.symbol === 'ARB' ? 'ARBITRUM' : fromNetwork.symbol;
+
+      const fromNetworkConfig = fromCoinConfig.networkList.find((n) => n.network === networkSymbol);
+
+      if (!fromNetworkConfig) {
+        throw new NotFoundException('Network not found');
+      }
+
+      if (!fromNetworkConfig.depositEnable) {
+        throw new NotFoundException('Deposit not enabled');
+      }
+
+      data.depositDust = fromNetworkConfig.depositDust;
+
+      ///////////////////////////////////////////////////
+
+      const toCoinConfig = await this.binanceApiService.getAssetConfig(toCoin);
+
+      const toNetworkSymbol =
+        toNetwork.symbol === 'BNB' ? 'BSC' : toNetwork.symbol === 'ARB' ? 'ARBITRUM' : toNetwork.symbol;
+
+      const toNetworkConfig = toCoinConfig.networkList.find((n) => n.network === toNetworkSymbol);
+
+      if (!toNetworkConfig) {
+        throw new NotFoundException('Network not found');
+      }
+
+      if (!toNetworkConfig.withdrawEnable) {
+        throw new NotFoundException('Withdraw not enabled');
+      }
+
+      if (exchangeType !== ExchangeTypeEnum.BRIDGE) {
+        const jsonData = JSON.parse(exchangeInfo);
+
+        const symbol = jsonData.symbols.find(
+          (s) =>
+            (s.baseAsset === fromCoin && s.quoteAsset === toCoin) ||
+            (s.baseAsset === toCoin && s.quoteAsset === fromCoin),
+        );
+
+        if (!symbol?.symbol) {
+          throw new NotFoundException('Pair not found');
+        }
+
+        if (!symbol.orderTypes.includes(OrderTypeEnum.MARKET)) {
+          throw new NotFoundException('Order type not found');
+        }
+
+        if (symbol.status !== 'TRADING') {
+          throw new NotFoundException('Pair not available');
+        }
+      } else {
+        data.withdrawMin = toNetworkConfig.withdrawMin;
+
+        data.withdrawMax = toNetworkConfig.withdrawMax;
+      }
+
+      return data;
     } catch (error) {
       throw new ExceptionHandler(error);
     }

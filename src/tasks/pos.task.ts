@@ -21,7 +21,7 @@ export class TasksService {
   ) {}
 
   @Cron('*/1 * * * *')
-  async SpotMarketTask() {
+  async PosTask() {
     try {
       const spotMarkets = await this.spotMarketRepository.findPendings();
 
