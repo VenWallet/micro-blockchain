@@ -112,3 +112,20 @@ export class PaymentRequestPayDto {
   @IsNotEmpty()
   paymentRequestId: string;
 }
+
+export class GetAmountMinMaxDto {
+  @ApiProperty()
+  @IsUUID()
+  @IsNotEmpty()
+  userId: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsEnum(IndexEnum)
+  network: string;
+
+  @ApiProperty()
+  @IsUUID()
+  @IsOptional()
+  token?: string;
+}
