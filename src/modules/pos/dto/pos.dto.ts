@@ -9,8 +9,8 @@ export class PosSettingsDto {
   userId: string;
 
   @ApiProperty()
-  @IsUUID()
-  @IsOptional()
+  @IsNotEmpty()
+  @IsEnum(IndexEnum)
   network: string;
 
   @ApiProperty()
@@ -19,8 +19,8 @@ export class PosSettingsDto {
   token: string;
 
   @ApiProperty()
-  @IsUUID()
   @IsOptional()
+  @IsEnum(IndexEnum)
   network_ext: string;
 
   @ApiProperty()
@@ -76,8 +76,8 @@ export class PaymentRequestDto {
   userId: string;
 
   @ApiProperty()
-  @IsUUID()
-  @IsOptional()
+  @IsNotEmpty()
+  @IsEnum(IndexEnum)
   network: string;
 
   @ApiProperty()

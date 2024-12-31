@@ -18,6 +18,8 @@ import { TransferDto, TransferTokenDto } from 'src/modules/blockchain/blockchain
 import { WalletService } from 'src/modules/wallet/wallet.service';
 import { TokenService } from 'src/modules/token/token.service';
 import { PosSocket } from '../sockets/pos.socket';
+import { NetworkRepository } from 'src/modules/network/repositories/network.repository';
+import { IndexEnum } from 'src/modules/network/enums/index.enum';
 
 @Injectable()
 export class PaymentRequestService {
@@ -27,11 +29,23 @@ export class PaymentRequestService {
     private readonly walletService: WalletService,
     private readonly tokenService: TokenService,
     private readonly posSocket: PosSocket,
+    private readonly networkRepository: NetworkRepository,
   ) {}
 
   async createPaymentRequest(createPaymentRequestDto: PaymentRequestDto) {
     try {
-      const paymentRequest = await this.paymentRequestRepository.create(createPaymentRequestDto);
+      const network = await this.networkRepository.findOneByIndex(createPaymentRequestDto.network as IndexEnum);
+
+      if (!network) {
+        throw new NotFoundException('Network not found');
+      }
+
+      const paymentRequestDto = {
+        ...createPaymentRequestDto,
+        network: network.id,
+      };
+
+      const paymentRequest = await this.paymentRequestRepository.create(paymentRequestDto);
 
       return paymentRequest;
     } catch (error) {

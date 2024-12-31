@@ -13,14 +13,40 @@ import { ExceptionHandler } from 'src/helpers/handlers/exception.handler';
 import { PosSettingsDto, UpdatePosSettingsDto } from '../dto/pos.dto';
 import { PosSettingsRepository } from '../repositories/posSettings.repository';
 import { PosSettingsEntity } from '../entities/posSettings.entity';
+import { NetworkRepository } from 'src/modules/network/repositories/network.repository';
+import { IndexEnum } from 'src/modules/network/enums/index.enum';
 
 @Injectable()
 export class PosSettingsService {
-  constructor(private readonly posSettingsRepository: PosSettingsRepository) {}
+  constructor(
+    private readonly posSettingsRepository: PosSettingsRepository,
+    private readonly networkRepository: NetworkRepository,
+  ) {}
 
   async createPosSettings(createPosSettingsDto: PosSettingsDto) {
     try {
-      const posSettings = await this.posSettingsRepository.create(createPosSettingsDto);
+      const network = await this.networkRepository.findOneByIndex(createPosSettingsDto.network as IndexEnum);
+
+      if (!network) {
+        throw new NotFoundException('Network not found');
+      }
+
+      const posSettingsDto = {
+        ...createPosSettingsDto,
+        network: network.id,
+      };
+
+      if (createPosSettingsDto.network_ext) {
+        const networkExt = await this.networkRepository.findOneByIndex(createPosSettingsDto.network_ext as IndexEnum);
+
+        if (!networkExt) {
+          throw new NotFoundException('Network Ext not found');
+        }
+
+        posSettingsDto.network_ext = networkExt.id;
+      }
+
+      const posSettings = await this.posSettingsRepository.create(posSettingsDto);
 
       return posSettings;
     } catch (error) {
