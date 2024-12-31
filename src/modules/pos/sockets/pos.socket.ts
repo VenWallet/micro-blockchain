@@ -70,10 +70,7 @@ export class PosSocket implements OnGatewayConnection, OnGatewayDisconnect {
 
       await this.paymentRequestRepository.update(paymentRequest.id, { socketId: client.id });
 
-      client.emit('payment-request:pay-status', {
-        status: 'success',
-        paymentRequest: paymentRequest,
-      });
+      client.emit('payment-request:pay-status', paymentRequest);
     } catch (error) {
       console.error('Error handlePaymentRequestPay:', error);
       client.emit('payment-request:error', {
@@ -108,10 +105,7 @@ export class PosSocket implements OnGatewayConnection, OnGatewayDisconnect {
 
       await this.posLinkRepository.update(posLink.id, { socketId: client.id });
 
-      client.emit('pos-link:connected', {
-        status: 'success',
-        paymentRequest: posLink,
-      });
+      client.emit('pos-link:connected', posLink);
     } catch (error) {
       console.error('Error handlePaymentRequestPay:', error);
       client.emit('pos-link:error', {
