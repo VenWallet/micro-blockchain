@@ -92,7 +92,7 @@ export class PaymentRequestDto {
 
   @ApiProperty()
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   note: string;
 }
 
