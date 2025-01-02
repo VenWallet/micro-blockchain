@@ -29,7 +29,27 @@ export class PosSettingsDto {
   token_ext: string;
 }
 
-export class UpdatePosSettingsDto extends PartialType(PosSettingsDto) {}
+export class UpdatePosSettingsDto {
+  @ApiProperty()
+  @IsOptional()
+  @IsUUID()
+  network: string;
+
+  @ApiProperty()
+  @IsUUID()
+  @IsOptional()
+  token: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsUUID()
+  network_ext: string;
+
+  @ApiProperty()
+  @IsUUID()
+  @IsOptional()
+  token_ext: string;
+}
 
 export class CreatePosLinkDto {
   @ApiProperty()
