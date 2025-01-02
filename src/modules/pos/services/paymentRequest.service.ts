@@ -256,6 +256,7 @@ export class PaymentRequestService {
       }
 
       data.depositDust = fromNetworkConfig.depositDust;
+      data.depositDustCoin = fromCoin;
 
       ///////////////////////////////////////////////////
 
@@ -274,7 +275,7 @@ export class PaymentRequestService {
         throw new NotFoundException('Withdraw not enabled');
       }
 
-      if (exchangeType !== ExchangeTypeEnum.BRIDGE) {
+      if (exchangeType !== ExchangeTypeEnum.BRIDGE && exchangeType !== ExchangeTypeEnum.SAME) {
         const jsonData = JSON.parse(exchangeInfo);
 
         const symbol = jsonData.symbols.find(
@@ -296,12 +297,22 @@ export class PaymentRequestService {
         }
 
         data.withdrawMin = toNetworkConfig.withdrawMin;
+        data.withdrawMinCoin = toCoin;
 
         data.withdrawMax = toNetworkConfig.withdrawMax;
+        data.withdrawMaxCoin = toCoin;
+      } else if (exchangeType === ExchangeTypeEnum.SAME) {
+        data.withdrawMin = 0;
+        data.withdrawMinCoin = toCoin;
+        data.depositDust = 0;
+        data.withdrawMax = 0;
+        data.withdrawMaxCoin = toCoin;
       } else {
         data.withdrawMin = toNetworkConfig.withdrawMin;
+        data.withdrawMinCoin = toCoin;
 
         data.withdrawMax = toNetworkConfig.withdrawMax;
+        data.withdrawMaxCoin = toCoin;
       }
 
       return data;
