@@ -332,6 +332,7 @@ export class BlockchainService {
     hash: string;
   }> {
     try {
+      console.log('transferDto', transferDto);
       const wallet = await this.walletService.findOneByUserIdAndIndex(transferDto.userId, transferDto.network);
 
       const service = this.protocolIndex.getProtocolService(transferDto.network);
