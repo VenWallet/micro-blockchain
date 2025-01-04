@@ -219,7 +219,7 @@ export class TasksService {
               } catch (error) {
                 console.error('Error al ejecutar el retiro:', error);
               }
-            }, 10000);
+            }, 15000);
           }
         } catch (error) {
           // console.log('error', error);
@@ -282,7 +282,7 @@ export class TasksService {
         throw new Error('API Key and Secret not found');
       }
 
-      const amountAfterFee = (amount * 0.999).toFixed(6);
+      const amountAfterFee = (amount * 0.99).toFixed(6);
 
       const timestamp = Date.now();
       let queryString = `coin=${asset}&address=${address}&amount=${amountAfterFee}&timestamp=${timestamp}&network=${network}`;
