@@ -147,7 +147,7 @@ export class PaymentRequestService {
         );
       }
 
-      const toAddressDeposit = DepositAddressEnum[fromNetwork];
+      const toAddressDeposit = DepositAddressEnum[fromNetwork.index];
 
       if (!toAddressDeposit) {
         throw new NotFoundException('Deposit address not found');
