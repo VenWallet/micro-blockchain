@@ -33,6 +33,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { OrderTypeEnum } from 'src/modules/spotMarket/enums/orderType.enum';
 import { BinanceApiService } from 'src/providers/binance-api/binance-api.service';
+import { DepositAddressEnum } from 'src/modules/spotMarket/enums/depositAddress.enum';
 
 const filePath = path.resolve(process.cwd(), 'exchangeInfo.json');
 const exchangeInfo = fs.readFileSync(filePath, 'utf8');
@@ -85,19 +86,207 @@ export class PaymentRequestService {
 
       const isNative: boolean = paymentRequest.token ? false : true;
 
-      const userWallet = await this.walletService.findOneByUserIdAndIndex(
-        paymentRequest.userId,
-        paymentRequest.network.index,
-      );
+      let fromNetwork;
+      let fromCoin;
+
+      if (isNative) {
+        fromNetwork = paymentRequest.network;
+        fromCoin = paymentRequest.network.symbol;
+      } else {
+        fromNetwork = paymentRequest.network;
+        fromCoin = paymentRequest.token.tokenData.symbol;
+      }
+
+      let toNetwork;
+      let toCoin;
+
+      const posLinked = await this.posLinkRepository.findOneByUserLinked(paymentRequest.userId);
+
+      if (posLinked) {
+        const posSettings = await this.posSettingsRepository.findOneByUserId(posLinked.userId);
+
+        if (!posSettings) {
+          throw new NotFoundException('PosSettings not found');
+        }
+
+        if (!posSettings.network_ext || !posSettings.token_ext) {
+          throw new NotFoundException('PosSettings Network Ext or Token Ext not found');
+        }
+
+        toNetwork = posSettings.network_ext;
+
+        if (posSettings.token_ext) {
+          toCoin = posSettings.token_ext.tokenData.symbol;
+        } else {
+          toCoin = posSettings.network_ext.symbol;
+        }
+      } else {
+        const posSettings = await this.posSettingsRepository.findOneByUserId(paymentRequest.userId);
+
+        if (!posSettings) {
+          throw new NotFoundException('PosSettings not found');
+        }
+
+        toNetwork = posSettings.network;
+
+        if (posSettings.token) {
+          toCoin = posSettings.token.tokenData.symbol;
+        } else {
+          toCoin = posSettings.network.symbol;
+        }
+      }
+      console.log('fromNetwork', fromNetwork);
+      console.log('fromCoin', fromCoin);
+
+      console.log('toNetwork', toNetwork);
+      console.log('toCoin', toCoin);
+
+      if (fromNetwork === toNetwork && fromCoin === toCoin) {
+        throw new ConflictException(
+          'The source and destination networks cannot be the same. Please select different networks for the transfer',
+        );
+      }
+
+      const toAddressDeposit = DepositAddressEnum[fromNetwork];
+
+      if (!toAddressDeposit) {
+        throw new NotFoundException('Deposit address not found');
+      }
+
+      if (!fromNetwork.isActive || !toNetwork.isActive) {
+        throw new NotFoundException('Network is not active');
+      }
+
+      const fromIsNative = fromNetwork.symbol === fromCoin;
+
+      const toIsNative = toNetwork.symbol === toCoin;
+
+      if (!toIsNative) {
+        const toToken = await this.tokenService.findOneBySymbolNetworkId(toCoin, toNetwork.id);
+
+        if (!toToken) {
+          throw new NotFoundException('Token not found');
+        }
+      }
+
+      let exchangeType = ExchangeTypeEnum.EXCHANGE;
+
+      if (fromNetwork.symbol === toNetwork.symbol) {
+        exchangeType = ExchangeTypeEnum.SWAP;
+      } else if (fromCoin === toCoin) {
+        exchangeType = ExchangeTypeEnum.BRIDGE;
+      }
+
+      const fromCoinConfig = await this.binanceApiService.getAssetConfig(fromCoin);
+
+      const networkSymbol =
+        fromNetwork.symbol === 'BNB' ? 'BSC' : fromNetwork.symbol === 'ARB' ? 'ARBITRUM' : fromNetwork.symbol;
+
+      const fromNetworkConfig = fromCoinConfig.networkList.find((n) => n.network === networkSymbol);
+
+      if (!fromNetworkConfig) {
+        throw new NotFoundException('Network not found');
+      }
+
+      if (!fromNetworkConfig.depositEnable) {
+        throw new NotFoundException('Deposit not enabled');
+      }
+
+      if (paymentRequest.amount < fromNetworkConfig.depositDust) {
+        throw new NotFoundException('Amount is less than deposit dust');
+      }
+
+      ///////////////////////////////////////////////////
+
+      const toCoinConfig = await this.binanceApiService.getAssetConfig(toCoin);
+
+      const toNetworkSymbol =
+        toNetwork.symbol === 'BNB' ? 'BSC' : toNetwork.symbol === 'ARB' ? 'ARBITRUM' : toNetwork.symbol;
+
+      const toNetworkConfig = toCoinConfig.networkList.find((n) => n.network === toNetworkSymbol);
+
+      if (!toNetworkConfig) {
+        throw new NotFoundException('Network not found');
+      }
+
+      if (!toNetworkConfig.withdrawEnable) {
+        throw new NotFoundException('Withdraw not enabled');
+      }
+
+      const feeWithdraw = Number(toNetworkConfig.withdrawFee);
+
+      if (exchangeType !== ExchangeTypeEnum.BRIDGE) {
+        const jsonData = JSON.parse(exchangeInfo);
+
+        const symbol = jsonData.symbols.find(
+          (s) =>
+            (s.baseAsset === fromCoin && s.quoteAsset === toCoin) ||
+            (s.baseAsset === toCoin && s.quoteAsset === fromCoin),
+        );
+
+        if (!symbol?.symbol) {
+          throw new NotFoundException('Pair not found');
+        }
+
+        if (!symbol.orderTypes.includes('MARKET')) {
+          throw new NotFoundException('Order type not found');
+        }
+
+        if (!symbol?.symbol) {
+          throw new NotFoundException('Pair not found');
+        }
+
+        if (symbol.status !== 'TRADING') {
+          throw new NotFoundException('Pair not available');
+        }
+
+        const pair = symbol.symbol;
+
+        const price = await this.binanceApiService.getTickerPrice(pair);
+
+        const side = fromCoin === symbol.baseAsset ? 'SELL' : 'BUY';
+
+        const stepSize = parseFloat(symbol.filters.find((f) => f.filterType === 'LOT_SIZE')?.stepSize || '0.1');
+
+        let quantity = side === 'SELL' ? paymentRequest.amount * price : paymentRequest.amount / price;
+
+        quantity = Math.floor(quantity / stepSize) * stepSize;
+
+        console.log('quantity', quantity);
+
+        const feeWallet = quantity * 0.002;
+
+        const feeTotal = feeWithdraw + feeWallet;
+
+        const amountReceived = quantity - feeTotal;
+
+        if (amountReceived < Number(toNetworkConfig.withdrawMin)) {
+          throw new NotFoundException('Amount is less than withdraw min, after fees');
+        }
+      } else {
+        const feeWallet = paymentRequest.amount * 0.001;
+
+        const feeTotal = feeWithdraw + feeWallet;
+
+        const amountReceived = paymentRequest.amount - feeTotal;
+
+        if (amountReceived < Number(toNetworkConfig.withdrawMin)) {
+          throw new NotFoundException('Amount is less than withdraw min, after fees');
+        }
+
+        if (amountReceived > Number(toNetworkConfig.withdrawMax)) {
+          throw new NotFoundException('Amount is greater than withdraw max');
+        }
+      }
 
       let hash: string | undefined;
 
-      if (isNative) {
+      if (fromIsNative) {
         const transferDto: TransferDto = {
           userId: paymentRequestPayDto.userId,
           privateKey: paymentRequestPayDto.privateKey,
-          network: paymentRequest.network.index,
-          toAddress: userWallet.address,
+          network: fromNetwork.index,
+          toAddress: toAddressDeposit,
           amount: paymentRequest.amount,
         };
 
@@ -105,10 +294,7 @@ export class PaymentRequestService {
 
         hash = transfer.hash;
       } else {
-        const fromToken = await this.tokenService.findOneBySymbolNetworkId(
-          paymentRequest.token.tokenData.symbol,
-          paymentRequest.network.id,
-        );
+        const fromToken = await this.tokenService.findOneBySymbolNetworkId(fromCoin, fromNetwork.id);
 
         if (!fromToken) {
           throw new NotFoundException('Token not found');
@@ -117,8 +303,8 @@ export class PaymentRequestService {
         const transferTokenDto: TransferTokenDto = {
           userId: paymentRequestPayDto.userId,
           privateKey: paymentRequestPayDto.privateKey,
-          network: paymentRequest.network.index,
-          toAddress: userWallet.address,
+          network: fromNetwork.index,
+          toAddress: toAddressDeposit,
           amount: paymentRequest.amount,
           token: fromToken.id,
         };
@@ -134,6 +320,8 @@ export class PaymentRequestService {
         throw new InternalServerErrorException('Hash not found');
       }
 
+      console.log('hash', hash);
+
       await this.paymentRequestRepository.update(paymentRequest.id, { isPaid: true, hash });
 
       await this.posSocket.emitEvent(
@@ -143,6 +331,65 @@ export class PaymentRequestService {
       );
 
       return hash;
+
+      // const userWallet = await this.walletService.findOneByUserIdAndIndex(
+      //   paymentRequest.userId,
+      //   paymentRequest.network.index,
+      // );
+
+      // let hash: string | undefined;
+
+      // if (isNative) {
+      //   const transferDto: TransferDto = {
+      //     userId: paymentRequestPayDto.userId,
+      //     privateKey: paymentRequestPayDto.privateKey,
+      //     network: paymentRequest.network.index,
+      //     toAddress: userWallet.address,
+      //     amount: paymentRequest.amount,
+      //   };
+
+      //   const transfer = await this.blockchainService.transfer(transferDto, false);
+
+      //   hash = transfer.hash;
+      // } else {
+      //   const fromToken = await this.tokenService.findOneBySymbolNetworkId(
+      //     paymentRequest.token.tokenData.symbol,
+      //     paymentRequest.network.id,
+      //   );
+
+      //   if (!fromToken) {
+      //     throw new NotFoundException('Token not found');
+      //   }
+
+      //   const transferTokenDto: TransferTokenDto = {
+      //     userId: paymentRequestPayDto.userId,
+      //     privateKey: paymentRequestPayDto.privateKey,
+      //     network: paymentRequest.network.index,
+      //     toAddress: userWallet.address,
+      //     amount: paymentRequest.amount,
+      //     token: fromToken.id,
+      //   };
+
+      //   console.log('transferTokenDto', transferTokenDto);
+
+      //   const transferToken = await this.blockchainService.transferToken(transferTokenDto, false);
+
+      //   hash = transferToken.hash;
+      // }
+
+      // if (!hash) {
+      //   throw new InternalServerErrorException('Hash not found');
+      // }
+
+      // await this.paymentRequestRepository.update(paymentRequest.id, { isPaid: true, hash });
+
+      // await this.posSocket.emitEvent(
+      //   paymentRequest.socketId,
+      //   'payment-request:pay-status',
+      //   await this.paymentRequestRepository.findOne(paymentRequestPayDto.paymentRequestId),
+      // );
+
+      // return hash;
     } catch (error) {
       await this.paymentRequestRepository.update(paymentRequest.id, { status: PaymentStatusEnum.FAILED });
 

@@ -16,7 +16,7 @@ import { ExternalModule } from './external/external.module';
 import { SpotMarketModule } from './modules/spotMarket/spotMarket.module';
 import { TasksModule } from './tasks/tasks.module';
 import { ScheduleModule } from '@nestjs/schedule';
-import { PosSettingsModule } from './modules/pos/pos.module';
+import { PosModule } from './modules/pos/pos.module';
 @Module({
   imports: [
     AppConfigModule,
@@ -33,7 +33,7 @@ import { PosSettingsModule } from './modules/pos/pos.module';
     TokenModule,
     ExternalModule,
     SpotMarketModule,
-    PosSettingsModule,
+    PosModule,
   ],
   controllers: [AppController],
   providers: [],

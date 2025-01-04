@@ -4,6 +4,7 @@ import { DeleteResult, Repository } from 'typeorm';
 import { plainToClass } from 'class-transformer';
 import { PaymentRequestDto, PosLinkDto } from '../dto/pos.dto';
 import { PaymentRequestEntity } from '../entities/paymentRequest.entity';
+import { PaymentStatusEnum } from '../enums/paymentStatus.enum';
 
 @Injectable()
 export class PaymentRequestRepository {
@@ -34,6 +35,13 @@ export class PaymentRequestRepository {
   async findOne(id: string): Promise<PaymentRequestEntity | null> {
     return await this.repository.findOne({
       where: { id },
+      relations: ['network', 'token', 'token.tokenData'],
+    });
+  }
+
+  async findProcessing(): Promise<PaymentRequestEntity[]> {
+    return await this.repository.find({
+      where: { status: PaymentStatusEnum.PROCESSING },
       relations: ['network', 'token', 'token.tokenData'],
     });
   }

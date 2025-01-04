@@ -46,4 +46,4 @@ import { BinanceApiModule } from 'src/providers/binance-api/binance-api.module';
     PosSocket,
   ],
 })
-export class PosSettingsModule {}
+export class PosModule {}
