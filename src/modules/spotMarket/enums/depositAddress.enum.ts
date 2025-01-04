@@ -6,7 +6,7 @@ export const DepositAddressEnum = {
   // [IndexEnum.BITCOIN]: 'ASD',
   [IndexEnum.BSC]: '0x9a477735d45e61c1070af53e1ff6985fbd604c81',
   // [IndexEnum.ETHEREUM]: '0x9a477735d45e61c1070af53e1ff6985fbd604c81',
-  // [IndexEnum.SOLANA]: 'ASD',
+  [IndexEnum.SOLANA]: '4dbc9vxP2BrEpqkMZ9kmTwumsqtM5Ck79qiowfD3xrDC',
   [IndexEnum.TRON]: 'TUwanjmrDeyme45peeQXbj9tcJUqqsDxh7',
 } as const;
 
