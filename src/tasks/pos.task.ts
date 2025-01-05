@@ -12,21 +12,278 @@ import { BinanceApiService } from '../providers/binance-api/binance-api.service'
 import { ExchangeTypeEnum } from 'src/modules/spotMarket/enums/exchangeType.enum';
 import { net } from 'web3';
 import { PaymentRequestRepository } from 'src/modules/pos/repositories/paymentRequest.repository';
+import { PosLinkRepository } from 'src/modules/pos/repositories/posLink.repository';
+import { PosSettingsRepository } from 'src/modules/pos/repositories/posSettings.repository';
+import { PaymentStatusEnum } from 'src/modules/pos/enums/paymentStatus.enum';
+import { PosSocket } from 'src/modules/pos/sockets/pos.socket';
 
 @Injectable()
 export class PosTask {
   constructor(
     private readonly paymentRequestRepository: PaymentRequestRepository,
+    private readonly posLinkRepository: PosLinkRepository,
+    private readonly posSettingsRepository: PosSettingsRepository,
     private readonly walletRepository: WalletRepository,
     private readonly binanceApiService: BinanceApiService,
+    private readonly posSocket: PosSocket,
   ) {}
 
   @Cron('*/1 * * * *')
   async PosTask() {
     try {
-      const paymentRequests = await this.paymentRequestRepository.findProcessing();
+      const paymentRequests = await this.paymentRequestRepository.findProcessingPaid();
+
+      if (!paymentRequests.length) {
+        return;
+      }
+
+      const data = fs.readFileSync('./exchangeInfo.json', 'utf8');
+      const jsonData = JSON.parse(data);
+
+      const deposits = await this.binanceApiService.getDeposits();
 
       console.log('paymentRequests', paymentRequests);
+
+      for (const paymentRequest of paymentRequests) {
+        try {
+          // console.log(spotMarket);
+
+          const deposit = deposits.find((d) => d.txId === paymentRequest.hash);
+
+          console.log(deposit);
+
+          if (!deposit) {
+            continue;
+          }
+
+          console.log(deposit);
+
+          if (deposit.status !== 1) {
+            continue;
+          }
+
+          const isNative: boolean = paymentRequest.token ? false : true;
+
+          let fromNetwork;
+          let fromCoin;
+
+          if (isNative) {
+            fromNetwork = paymentRequest.network;
+            fromCoin = paymentRequest.network.symbol;
+          } else {
+            fromNetwork = paymentRequest.network;
+            fromCoin = paymentRequest.token.tokenData.symbol;
+          }
+
+          let toNetwork;
+          let toCoin;
+          let toUserId;
+
+          const posLinked = await this.posLinkRepository.findOneByUserLinked(paymentRequest.userId);
+
+          if (posLinked) {
+            toUserId = posLinked.userId;
+
+            const posSettings = await this.posSettingsRepository.findOneByUserId(posLinked.userId);
+
+            if (!posSettings) {
+              continue;
+            }
+
+            if (!posSettings.network_ext || !posSettings.token_ext) {
+              continue;
+            }
+
+            toNetwork = posSettings.network_ext;
+
+            if (posSettings.token_ext) {
+              toCoin = posSettings.token_ext.tokenData.symbol;
+            } else {
+              toCoin = posSettings.network_ext.symbol;
+            }
+          } else {
+            const posSettings = await this.posSettingsRepository.findOneByUserId(paymentRequest.userId);
+
+            if (!posSettings) {
+              continue;
+            }
+
+            toUserId = posSettings.userId;
+
+            toNetwork = posSettings.network;
+
+            if (posSettings.token) {
+              toCoin = posSettings.token.tokenData.symbol;
+            } else {
+              toCoin = posSettings.network.symbol;
+            }
+          }
+          console.log('fromNetwork', fromNetwork);
+          console.log('fromCoin', fromCoin);
+
+          console.log('toNetwork', toNetwork);
+          console.log('toCoin', toCoin);
+
+          const wallet = await this.walletRepository.findOneByUserIdAndIndex(toUserId, toNetwork.index);
+
+          console.log('wallet', wallet);
+
+          if (!wallet) {
+            continue;
+          }
+
+          if (paymentRequest.exchangeType === ExchangeTypeEnum.BRIDGE) {
+            const network = wallet.network;
+
+            const toNetworkSymbol =
+              network.symbol === 'BNB' ? 'BSC' : network.symbol === 'ARB' ? 'ARBITRUM' : network.symbol;
+
+            const withdrawData = await this.withdraw(
+              toCoin,
+              wallet.address,
+              Number(paymentRequest.amount),
+              toNetworkSymbol,
+              network.decimals,
+            );
+
+            console.log('withdrawData', withdrawData);
+
+            await this.paymentRequestRepository.update(paymentRequest.id, {
+              status: PaymentStatusEnum.COMPLETED,
+              withdrawData: withdrawData,
+            });
+
+            await this.posSocket.emitEvent(
+              paymentRequest.socketId,
+              'payment-request:pay-status',
+              await this.paymentRequestRepository.findOne(paymentRequest.id),
+            );
+          } else {
+            const symbol = jsonData.symbols.find(
+              (s) =>
+                (s.baseAsset === fromCoin && s.quoteAsset === toCoin) ||
+                (s.baseAsset === toCoin && s.quoteAsset === fromCoin),
+            );
+
+            console.log('symbol', symbol);
+
+            if (!symbol?.symbol) {
+              await this.paymentRequestRepository.update(paymentRequest.id, { status: PaymentStatusEnum.CANCELLED });
+              continue;
+            }
+
+            const pair = symbol.symbol;
+
+            const response = await axios.get(`https://api.binance.com/api/v3/ticker/price?symbol=${pair}`).catch(() => {
+              return null;
+            });
+
+            const side = fromCoin === symbol.baseAsset ? 'SELL' : 'BUY';
+
+            let price: number | null = 0;
+
+            if (side === 'BUY') {
+              price = response?.data?.price ? parseFloat(response.data.price) : null;
+
+              if (!price) {
+                continue;
+              }
+            }
+
+            const quantity = side === 'SELL' ? Number(paymentRequest.amount) : Number(paymentRequest.amount) / price;
+
+            console.log('quantity', quantity);
+            // Ajustar la cantidad al stepSize definido
+            const stepSize = parseFloat(symbol.filters.find((f) => f.filterType === 'LOT_SIZE')?.stepSize || '0.1');
+
+            // // Función para ajustar la cantidad al stepSize
+            // function adjustQuantity(qty, step) {
+            //   return Math.floor(qty / step) * step; // Redondear hacia abajo al múltiplo más cercano
+            // }
+
+            // const quantityFinal = adjustQuantity(quantity, stepSize * 2);
+
+            const adjustedQuantity = Math.floor(quantity / stepSize) * stepSize;
+
+            console.log('adjustedQuantity', adjustedQuantity);
+
+            const orderData = await this.trade(pair, side, Number(adjustedQuantity));
+            // const orderData = {
+            //   symbol: 'NEARUSDT',
+            //   orderId: 3420040618,
+            //   orderListId: -1,
+            //   clientOrderId: 'AceHsJgWMYdXohGqSXpgXu',
+            //   transactTime: 1733165641057,
+            //   price: '0.00000000',
+            //   origQty: '3.50000000',
+            //   executedQty: '3.50000000',
+            //   cummulativeQuoteQty: '23.64950000',
+            //   status: 'FILLED',
+            //   timeInForce: 'GTC',
+            //   type: 'MARKET',
+            //   side: 'BUY',
+            //   workingTime: 1733165641057,
+            //   fills: [
+            //     {
+            //       price: '6.75700000',
+            //       qty: '3.50000000',
+            //       commission: '0.00350000',
+            //       commissionAsset: 'NEAR',
+            //       tradeId: 225585905,
+            //     },
+            //   ],
+            //   selfTradePreventionMode: 'EXPIRE_MAKER',
+            // };
+
+            console.log('orderData', orderData);
+
+            if (orderData.status !== 'FILLED') {
+              await this.paymentRequestRepository.update(paymentRequest.id, {
+                status: PaymentStatusEnum.FAILED,
+                orderData: orderData,
+              });
+
+              continue;
+            }
+
+            await this.paymentRequestRepository.update(paymentRequest.id, {
+              status: PaymentStatusEnum.PROCESSING,
+              orderData: orderData,
+            });
+
+            const network = wallet.network;
+
+            const toNetworkSymbol =
+              network.symbol === 'BNB' ? 'BSC' : network.symbol === 'ARB' ? 'ARBITRUM' : network.symbol;
+
+            setTimeout(async () => {
+              try {
+                const withdrawData = await this.withdraw(
+                  toCoin,
+                  wallet.address,
+                  side === 'BUY' ? Number(orderData.executedQty) : Number(orderData.cummulativeQuoteQty),
+                  toNetworkSymbol,
+                  network.decimals,
+                );
+
+                console.log('withdrawData', withdrawData);
+
+                await this.paymentRequestRepository.update(paymentRequest.id, {
+                  status: PaymentStatusEnum.COMPLETED,
+                  withdrawData: withdrawData,
+                });
+
+                console.log('Retiro ejecutado exitosamente.');
+              } catch (error) {
+                console.error('Error al ejecutar el retiro:', error);
+              }
+            }, 15000);
+          }
+        } catch (error) {
+          console.log('error', error);
+          continue;
+        }
+      }
     } catch (error) {
       console.log('error', error?.data || error.response.data);
     }

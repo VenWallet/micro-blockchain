@@ -39,9 +39,9 @@ export class PaymentRequestRepository {
     });
   }
 
-  async findProcessing(): Promise<PaymentRequestEntity[]> {
+  async findProcessingPaid(): Promise<PaymentRequestEntity[]> {
     return await this.repository.find({
-      where: { status: PaymentStatusEnum.PROCESSING },
+      where: { status: PaymentStatusEnum.PROCESSING, isPaid: true },
       relations: ['network', 'token', 'token.tokenData'],
     });
   }

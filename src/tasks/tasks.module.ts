@@ -10,6 +10,6 @@ import { PosTask } from './pos.task';
 @Module({
   imports: [HttpCustomModule, SpotMarketModule, WalletModule, BinanceApiModule, PosModule],
   controllers: [],
-  providers: [TasksService],
+  providers: [TasksService, PosTask],
 })
 export class TasksModule {}

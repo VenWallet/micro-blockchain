@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { TokenEntity } from 'src/modules/token/entities/token.entity';
 import { NetworkEntity } from 'src/modules/network/entities/network.entity';
+import { ExchangeTypeEnum } from 'src/modules/spotMarket/enums/exchangeType.enum';
 
 @Entity({ name: 'pos_link' })
 export class PosLinkEntity extends BaseEntity {

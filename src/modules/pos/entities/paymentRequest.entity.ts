@@ -11,6 +11,7 @@ import {
 import { TokenEntity } from 'src/modules/token/entities/token.entity';
 import { NetworkEntity } from 'src/modules/network/entities/network.entity';
 import { PaymentStatusEnum } from '../enums/paymentStatus.enum';
+import { ExchangeTypeEnum } from 'src/modules/spotMarket/enums/exchangeType.enum';
 
 @Entity({ name: 'payment_request' })
 export class PaymentRequestEntity extends BaseEntity {
@@ -64,6 +65,28 @@ export class PaymentRequestEntity extends BaseEntity {
     nullable: true,
   })
   hash: string;
+
+  @Column({
+    type: 'enum',
+    name: 'exchange_type',
+    enum: ExchangeTypeEnum,
+    default: ExchangeTypeEnum.EXCHANGE,
+  })
+  exchangeType: ExchangeTypeEnum;
+
+  @Column({
+    name: 'order_data',
+    type: 'jsonb',
+    nullable: true,
+  })
+  orderData: any;
+
+  @Column({
+    name: 'withdraw_data',
+    type: 'jsonb',
+    nullable: true,
+  })
+  withdrawData: any;
 
   @CreateDateColumn({
     name: 'created_at',

@@ -141,11 +141,11 @@ export class PaymentRequestService {
       console.log('toNetwork', toNetwork);
       console.log('toCoin', toCoin);
 
-      if (fromNetwork === toNetwork && fromCoin === toCoin) {
-        throw new ConflictException(
-          'The source and destination networks cannot be the same. Please select different networks for the transfer',
-        );
-      }
+      // if (fromNetwork === toNetwork && fromCoin === toCoin) {
+      //   throw new ConflictException(
+      //     'The source and destination networks cannot be the same. Please select different networks for the transfer',
+      //   );
+      // }
 
       const toAddressDeposit = DepositAddressEnum[fromNetwork.index];
 
@@ -171,7 +171,9 @@ export class PaymentRequestService {
 
       let exchangeType = ExchangeTypeEnum.EXCHANGE;
 
-      if (fromNetwork.symbol === toNetwork.symbol) {
+      if (fromNetwork.symbol === toNetwork.symbol && fromCoin === toCoin) {
+        exchangeType = ExchangeTypeEnum.SAME;
+      } else if (fromNetwork.symbol === toNetwork.symbol) {
         exchangeType = ExchangeTypeEnum.SWAP;
       } else if (fromCoin === toCoin) {
         exchangeType = ExchangeTypeEnum.BRIDGE;
@@ -322,7 +324,7 @@ export class PaymentRequestService {
 
       console.log('hash', hash);
 
-      await this.paymentRequestRepository.update(paymentRequest.id, { isPaid: true, hash });
+      await this.paymentRequestRepository.update(paymentRequest.id, { isPaid: true, hash, exchangeType: exchangeType });
 
       await this.posSocket.emitEvent(
         paymentRequest.socketId,
