@@ -1,6 +1,6 @@
 import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeleteResult, Repository } from 'typeorm';
+import { Between, DeleteResult, Repository } from 'typeorm';
 import { plainToClass } from 'class-transformer';
 import { PaymentRequestDto, PosLinkDto } from '../dto/pos.dto';
 import { PaymentRequestEntity } from '../entities/paymentRequest.entity';
@@ -42,6 +42,16 @@ export class PaymentRequestRepository {
   async findProcessingPaid(): Promise<PaymentRequestEntity[]> {
     return await this.repository.find({
       where: { status: PaymentStatusEnum.PROCESSING, isPaid: true },
+      relations: ['network', 'token', 'token.tokenData'],
+    });
+  }
+
+  async findPendingsAgoOneDay(): Promise<PaymentRequestEntity[]> {
+    const daysAgo = new Date();
+    daysAgo.setDate(daysAgo.getDate() - 1);
+
+    return await this.repository.find({
+      where: { status: PaymentStatusEnum.PENDING, createdAt: Between(daysAgo, new Date()) },
       relations: ['network', 'token', 'token.tokenData'],
     });
   }

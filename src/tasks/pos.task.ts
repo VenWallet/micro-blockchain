@@ -16,6 +16,7 @@ import { PosLinkRepository } from 'src/modules/pos/repositories/posLink.reposito
 import { PosSettingsRepository } from 'src/modules/pos/repositories/posSettings.repository';
 import { PaymentStatusEnum } from 'src/modules/pos/enums/paymentStatus.enum';
 import { PosSocket } from 'src/modules/pos/sockets/pos.socket';
+import { NetworksEnum } from 'src/modules/network/enums/networks.enum';
 
 @Injectable()
 export class PosTask {
@@ -29,8 +30,77 @@ export class PosTask {
   ) {}
 
   @Cron('*/1 * * * *')
+  async PosTaskPendings() {
+    try {
+      console.log('PosTaskPendings');
+      const paymentRequests = await this.paymentRequestRepository.findPendingsAgoOneDay();
+
+      console.log('paymentRequests', paymentRequests);
+
+      if (!paymentRequests.length) {
+        return;
+      }
+
+      const data = fs.readFileSync('./exchangeInfo.json', 'utf8');
+      const jsonData = JSON.parse(data);
+
+      const deposits = await this.binanceApiService.getDeposits();
+
+      console.log('deposits', deposits);
+
+      for (const paymentRequest of paymentRequests) {
+        const refId = paymentRequest.refId;
+
+        if (!/^\d{4}$/.test(refId)) {
+          console.error(`Invalid refId: ${refId}`);
+          continue;
+        }
+
+        const matchingDeposit = deposits.find((deposit) => {
+          const amountString = deposit.amount.toString();
+          const lastFourDigits = amountString.slice(-4);
+          return lastFourDigits === refId;
+        });
+
+        if (matchingDeposit) {
+          if (paymentRequest.token) {
+            if (paymentRequest.token.tokenData.symbol !== matchingDeposit.coin) {
+              console.log(`Invalid coin: ${matchingDeposit.coin}`);
+              continue;
+            }
+          } else {
+            if (paymentRequest.network.symbol !== matchingDeposit.coin) {
+              console.log(`Invalid coin: ${matchingDeposit.coin}`);
+              continue;
+            }
+
+            const nameNetwork =
+              paymentRequest.network.name === NetworksEnum.TRON ? 'TRX' : paymentRequest.network.name.toUpperCase();
+
+            if (nameNetwork !== matchingDeposit.network) {
+              console.log(`Invalid network: ${matchingDeposit.network}`);
+              continue;
+            }
+
+            console.log('Updating payment request', paymentRequest.id);
+
+            await this.paymentRequestRepository.update(paymentRequest.id, {
+              status: PaymentStatusEnum.PROCESSING,
+              isPaid: true,
+              hash: matchingDeposit.txId,
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.log('error', error?.data || error.response.data);
+    }
+  }
+
+  @Cron('*/1 * * * *')
   async PosTask() {
     try {
+      console.log('PosTask');
       const paymentRequests = await this.paymentRequestRepository.findProcessingPaid();
 
       if (!paymentRequests.length) {
@@ -42,248 +112,250 @@ export class PosTask {
 
       const deposits = await this.binanceApiService.getDeposits();
 
-      console.log('paymentRequests', paymentRequests);
+      // console.log('deposits', deposits);
 
-      for (const paymentRequest of paymentRequests) {
-        try {
-          // console.log(spotMarket);
+      // console.log('paymentRequests', paymentRequests);
 
-          const deposit = deposits.find((d) => d.txId === paymentRequest.hash);
+      // for (const paymentRequest of paymentRequests) {
+      //   try {
+      //     // console.log(spotMarket);
 
-          console.log(deposit);
+      //     const deposit = deposits.find((d) => d.txId === paymentRequest.hash);
 
-          if (!deposit) {
-            continue;
-          }
+      //     console.log(deposit);
 
-          console.log(deposit);
+      //     if (!deposit) {
+      //       continue;
+      //     }
 
-          if (deposit.status !== 1) {
-            continue;
-          }
+      //     console.log(deposit);
 
-          const isNative: boolean = paymentRequest.token ? false : true;
+      //     if (deposit.status !== 1) {
+      //       continue;
+      //     }
 
-          let fromNetwork;
-          let fromCoin;
+      //     const isNative: boolean = paymentRequest.token ? false : true;
 
-          if (isNative) {
-            fromNetwork = paymentRequest.network;
-            fromCoin = paymentRequest.network.symbol;
-          } else {
-            fromNetwork = paymentRequest.network;
-            fromCoin = paymentRequest.token.tokenData.symbol;
-          }
+      //     let fromNetwork;
+      //     let fromCoin;
 
-          let toNetwork;
-          let toCoin;
-          let toUserId;
+      //     if (isNative) {
+      //       fromNetwork = paymentRequest.network;
+      //       fromCoin = paymentRequest.network.symbol;
+      //     } else {
+      //       fromNetwork = paymentRequest.network;
+      //       fromCoin = paymentRequest.token.tokenData.symbol;
+      //     }
 
-          const posLinked = await this.posLinkRepository.findOneByUserLinked(paymentRequest.userId);
+      //     let toNetwork;
+      //     let toCoin;
+      //     let toUserId;
 
-          if (posLinked) {
-            toUserId = posLinked.userId;
+      //     const posLinked = await this.posLinkRepository.findOneByUserLinked(paymentRequest.userId);
 
-            const posSettings = await this.posSettingsRepository.findOneByUserId(posLinked.userId);
+      //     if (posLinked) {
+      //       toUserId = posLinked.userId;
 
-            if (!posSettings) {
-              continue;
-            }
+      //       const posSettings = await this.posSettingsRepository.findOneByUserId(posLinked.userId);
 
-            if (!posSettings.network_ext || !posSettings.token_ext) {
-              continue;
-            }
+      //       if (!posSettings) {
+      //         continue;
+      //       }
 
-            toNetwork = posSettings.network_ext;
+      //       if (!posSettings.network_ext || !posSettings.token_ext) {
+      //         continue;
+      //       }
 
-            if (posSettings.token_ext) {
-              toCoin = posSettings.token_ext.tokenData.symbol;
-            } else {
-              toCoin = posSettings.network_ext.symbol;
-            }
-          } else {
-            const posSettings = await this.posSettingsRepository.findOneByUserId(paymentRequest.userId);
+      //       toNetwork = posSettings.network_ext;
 
-            if (!posSettings) {
-              continue;
-            }
+      //       if (posSettings.token_ext) {
+      //         toCoin = posSettings.token_ext.tokenData.symbol;
+      //       } else {
+      //         toCoin = posSettings.network_ext.symbol;
+      //       }
+      //     } else {
+      //       const posSettings = await this.posSettingsRepository.findOneByUserId(paymentRequest.userId);
 
-            toUserId = posSettings.userId;
+      //       if (!posSettings) {
+      //         continue;
+      //       }
 
-            toNetwork = posSettings.network;
+      //       toUserId = posSettings.userId;
 
-            if (posSettings.token) {
-              toCoin = posSettings.token.tokenData.symbol;
-            } else {
-              toCoin = posSettings.network.symbol;
-            }
-          }
-          console.log('fromNetwork', fromNetwork);
-          console.log('fromCoin', fromCoin);
+      //       toNetwork = posSettings.network;
 
-          console.log('toNetwork', toNetwork);
-          console.log('toCoin', toCoin);
+      //       if (posSettings.token) {
+      //         toCoin = posSettings.token.tokenData.symbol;
+      //       } else {
+      //         toCoin = posSettings.network.symbol;
+      //       }
+      //     }
+      //     console.log('fromNetwork', fromNetwork);
+      //     console.log('fromCoin', fromCoin);
 
-          const wallet = await this.walletRepository.findOneByUserIdAndIndex(toUserId, toNetwork.index);
+      //     console.log('toNetwork', toNetwork);
+      //     console.log('toCoin', toCoin);
 
-          console.log('wallet', wallet);
+      //     const wallet = await this.walletRepository.findOneByUserIdAndIndex(toUserId, toNetwork.index);
 
-          if (!wallet) {
-            continue;
-          }
+      //     console.log('wallet', wallet);
 
-          if (paymentRequest.exchangeType === ExchangeTypeEnum.BRIDGE) {
-            const network = wallet.network;
+      //     if (!wallet) {
+      //       continue;
+      //     }
 
-            const toNetworkSymbol =
-              network.symbol === 'BNB' ? 'BSC' : network.symbol === 'ARB' ? 'ARBITRUM' : network.symbol;
+      //     if (paymentRequest.exchangeType === ExchangeTypeEnum.BRIDGE) {
+      //       const network = wallet.network;
 
-            const withdrawData = await this.withdraw(
-              toCoin,
-              wallet.address,
-              Number(paymentRequest.amount),
-              toNetworkSymbol,
-              network.decimals,
-            );
+      //       const toNetworkSymbol =
+      //         network.symbol === 'BNB' ? 'BSC' : network.symbol === 'ARB' ? 'ARBITRUM' : network.symbol;
 
-            console.log('withdrawData', withdrawData);
+      //       const withdrawData = await this.withdraw(
+      //         toCoin,
+      //         wallet.address,
+      //         Number(paymentRequest.amount),
+      //         toNetworkSymbol,
+      //         network.decimals,
+      //       );
 
-            await this.paymentRequestRepository.update(paymentRequest.id, {
-              status: PaymentStatusEnum.COMPLETED,
-              withdrawData: withdrawData,
-            });
+      //       console.log('withdrawData', withdrawData);
 
-            await this.posSocket.emitEvent(
-              paymentRequest.socketId,
-              'payment-request:pay-status',
-              await this.paymentRequestRepository.findOne(paymentRequest.id),
-            );
-          } else {
-            const symbol = jsonData.symbols.find(
-              (s) =>
-                (s.baseAsset === fromCoin && s.quoteAsset === toCoin) ||
-                (s.baseAsset === toCoin && s.quoteAsset === fromCoin),
-            );
+      //       await this.paymentRequestRepository.update(paymentRequest.id, {
+      //         status: PaymentStatusEnum.COMPLETED,
+      //         withdrawData: withdrawData,
+      //       });
 
-            console.log('symbol', symbol);
+      //       await this.posSocket.emitEvent(
+      //         paymentRequest.socketId,
+      //         'payment-request:pay-status',
+      //         await this.paymentRequestRepository.findOne(paymentRequest.id),
+      //       );
+      //     } else {
+      //       const symbol = jsonData.symbols.find(
+      //         (s) =>
+      //           (s.baseAsset === fromCoin && s.quoteAsset === toCoin) ||
+      //           (s.baseAsset === toCoin && s.quoteAsset === fromCoin),
+      //       );
 
-            if (!symbol?.symbol) {
-              await this.paymentRequestRepository.update(paymentRequest.id, { status: PaymentStatusEnum.CANCELLED });
-              continue;
-            }
+      //       console.log('symbol', symbol);
 
-            const pair = symbol.symbol;
+      //       if (!symbol?.symbol) {
+      //         await this.paymentRequestRepository.update(paymentRequest.id, { status: PaymentStatusEnum.CANCELLED });
+      //         continue;
+      //       }
 
-            const response = await axios.get(`https://api.binance.com/api/v3/ticker/price?symbol=${pair}`).catch(() => {
-              return null;
-            });
+      //       const pair = symbol.symbol;
 
-            const side = fromCoin === symbol.baseAsset ? 'SELL' : 'BUY';
+      //       const response = await axios.get(`https://api.binance.com/api/v3/ticker/price?symbol=${pair}`).catch(() => {
+      //         return null;
+      //       });
 
-            let price: number | null = 0;
+      //       const side = fromCoin === symbol.baseAsset ? 'SELL' : 'BUY';
 
-            if (side === 'BUY') {
-              price = response?.data?.price ? parseFloat(response.data.price) : null;
+      //       let price: number | null = 0;
 
-              if (!price) {
-                continue;
-              }
-            }
+      //       if (side === 'BUY') {
+      //         price = response?.data?.price ? parseFloat(response.data.price) : null;
 
-            const quantity = side === 'SELL' ? Number(paymentRequest.amount) : Number(paymentRequest.amount) / price;
+      //         if (!price) {
+      //           continue;
+      //         }
+      //       }
 
-            console.log('quantity', quantity);
-            // Ajustar la cantidad al stepSize definido
-            const stepSize = parseFloat(symbol.filters.find((f) => f.filterType === 'LOT_SIZE')?.stepSize || '0.1');
+      //       const quantity = side === 'SELL' ? Number(paymentRequest.amount) : Number(paymentRequest.amount) / price;
 
-            // // Función para ajustar la cantidad al stepSize
-            // function adjustQuantity(qty, step) {
-            //   return Math.floor(qty / step) * step; // Redondear hacia abajo al múltiplo más cercano
-            // }
+      //       console.log('quantity', quantity);
+      //       // Ajustar la cantidad al stepSize definido
+      //       const stepSize = parseFloat(symbol.filters.find((f) => f.filterType === 'LOT_SIZE')?.stepSize || '0.1');
 
-            // const quantityFinal = adjustQuantity(quantity, stepSize * 2);
+      //       // // Función para ajustar la cantidad al stepSize
+      //       // function adjustQuantity(qty, step) {
+      //       //   return Math.floor(qty / step) * step; // Redondear hacia abajo al múltiplo más cercano
+      //       // }
 
-            const adjustedQuantity = Math.floor(quantity / stepSize) * stepSize;
+      //       // const quantityFinal = adjustQuantity(quantity, stepSize * 2);
 
-            console.log('adjustedQuantity', adjustedQuantity);
+      //       const adjustedQuantity = Math.floor(quantity / stepSize) * stepSize;
 
-            const orderData = await this.trade(pair, side, Number(adjustedQuantity));
-            // const orderData = {
-            //   symbol: 'NEARUSDT',
-            //   orderId: 3420040618,
-            //   orderListId: -1,
-            //   clientOrderId: 'AceHsJgWMYdXohGqSXpgXu',
-            //   transactTime: 1733165641057,
-            //   price: '0.00000000',
-            //   origQty: '3.50000000',
-            //   executedQty: '3.50000000',
-            //   cummulativeQuoteQty: '23.64950000',
-            //   status: 'FILLED',
-            //   timeInForce: 'GTC',
-            //   type: 'MARKET',
-            //   side: 'BUY',
-            //   workingTime: 1733165641057,
-            //   fills: [
-            //     {
-            //       price: '6.75700000',
-            //       qty: '3.50000000',
-            //       commission: '0.00350000',
-            //       commissionAsset: 'NEAR',
-            //       tradeId: 225585905,
-            //     },
-            //   ],
-            //   selfTradePreventionMode: 'EXPIRE_MAKER',
-            // };
+      //       console.log('adjustedQuantity', adjustedQuantity);
 
-            console.log('orderData', orderData);
+      //       const orderData = await this.trade(pair, side, Number(adjustedQuantity));
+      //       // const orderData = {
+      //       //   symbol: 'NEARUSDT',
+      //       //   orderId: 3420040618,
+      //       //   orderListId: -1,
+      //       //   clientOrderId: 'AceHsJgWMYdXohGqSXpgXu',
+      //       //   transactTime: 1733165641057,
+      //       //   price: '0.00000000',
+      //       //   origQty: '3.50000000',
+      //       //   executedQty: '3.50000000',
+      //       //   cummulativeQuoteQty: '23.64950000',
+      //       //   status: 'FILLED',
+      //       //   timeInForce: 'GTC',
+      //       //   type: 'MARKET',
+      //       //   side: 'BUY',
+      //       //   workingTime: 1733165641057,
+      //       //   fills: [
+      //       //     {
+      //       //       price: '6.75700000',
+      //       //       qty: '3.50000000',
+      //       //       commission: '0.00350000',
+      //       //       commissionAsset: 'NEAR',
+      //       //       tradeId: 225585905,
+      //       //     },
+      //       //   ],
+      //       //   selfTradePreventionMode: 'EXPIRE_MAKER',
+      //       // };
 
-            if (orderData.status !== 'FILLED') {
-              await this.paymentRequestRepository.update(paymentRequest.id, {
-                status: PaymentStatusEnum.FAILED,
-                orderData: orderData,
-              });
+      //       console.log('orderData', orderData);
 
-              continue;
-            }
+      //       if (orderData.status !== 'FILLED') {
+      //         await this.paymentRequestRepository.update(paymentRequest.id, {
+      //           status: PaymentStatusEnum.FAILED,
+      //           orderData: orderData,
+      //         });
 
-            await this.paymentRequestRepository.update(paymentRequest.id, {
-              status: PaymentStatusEnum.PROCESSING,
-              orderData: orderData,
-            });
+      //         continue;
+      //       }
 
-            const network = wallet.network;
+      //       await this.paymentRequestRepository.update(paymentRequest.id, {
+      //         status: PaymentStatusEnum.PROCESSING,
+      //         orderData: orderData,
+      //       });
 
-            const toNetworkSymbol =
-              network.symbol === 'BNB' ? 'BSC' : network.symbol === 'ARB' ? 'ARBITRUM' : network.symbol;
+      //       const network = wallet.network;
 
-            setTimeout(async () => {
-              try {
-                const withdrawData = await this.withdraw(
-                  toCoin,
-                  wallet.address,
-                  side === 'BUY' ? Number(orderData.executedQty) : Number(orderData.cummulativeQuoteQty),
-                  toNetworkSymbol,
-                  network.decimals,
-                );
+      //       const toNetworkSymbol =
+      //         network.symbol === 'BNB' ? 'BSC' : network.symbol === 'ARB' ? 'ARBITRUM' : network.symbol;
 
-                console.log('withdrawData', withdrawData);
+      //       setTimeout(async () => {
+      //         try {
+      //           const withdrawData = await this.withdraw(
+      //             toCoin,
+      //             wallet.address,
+      //             side === 'BUY' ? Number(orderData.executedQty) : Number(orderData.cummulativeQuoteQty),
+      //             toNetworkSymbol,
+      //             network.decimals,
+      //           );
 
-                await this.paymentRequestRepository.update(paymentRequest.id, {
-                  status: PaymentStatusEnum.COMPLETED,
-                  withdrawData: withdrawData,
-                });
+      //           console.log('withdrawData', withdrawData);
 
-                console.log('Retiro ejecutado exitosamente.');
-              } catch (error) {
-                console.error('Error al ejecutar el retiro:', error);
-              }
-            }, 15000);
-          }
-        } catch (error) {
-          console.log('error', error);
-          continue;
-        }
-      }
+      //           await this.paymentRequestRepository.update(paymentRequest.id, {
+      //             status: PaymentStatusEnum.COMPLETED,
+      //             withdrawData: withdrawData,
+      //           });
+
+      //           console.log('Retiro ejecutado exitosamente.');
+      //         } catch (error) {
+      //           console.error('Error al ejecutar el retiro:', error);
+      //         }
+      //       }, 15000);
+      //     }
+      //   } catch (error) {
+      //     console.log('error', error);
+      //     continue;
+      //   }
+      // }
     } catch (error) {
       console.log('error', error?.data || error.response.data);
     }

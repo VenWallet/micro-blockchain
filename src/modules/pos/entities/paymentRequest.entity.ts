@@ -79,6 +79,12 @@ export class PaymentRequestEntity extends BaseEntity {
   socketId: string;
 
   @Column({
+    name: 'payment_address',
+    nullable: true,
+  })
+  paymentAddress: string;
+
+  @Column({
     nullable: true,
   })
   hash: string;
