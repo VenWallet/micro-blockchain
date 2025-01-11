@@ -80,7 +80,9 @@ export class PaymentRequestService {
 
       // Convertir el refId en su representación numérica para ajustar el monto
       const refIdNumeric = parseFloat(`0.${refId}`); // Crea el decimal a partir del refId
-      const adjustedAmount = parseFloat((createPaymentRequestDto.amount + refIdNumeric).toFixed(8)); // Suma y ajusta a 8 decimales
+      const adjustedAmount = parseFloat(
+        Number(String(createPaymentRequestDto.amount) + String(refIdNumeric)).toFixed(8),
+      ); // Suma y ajusta a 8 decimales
 
       // Construir los datos para el nuevo PaymentRequest
       const paymentRequestDto = {
