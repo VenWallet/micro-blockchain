@@ -76,6 +76,8 @@ export class PaymentRequestService {
 
       let adjustedAmount;
 
+      createPaymentRequestDto.amount = createPaymentRequestDto.amount + createPaymentRequestDto.amount * 0.005;
+
       if (Number.isInteger(createPaymentRequestDto.amount)) {
         adjustedAmount = Number(Number(createPaymentRequestDto.amount).toFixed(2) + String(refId));
       } else {
