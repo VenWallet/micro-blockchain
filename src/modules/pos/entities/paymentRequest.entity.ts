@@ -40,16 +40,12 @@ export class PaymentRequestEntity extends BaseEntity {
 
   @Column({
     type: 'decimal',
-    precision: 18,
-    scale: 8,
     nullable: false,
   })
   amount: number;
 
   @Column({
     type: 'decimal',
-    precision: 18,
-    scale: 8,
     nullable: true,
   })
   fee: number;
