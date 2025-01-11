@@ -60,8 +60,19 @@ export class PaymentRequestService {
         throw new NotFoundException('Network not found');
       }
 
+      const refId =
+        '0' +
+        Math.floor(1000 + Math.random() * 9000)
+          .toString()
+          .slice(1);
+
+      const refIdNumeric = parseFloat('0.' + refId);
+      const adjustedAmount = parseFloat((createPaymentRequestDto.amount + refIdNumeric).toFixed(8));
+
       const paymentRequestDto = {
         ...createPaymentRequestDto,
+        refId: refId,
+        amount: adjustedAmount,
         network: network.id,
       };
 

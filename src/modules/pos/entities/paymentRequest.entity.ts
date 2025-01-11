@@ -24,6 +24,12 @@ export class PaymentRequestEntity extends BaseEntity {
   })
   userId: string;
 
+  @Column({
+    name: 'ref_id',
+    nullable: true,
+  })
+  refId: string;
+
   @ManyToOne(() => NetworkEntity)
   @JoinColumn({ name: 'network_id' })
   network: NetworkEntity;
