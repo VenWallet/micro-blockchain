@@ -39,9 +39,12 @@ export class PaymentRequestEntity extends BaseEntity {
   token: TokenEntity;
 
   @Column({
+    type: 'decimal',
+    precision: 18,
+    scale: 8,
     nullable: false,
   })
-  amount!: number;
+  amount: number;
 
   @Column({
     nullable: true,
