@@ -76,12 +76,14 @@ export class PaymentRequestService {
 
       let adjustedAmount;
 
-      createPaymentRequestDto.amount = createPaymentRequestDto.amount + createPaymentRequestDto.amount * 0.005;
+      let fee = Number((createPaymentRequestDto.amount * 0.005).toFixed(8));
+
+      createPaymentRequestDto.amount = Number((createPaymentRequestDto.amount + fee).toFixed(8));
 
       if (Number.isInteger(createPaymentRequestDto.amount)) {
         adjustedAmount = Number(Number(createPaymentRequestDto.amount).toFixed(2) + String(refId));
       } else {
-        adjustedAmount = Number(String(parseFloat(String(createPaymentRequestDto.amount))) + String(refId));
+        adjustedAmount = Number(String(createPaymentRequestDto.amount) + String(refId));
       }
 
       if (!adjustedAmount) {
@@ -91,6 +93,7 @@ export class PaymentRequestService {
       const paymentRequestDto = {
         ...createPaymentRequestDto,
         refId,
+        fee,
         amount: adjustedAmount,
         network: network.id,
       };
