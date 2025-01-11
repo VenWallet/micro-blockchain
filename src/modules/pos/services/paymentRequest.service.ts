@@ -83,7 +83,7 @@ export class PaymentRequestService {
           .toString()
           .slice(1);
 
-      const refIdNumeric = parseFloat('0.' + refId);
+      const refIdNumeric = parseFloat(`0.${refId}`); // Con `parseFloat` y plantilla literal
       const adjustedAmount = parseFloat((createPaymentRequestDto.amount + refIdNumeric).toFixed(8));
 
       const paymentRequestDto = {
