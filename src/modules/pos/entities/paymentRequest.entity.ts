@@ -50,7 +50,7 @@ export class PaymentRequestEntity extends BaseEntity {
     type: 'decimal',
     precision: 18,
     scale: 8,
-    nullable: false,
+    nullable: true,
   })
   fee: number;
 
