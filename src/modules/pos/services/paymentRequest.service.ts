@@ -54,23 +54,19 @@ export class PaymentRequestService {
 
   async createPaymentRequest(createPaymentRequestDto: PaymentRequestDto) {
     try {
-      // Verifica que la red existe
       const network = await this.networkRepository.findOneByIndex(createPaymentRequestDto.network as IndexEnum);
 
       if (!network) {
         throw new NotFoundException('Network not found');
       }
 
-      // Generar un refId único de 4 dígitos, garantizando unicidad
       let refId: string = '';
       let isUnique = false;
 
       while (!isUnique) {
-        // Genera un refId aleatorio y garantiza formato de 4 dígitos
         refId = Math.floor(1000 + Math.random() * 9000).toString();
-        refId = '0' + refId.slice(1); // Asegura que siempre comience con 0
+        refId = '0' + refId.slice(1);
 
-        // Verifica que el refId no exista en la base de datos
         const existingPaymentRequest = await this.paymentRequestRepository.findOneByRefId(refId);
 
         if (!existingPaymentRequest) {
@@ -78,21 +74,25 @@ export class PaymentRequestService {
         }
       }
 
-      // Convertir el refId en su representación numérica para ajustar el monto
-      const refIdNumeric = parseFloat(`0.${refId}`); // Crea el decimal a partir del refId
-      const adjustedAmount = parseFloat(
-        Number(String(createPaymentRequestDto.amount) + String(refIdNumeric)).toFixed(8),
-      ); // Suma y ajusta a 8 decimales
+      let adjustedAmount;
 
-      // Construir los datos para el nuevo PaymentRequest
+      if (Number.isInteger(createPaymentRequestDto.amount)) {
+        adjustedAmount = Number(Number(createPaymentRequestDto.amount).toFixed(2) + String(refId));
+      } else {
+        adjustedAmount = Number(String(parseFloat(String(createPaymentRequestDto.amount))) + String(refId));
+      }
+
+      if (!adjustedAmount) {
+        throw new ConflictException('Amount must be greater than 0.01');
+      }
+
       const paymentRequestDto = {
         ...createPaymentRequestDto,
-        refId, // Guarda el refId generado
-        amount: adjustedAmount, // Usa el monto ajustado
+        refId,
+        amount: adjustedAmount,
         network: network.id,
       };
 
-      // Crea la solicitud de pago
       const paymentRequest = await this.paymentRequestRepository.create(paymentRequestDto);
 
       return paymentRequest;
