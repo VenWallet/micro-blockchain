@@ -60,7 +60,24 @@ export class PaymentRequestService {
         throw new NotFoundException('Network not found');
       }
 
-      const refId =
+      let refId: string;
+      let isUnique = false;
+
+      while (!isUnique) {
+        refId =
+          '0' +
+          Math.floor(1000 + Math.random() * 9000)
+            .toString()
+            .slice(1);
+
+        const existingPaymentRequest = await this.paymentRequestRepository.findOneByRefId(refId);
+
+        if (!existingPaymentRequest) {
+          isUnique = true;
+        }
+      }
+
+      refId =
         '0' +
         Math.floor(1000 + Math.random() * 9000)
           .toString()

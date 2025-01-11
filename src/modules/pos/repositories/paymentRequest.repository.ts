@@ -52,6 +52,12 @@ export class PaymentRequestRepository {
     });
   }
 
+  async findOneByRefId(refId: string): Promise<PaymentRequestEntity | null> {
+    return await this.repository.findOne({
+      where: { refId },
+    });
+  }
+
   async update(id: string, updateData: Partial<PaymentRequestEntity>): Promise<void> {
     const updateResult = await this.repository.update({ id }, updateData);
     if (updateResult.affected === 0) {
