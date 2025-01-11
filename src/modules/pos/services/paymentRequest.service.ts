@@ -92,6 +92,7 @@ export class PaymentRequestService {
 
       const paymentRequestDto = {
         ...createPaymentRequestDto,
+        paymentAddress: DepositAddressEnum[network.index],
         refId,
         fee,
         amount: adjustedAmount,
