@@ -284,7 +284,7 @@ export class PaymentRequestService {
 
         const stepSize = parseFloat(symbol.filters.find((f) => f.filterType === 'LOT_SIZE')?.stepSize || '0.1');
 
-        let quantity = side === 'SELL' ? paymentRequest.amount * price : paymentRequest.amount / price;
+        let quantity = side === 'SELL' ? Number(paymentRequest.amount) * price : Number(paymentRequest.amount) / price;
 
         quantity = Math.floor(quantity / stepSize) * stepSize;
 
@@ -300,11 +300,11 @@ export class PaymentRequestService {
           throw new NotFoundException('Amount is less than withdraw min, after fees');
         }
       } else {
-        const feeWallet = paymentRequest.amount * 0.001;
+        const feeWallet = Number(paymentRequest.amount) * 0.001;
 
         const feeTotal = feeWithdraw + feeWallet;
 
-        const amountReceived = paymentRequest.amount - feeTotal;
+        const amountReceived = Number(paymentRequest.amount) - feeTotal;
 
         if (amountReceived < Number(toNetworkConfig.withdrawMin)) {
           throw new NotFoundException('Amount is less than withdraw min, after fees');
@@ -323,7 +323,7 @@ export class PaymentRequestService {
           privateKey: paymentRequestPayDto.privateKey,
           network: fromNetwork.index,
           toAddress: toAddressDeposit,
-          amount: paymentRequest.amount,
+          amount: Number(paymentRequest.amount),
         };
 
         const transfer = await this.blockchainService.transfer(transferDto, false);
@@ -341,7 +341,7 @@ export class PaymentRequestService {
           privateKey: paymentRequestPayDto.privateKey,
           network: fromNetwork.index,
           toAddress: toAddressDeposit,
-          amount: paymentRequest.amount,
+          amount: Number(paymentRequest.amount),
           token: fromToken.id,
         };
 

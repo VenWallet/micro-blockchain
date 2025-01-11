@@ -39,16 +39,14 @@ export class PaymentRequestEntity extends BaseEntity {
   token: TokenEntity;
 
   @Column({
-    type: 'decimal',
     nullable: false,
   })
-  amount: number;
+  amount: string;
 
   @Column({
-    type: 'decimal',
     nullable: true,
   })
-  fee: number;
+  fee: string;
 
   @Column({
     nullable: true,
