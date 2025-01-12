@@ -233,7 +233,7 @@ export class PaymentRequestService {
 
       const feeWithdraw = Number(toNetworkConfig.withdrawFee);
 
-      if (exchangeType !== ExchangeTypeEnum.BRIDGE) {
+      if (exchangeType !== ExchangeTypeEnum.BRIDGE && exchangeType !== ExchangeTypeEnum.SAME) {
         const jsonData = JSON.parse(exchangeInfo);
 
         const symbol = jsonData.symbols.find(
