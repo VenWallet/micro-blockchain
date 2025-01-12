@@ -102,7 +102,9 @@ export class PaymentRequestService {
         network: network.id,
       };
 
-      const paymentRequest = await this.paymentRequestRepository.create(paymentRequestDto);
+      let paymentRequest: any = await this.paymentRequestRepository.create(paymentRequestDto);
+
+      paymentRequest = await this.paymentRequestRepository.findOne(paymentRequest.id);
 
       const isNative: boolean = paymentRequest.token ? false : true;
 
