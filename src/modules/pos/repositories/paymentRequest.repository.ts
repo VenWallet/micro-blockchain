@@ -46,19 +46,35 @@ export class PaymentRequestRepository {
     });
   }
 
-  async findPendingsAgoOneDay(): Promise<PaymentRequestEntity[]> {
-    const daysAgo = new Date();
-    daysAgo.setDate(daysAgo.getDate() - 1);
+  // async findPendingsAgoOneDay(): Promise<PaymentRequestEntity[]> {
+  //   const daysAgo = new Date();
+  //   daysAgo.setDate(daysAgo.getDate() - 1);
+
+  //   return await this.repository.find({
+  //     where: { status: PaymentStatusEnum.PENDING, createdAt: Between(daysAgo, new Date()) },
+  //     relations: ['network', 'token', 'token.tokenData'],
+  //   });
+  // }
+
+  async findPendingsAgoThirtyMinutes(): Promise<PaymentRequestEntity[]> {
+    const thirtyMinutesAgo = new Date();
+    thirtyMinutesAgo.setMinutes(thirtyMinutesAgo.getMinutes() - 30);
 
     return await this.repository.find({
-      where: { status: PaymentStatusEnum.PENDING, createdAt: Between(daysAgo, new Date()) },
+      where: {
+        status: PaymentStatusEnum.PENDING,
+        createdAt: Between(thirtyMinutesAgo, new Date()),
+      },
       relations: ['network', 'token', 'token.tokenData'],
     });
   }
 
   async findOneByUserId(userId: string): Promise<PaymentRequestEntity | null> {
+    const thirtyMinutesAgo = new Date();
+    thirtyMinutesAgo.setMinutes(thirtyMinutesAgo.getMinutes() - 30);
+
     return await this.repository.findOne({
-      where: { userId },
+      where: { userId, createdAt: Between(thirtyMinutesAgo, new Date()) },
     });
   }
 

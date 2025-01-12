@@ -33,7 +33,7 @@ export class PosTask {
   async PosTaskPendings() {
     try {
       console.log('PosTaskPendings');
-      const paymentRequests = await this.paymentRequestRepository.findPendingsAgoOneDay();
+      const paymentRequests = await this.paymentRequestRepository.findPendingsAgoThirtyMinutes();
 
       console.log('paymentRequests', paymentRequests);
 
@@ -44,7 +44,9 @@ export class PosTask {
       const data = fs.readFileSync('./exchangeInfo.json', 'utf8');
       const jsonData = JSON.parse(data);
 
-      const deposits = await this.binanceApiService.getDeposits();
+      const allDeposits = await this.binanceApiService.getDeposits();
+
+      const deposits = this.filterDeposits(allDeposits);
 
       console.log('deposits', deposits);
 
@@ -58,8 +60,8 @@ export class PosTask {
 
         const matchingDeposit = deposits.find((deposit) => {
           const amountString = deposit.amount.toString();
-          const lastFourDigits = amountString.slice(-4);
-          return lastFourDigits === refId;
+          const lastTwoDigits = amountString.slice(-2);
+          return lastTwoDigits === refId;
         });
 
         if (matchingDeposit) {
@@ -73,28 +75,35 @@ export class PosTask {
               console.log(`Invalid coin: ${matchingDeposit.coin}`);
               continue;
             }
-
-            const nameNetwork =
-              paymentRequest.network.name === NetworksEnum.TRON ? 'TRX' : paymentRequest.network.name.toUpperCase();
-
-            if (nameNetwork !== matchingDeposit.network) {
-              console.log(`Invalid network: ${matchingDeposit.network}`);
-              continue;
-            }
-
-            console.log('Updating payment request', paymentRequest.id);
-
-            await this.paymentRequestRepository.update(paymentRequest.id, {
-              status: PaymentStatusEnum.PROCESSING,
-              isPaid: true,
-              hash: matchingDeposit.txId,
-            });
           }
+
+          const nameNetwork =
+            paymentRequest.network.name === NetworksEnum.TRON ? 'TRX' : paymentRequest.network.name.toUpperCase();
+
+          if (nameNetwork !== matchingDeposit.network) {
+            console.log(`Invalid network: ${matchingDeposit.network}`);
+            continue;
+          }
+
+          console.log('Updating payment request', paymentRequest.id);
+
+          await this.paymentRequestRepository.update(paymentRequest.id, {
+            status: PaymentStatusEnum.PROCESSING,
+            isPaid: true,
+            hash: matchingDeposit.txId,
+          });
         }
       }
     } catch (error) {
       console.log('error', error?.data || error.response.data);
     }
+  }
+
+  filterDeposits(deposits: any[]): any[] {
+    const now = Date.now(); // Tiempo actual en milisegundos
+    const thirtyMinutesAgo = now - 30 * 60 * 1000; // Hace 30 minutos en milisegundos
+
+    return deposits.filter((deposit) => deposit.insertTime > thirtyMinutesAgo);
   }
 
   @Cron('*/1 * * * *')

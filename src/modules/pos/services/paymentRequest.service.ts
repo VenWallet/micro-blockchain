@@ -64,13 +64,11 @@ export class PaymentRequestService {
       let isUnique = false;
 
       while (!isUnique) {
-        refId = Math.floor(1000 + Math.random() * 9000).toString();
+        refId = Math.floor(10 + Math.random() * 90).toString();
 
         while (refId.endsWith('0')) {
-          refId = Math.floor(1000 + Math.random() * 9000).toString();
+          refId = Math.floor(10 + Math.random() * 90).toString();
         }
-
-        refId = '0' + refId.slice(1);
 
         const existingPaymentRequest = await this.paymentRequestRepository.findOneByRefId(refId);
 
