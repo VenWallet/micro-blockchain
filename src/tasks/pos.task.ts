@@ -30,7 +30,7 @@ export class PosTask {
     private readonly posSocket: PosSocket,
   ) {}
 
-  // @Cron('*/1 * * * *')
+  @Cron('*/1 * * * *')
   async PosTaskPendings() {
     try {
       console.log('PosTaskPendings');
@@ -106,7 +106,7 @@ export class PosTask {
     return deposits.filter((deposit) => deposit.insertTime > thirtyMinutesAgo);
   }
 
-  // @Cron('*/1 * * * *')
+  @Cron('*/1 * * * *')
   async PosTask() {
     try {
       console.log('PosTask');
@@ -225,6 +225,8 @@ export class PosTask {
 
             const toNetworkSymbol =
               network.symbol === 'BNB' ? 'BSC' : network.symbol === 'ARB' ? 'ARBITRUM' : network.symbol;
+
+            console.log('Withdraw to address', wallet.address);
 
             const withdrawData = await this.withdraw(
               toCoin,
@@ -361,6 +363,12 @@ export class PosTask {
                   status: PaymentStatusEnum.COMPLETED,
                   withdrawData: withdrawData,
                 });
+
+                await this.posSocket.emitEvent(
+                  paymentRequest.socketId,
+                  'payment-request:pay-status',
+                  await this.paymentRequestRepository.findOne(paymentRequest.id),
+                );
 
                 console.log('Retiro ejecutado exitosamente.');
               } catch (error) {
