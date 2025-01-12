@@ -104,7 +104,200 @@ export class PaymentRequestService {
 
       const paymentRequest = await this.paymentRequestRepository.create(paymentRequestDto);
 
-      return paymentRequest;
+      const isNative: boolean = paymentRequest.token ? false : true;
+
+      let fromNetwork;
+      let fromCoin;
+
+      if (isNative) {
+        fromNetwork = paymentRequest.network;
+        fromCoin = paymentRequest.network.symbol;
+      } else {
+        fromNetwork = paymentRequest.network;
+        fromCoin = paymentRequest.token.tokenData.symbol;
+      }
+
+      let toNetwork;
+      let toCoin;
+
+      const posLinked = await this.posLinkRepository.findOneByUserLinked(paymentRequest.userId);
+
+      if (posLinked) {
+        const posSettings = await this.posSettingsRepository.findOneByUserId(posLinked.userId);
+
+        if (!posSettings) {
+          throw new NotFoundException('PosSettings not found');
+        }
+
+        if (!posSettings.network_ext || !posSettings.token_ext) {
+          throw new NotFoundException('PosSettings Network Ext or Token Ext not found');
+        }
+
+        toNetwork = posSettings.network_ext;
+
+        if (posSettings.token_ext) {
+          toCoin = posSettings.token_ext.tokenData.symbol;
+        } else {
+          toCoin = posSettings.network_ext.symbol;
+        }
+      } else {
+        const posSettings = await this.posSettingsRepository.findOneByUserId(paymentRequest.userId);
+
+        if (!posSettings) {
+          throw new NotFoundException('PosSettings not found');
+        }
+
+        toNetwork = posSettings.network;
+
+        if (posSettings.token) {
+          toCoin = posSettings.token.tokenData.symbol;
+        } else {
+          toCoin = posSettings.network.symbol;
+        }
+      }
+      console.log('fromNetwork', fromNetwork);
+      console.log('fromCoin', fromCoin);
+
+      console.log('toNetwork', toNetwork);
+      console.log('toCoin', toCoin);
+
+      const toAddressDeposit = DepositAddressEnum[fromNetwork.index];
+
+      if (!toAddressDeposit) {
+        throw new NotFoundException('Deposit address not found');
+      }
+
+      if (!fromNetwork.isActive || !toNetwork.isActive) {
+        throw new NotFoundException('Network is not active');
+      }
+
+      const fromIsNative = fromNetwork.symbol === fromCoin;
+
+      const toIsNative = toNetwork.symbol === toCoin;
+
+      if (!toIsNative) {
+        const toToken = await this.tokenService.findOneBySymbolNetworkId(toCoin, toNetwork.id);
+
+        if (!toToken) {
+          throw new NotFoundException('Token not found');
+        }
+      }
+
+      let exchangeType = ExchangeTypeEnum.EXCHANGE;
+
+      if (fromNetwork.symbol === toNetwork.symbol && fromCoin === toCoin) {
+        exchangeType = ExchangeTypeEnum.SAME;
+      } else if (fromNetwork.symbol === toNetwork.symbol) {
+        exchangeType = ExchangeTypeEnum.SWAP;
+      } else if (fromCoin === toCoin) {
+        exchangeType = ExchangeTypeEnum.BRIDGE;
+      }
+
+      const fromCoinConfig = await this.binanceApiService.getAssetConfig(fromCoin);
+
+      const networkSymbol =
+        fromNetwork.symbol === 'BNB' ? 'BSC' : fromNetwork.symbol === 'ARB' ? 'ARBITRUM' : fromNetwork.symbol;
+
+      const fromNetworkConfig = fromCoinConfig.networkList.find((n) => n.network === networkSymbol);
+
+      if (!fromNetworkConfig) {
+        throw new NotFoundException('Network not found');
+      }
+
+      if (!fromNetworkConfig.depositEnable) {
+        throw new NotFoundException('Deposit not enabled');
+      }
+
+      if (paymentRequest.amount < fromNetworkConfig.depositDust) {
+        throw new NotFoundException('Amount is less than deposit dust');
+      }
+
+      ///////////////////////////////////////////////////
+
+      const toCoinConfig = await this.binanceApiService.getAssetConfig(toCoin);
+
+      const toNetworkSymbol =
+        toNetwork.symbol === 'BNB' ? 'BSC' : toNetwork.symbol === 'ARB' ? 'ARBITRUM' : toNetwork.symbol;
+
+      const toNetworkConfig = toCoinConfig.networkList.find((n) => n.network === toNetworkSymbol);
+
+      if (!toNetworkConfig) {
+        throw new NotFoundException('Network not found');
+      }
+
+      if (!toNetworkConfig.withdrawEnable) {
+        throw new NotFoundException('Withdraw not enabled');
+      }
+
+      const feeWithdraw = Number(toNetworkConfig.withdrawFee);
+
+      if (exchangeType !== ExchangeTypeEnum.BRIDGE) {
+        const jsonData = JSON.parse(exchangeInfo);
+
+        const symbol = jsonData.symbols.find(
+          (s) =>
+            (s.baseAsset === fromCoin && s.quoteAsset === toCoin) ||
+            (s.baseAsset === toCoin && s.quoteAsset === fromCoin),
+        );
+
+        if (!symbol?.symbol) {
+          throw new NotFoundException('Pair not found');
+        }
+
+        if (!symbol.orderTypes.includes('MARKET')) {
+          throw new NotFoundException('Order type not found');
+        }
+
+        if (!symbol?.symbol) {
+          throw new NotFoundException('Pair not found');
+        }
+
+        if (symbol.status !== 'TRADING') {
+          throw new NotFoundException('Pair not available');
+        }
+
+        const pair = symbol.symbol;
+
+        const price = await this.binanceApiService.getTickerPrice(pair);
+
+        const side = fromCoin === symbol.baseAsset ? 'SELL' : 'BUY';
+
+        const stepSize = parseFloat(symbol.filters.find((f) => f.filterType === 'LOT_SIZE')?.stepSize || '0.1');
+
+        let quantity = side === 'SELL' ? Number(paymentRequest.amount) * price : Number(paymentRequest.amount) / price;
+
+        quantity = Math.floor(quantity / stepSize) * stepSize;
+
+        console.log('quantity', quantity);
+
+        const feeWallet = quantity * 0.002;
+
+        const feeTotal = feeWithdraw + feeWallet;
+
+        const amountReceived = quantity - feeTotal;
+
+        if (amountReceived < Number(toNetworkConfig.withdrawMin)) {
+          throw new NotFoundException('Amount is less than withdraw min, after fees');
+        }
+      } else {
+        const feeWallet = Number(paymentRequest.amount) * 0.001;
+
+        const feeTotal = feeWithdraw + feeWallet;
+
+        const amountReceived = Number(paymentRequest.amount) - feeTotal;
+
+        if (amountReceived < Number(toNetworkConfig.withdrawMin)) {
+          throw new NotFoundException('Amount is less than withdraw min, after fees');
+        }
+
+        if (amountReceived > Number(toNetworkConfig.withdrawMax)) {
+          throw new NotFoundException('Amount is greater than withdraw max');
+        }
+      }
+
+      await this.paymentRequestRepository.update(paymentRequest.id, { exchangeType: exchangeType });
+
+      return await this.paymentRequestRepository.findOne(paymentRequest.id);
     } catch (error) {
       throw new ExceptionHandler(error);
     }
