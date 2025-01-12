@@ -1,6 +1,6 @@
 import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, DeleteResult, Repository } from 'typeorm';
+import { Between, DeleteResult, LessThan, MoreThanOrEqual, Raw, Repository } from 'typeorm';
 import { plainToClass } from 'class-transformer';
 import { PaymentRequestDto, PosLinkDto } from '../dto/pos.dto';
 import { PaymentRequestEntity } from '../entities/paymentRequest.entity';
@@ -57,13 +57,17 @@ export class PaymentRequestRepository {
   // }
 
   async findPendingsAgoThirtyMinutes(): Promise<PaymentRequestEntity[]> {
+    const now = new Date();
     const thirtyMinutesAgo = new Date();
-    thirtyMinutesAgo.setMinutes(thirtyMinutesAgo.getMinutes() - 30);
+    thirtyMinutesAgo.setMinutes(now.getMinutes() - 30);
 
     return await this.repository.find({
       where: {
         status: PaymentStatusEnum.PENDING,
-        createdAt: Between(thirtyMinutesAgo, new Date()),
+        createdAt: Raw((alias) => `${alias} BETWEEN :thirtyMinutesAgo AND :now`, {
+          thirtyMinutesAgo: thirtyMinutesAgo.toISOString(),
+          now: now.toISOString(),
+        }),
       },
       relations: ['network', 'token', 'token.tokenData'],
     });

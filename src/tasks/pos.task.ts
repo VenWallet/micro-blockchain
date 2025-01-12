@@ -29,7 +29,7 @@ export class PosTask {
     private readonly posSocket: PosSocket,
   ) {}
 
-  @Cron('*/1 * * * *')
+  // @Cron('*/1 * * * *')
   async PosTaskPendings() {
     try {
       console.log('PosTaskPendings');
@@ -41,9 +41,6 @@ export class PosTask {
         return;
       }
 
-      const data = fs.readFileSync('./exchangeInfo.json', 'utf8');
-      const jsonData = JSON.parse(data);
-
       const allDeposits = await this.binanceApiService.getDeposits();
 
       const deposits = this.filterDeposits(allDeposits);
@@ -53,7 +50,7 @@ export class PosTask {
       for (const paymentRequest of paymentRequests) {
         const refId = paymentRequest.refId;
 
-        if (!/^\d{4}$/.test(refId)) {
+        if (!/^\d{2}$/.test(refId)) {
           console.error(`Invalid refId: ${refId}`);
           continue;
         }
@@ -63,6 +60,8 @@ export class PosTask {
           const lastTwoDigits = amountString.slice(-2);
           return lastTwoDigits === refId;
         });
+
+        console.log('matchingDeposit', matchingDeposit);
 
         if (matchingDeposit) {
           if (paymentRequest.token) {
@@ -100,13 +99,13 @@ export class PosTask {
   }
 
   filterDeposits(deposits: any[]): any[] {
-    const now = Date.now(); // Tiempo actual en milisegundos
-    const thirtyMinutesAgo = now - 30 * 60 * 1000; // Hace 30 minutos en milisegundos
+    const now = Date.now();
+    const thirtyMinutesAgo = now - 30 * 60 * 1000;
 
     return deposits.filter((deposit) => deposit.insertTime > thirtyMinutesAgo);
   }
 
-  @Cron('*/1 * * * *')
+  // @Cron('*/1 * * * *')
   async PosTask() {
     try {
       console.log('PosTask');
