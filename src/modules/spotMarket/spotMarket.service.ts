@@ -25,6 +25,7 @@ import { SpotMarketRepository } from './repositories/spotMarket.repository';
 import { ExchangeTypeEnum } from './enums/exchangeType.enum';
 import { BinanceApiService } from 'src/providers/binance-api/binance-api.service';
 import * as path from 'path';
+import { OrderTypeEnum } from './enums/orderType.enum';
 
 const filePath = path.resolve(process.cwd(), 'exchangeInfo.json');
 const exchangeInfo = fs.readFileSync(filePath, 'utf8');
@@ -262,6 +263,10 @@ export class SpotMarketService {
         exchangeType: exchangeType,
         status: SpotMarketStatusEnum.PENDING,
       };
+
+      if (createSpotMarketDto.typeOrder === OrderTypeEnum.LIMIT && createSpotMarketDto.price) {
+        spotMarketDto.price = String(createSpotMarketDto.price);
+      }
 
       const spotMarket = await this.spotMarketRepository.create(spotMarketDto);
 

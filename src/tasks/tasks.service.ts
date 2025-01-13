@@ -132,7 +132,7 @@ export class TasksService {
 
             console.log('adjustedQuantity', adjustedQuantity);
 
-            const orderData = await this.trade(pair, side, Number(adjustedQuantity));
+            const orderData = await this.trade(pair, side, Number(adjustedQuantity), spotMarket.orderType, price);
             // const orderData = {
             //   symbol: 'NEARUSDT',
             //   orderId: 3420040618,
@@ -231,7 +231,7 @@ export class TasksService {
     }
   }
 
-  private async trade(symbol: string, side: string, quantity: number) {
+  private async trade(symbol: string, side: string, quantity: number, orderType: string, price?: number) {
     try {
       const apiKey = process.env.BINANCE_API_KEY;
       const apiSecret = process.env.BINANCE_API_SECRET;
@@ -240,7 +240,11 @@ export class TasksService {
         throw new Error('API Key and Secret not found');
       }
       const timestamp = Date.now();
-      const queryString = `symbol=${symbol}&side=${side}&type=MARKET&quantity=${quantity.toFixed(6)}&timestamp=${timestamp}`;
+      let queryString = `symbol=${symbol}&side=${side}&type=${orderType}&quantity=${quantity.toFixed(6)}&timestamp=${timestamp}`;
+
+      if (price) {
+        queryString += `&price=${price.toFixed(2)}`;
+      }
 
       // Generate signature
       const signature = crypto.createHmac('sha256', apiSecret).update(queryString).digest('hex');
@@ -261,10 +265,10 @@ export class TasksService {
 
       const feeRate = 0.001; // Fee rate is typically 0.1% for spot trading
       const executedQty = parseFloat(orderData.executedQty); // Amount of base asset traded
-      const price = parseFloat(orderData.fills[0].price); // Price per unit in quote asset
+      const priceData = parseFloat(orderData.fills[0].price); // Price per unit in quote asset
 
       // Calculate fee in quote asset
-      const feeInQuoteAsset = executedQty * price * feeRate;
+      const feeInQuoteAsset = executedQty * priceData * feeRate;
 
       return orderData;
     } catch (error) {

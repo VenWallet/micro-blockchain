@@ -46,6 +46,11 @@ export class CreateSpotMarketDto {
   @IsNotEmpty()
   @Min(0.0000001, { message: 'The amount must be greater than 0' })
   amount: number;
+
+  @ApiProperty({ required: false })
+  @IsNumber()
+  @IsOptional()
+  price?: number;
 }
 
 export class SpotMarketDto {
