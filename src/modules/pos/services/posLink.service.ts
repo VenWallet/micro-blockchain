@@ -74,6 +74,14 @@ export class PosLinkService {
     }
   }
 
+  async findOne(id: string): Promise<PosLinkEntity | null> {
+    try {
+      return await this.posLinkRepository.findOne(id);
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
   async getPosLinkByUserLinked(userId: string): Promise<PosLinkEntity | null> {
     try {
       return await this.posLinkRepository.getPosLinkByUserLinked(userId);
