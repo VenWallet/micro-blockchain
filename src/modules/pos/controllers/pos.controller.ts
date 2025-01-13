@@ -65,9 +65,9 @@ export class PosSettingsController {
     return this.posLinkService.connectPosLink(connectPosLinkDto);
   }
 
-  @Patch('link/:userId')
-  updatePosLink(@Param('userId') userId: string, @Body() updatePosLinkDto: UpdatePosLinkDto) {
-    return this.posLinkService.update(userId, updatePosLinkDto);
+  @Patch('link/:id')
+  updatePosLink(@Param('id') id: string, @Body() updatePosLinkDto: UpdatePosLinkDto) {
+    return this.posLinkService.update(id, updatePosLinkDto);
   }
 
   @Get('link/linked/:userId')

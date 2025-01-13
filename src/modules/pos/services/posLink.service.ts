@@ -90,9 +90,9 @@ export class PosLinkService {
     }
   }
 
-  async update(userId: string, updatePosLinkDto: UpdatePosLinkDto): Promise<PosLinkEntity> {
+  async update(id: string, updatePosLinkDto: UpdatePosLinkDto): Promise<PosLinkEntity> {
     try {
-      const posLinkFound = await this.posLinkRepository.findOneByUserId(userId);
+      const posLinkFound = await this.posLinkRepository.findOne(id);
 
       if (!posLinkFound) {
         throw new NotFoundException('PosLink not found');
