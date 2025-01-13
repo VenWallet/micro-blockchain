@@ -168,7 +168,10 @@ export class SpotMarketService {
 
         const pair = symbol.symbol;
 
-        const price = await this.binanceApiService.getTickerPrice(pair);
+        const price =
+          createSpotMarketDto.typeOrder === OrderTypeEnum.LIMIT && createSpotMarketDto.price
+            ? createSpotMarketDto.price
+            : await this.binanceApiService.getTickerPrice(pair);
 
         const side = createSpotMarketDto.fromCoin === symbol.baseAsset ? 'SELL' : 'BUY';
 
@@ -473,7 +476,10 @@ export class SpotMarketService {
 
         const pair = symbol.symbol;
 
-        const price = await this.binanceApiService.getTickerPrice(pair);
+        const price =
+          previewSpotMarketDto.typeOrder === OrderTypeEnum.LIMIT && previewSpotMarketDto.price
+            ? previewSpotMarketDto.price
+            : await this.binanceApiService.getTickerPrice(pair);
 
         const side = previewSpotMarketDto.fromCoin === symbol.baseAsset ? 'SELL' : 'BUY';
 
