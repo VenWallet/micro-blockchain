@@ -801,4 +801,12 @@ export class PaymentRequestService {
       throw new ExceptionHandler(error);
     }
   }
+
+  async getPaymentRequestByUserId(userId: string) {
+    try {
+      return await this.paymentRequestRepository.findByUserId(userId);
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
 }

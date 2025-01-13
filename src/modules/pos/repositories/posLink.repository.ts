@@ -50,6 +50,12 @@ export class PosLinkRepository {
     });
   }
 
+  async getPosLinkByUserLinked(userId: string): Promise<PosLinkEntity | null> {
+    return await this.repository.findOne({
+      where: { userLinked: userId },
+    });
+  }
+
   async update(id: string, updateData: Partial<PosLinkEntity>): Promise<void> {
     const updateResult = await this.repository.update({ id }, updateData);
     if (updateResult.affected === 0) {

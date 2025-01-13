@@ -82,6 +82,12 @@ export class PaymentRequestRepository {
     });
   }
 
+  async findByUserId(userId: string): Promise<PaymentRequestEntity[]> {
+    return await this.repository.find({
+      where: { userId },
+    });
+  }
+
   async findOneByRefId(refId: string): Promise<PaymentRequestEntity | null> {
     return await this.repository.findOne({
       where: { refId },

@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Query, HttpCode, HttpStatus, ParseBoolPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Query,
+  HttpCode,
+  HttpStatus,
+  ParseBoolPipe,
+  Delete,
+} from '@nestjs/common';
 import { ApiProperty, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { PosSettingsService } from '../services/posSettings.service';
 import {
@@ -43,6 +55,11 @@ export class PosSettingsController {
     return this.posLinkService.createPosLink(posLinkDto);
   }
 
+  @Delete('link/:id')
+  deletePosLink(@Param('id') id: string) {
+    return this.posLinkService.remove(id);
+  }
+
   @Post('link/connect')
   connectPosLink(@Body() connectPosLinkDto: ConnectPosLinkDto) {
     return this.posLinkService.connectPosLink(connectPosLinkDto);
@@ -51,6 +68,11 @@ export class PosSettingsController {
   @Patch('link/:userId')
   updatePosLink(@Param('userId') userId: string, @Body() updatePosLinkDto: UpdatePosLinkDto) {
     return this.posLinkService.update(userId, updatePosLinkDto);
+  }
+
+  @Get('link/linked/:userId')
+  getPosLinkByUserLinked(@Param('userId') userId: string) {
+    return this.posLinkService.getPosLinkByUserLinked(userId);
   }
 
   @Get('link/:userId')
@@ -71,5 +93,10 @@ export class PosSettingsController {
   @Post('payment-request/amount-min-max')
   getAmountMixMax(@Body() getAmountMinMaxDto: GetAmountMinMaxDto) {
     return this.paymentRequestService.getAmountMinMax(getAmountMinMaxDto);
+  }
+
+  @Get('payment-request/:userId')
+  getPaymentRequestByUserId(@Param('userId') userId: string) {
+    return this.paymentRequestService.getPaymentRequestByUserId(userId);
   }
 }
