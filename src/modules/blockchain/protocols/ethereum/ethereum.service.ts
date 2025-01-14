@@ -15,10 +15,13 @@ import { EnvironmentVariables } from 'src/config/env';
 import { IndexEnum } from 'src/modules/network/enums/index.enum';
 import * as abi from '../abi.json';
 import { ProtocolInterface } from '../procotol.inferface';
+import { constructSimpleSDK, OptimalRate, SimpleFetchSDK } from '@paraswap/sdk';
+import axios from 'axios';
 
 @Injectable()
 export class EthereumService implements ProtocolInterface {
   private readonly web3: Web3;
+  private readonly paraSwap: SimpleFetchSDK;
 
   constructor(private readonly configService: ConfigService<EnvironmentVariables>) {
     const ETHEREUM_NETWORK = this.configService.get('ETHEREUM_NETWORK', { infer: true })!;
@@ -27,6 +30,11 @@ export class EthereumService implements ProtocolInterface {
     const nodeUrl = `https://${ETHEREUM_NETWORK}.infura.io/v3/${INFURA_PROJECT_ID}`;
 
     this.web3 = new Web3(new Web3.providers.HttpProvider(nodeUrl));
+
+    this.paraSwap = constructSimpleSDK({
+      chainId: 1,
+      axios,
+    });
   }
 
   async fromMnemonic(mnemonic: string): Promise<{
@@ -82,12 +90,9 @@ export class EthereumService implements ProtocolInterface {
 
   async getBalanceToken(address: string, contractId: string, decimals: number): Promise<number> {
     try {
-      // console.log('abi', abi);
       let contract = new this.web3.eth.Contract(abi, contractId);
 
       const balance: bigint = await contract.methods.balanceOf(address).call();
-
-      console.log(balance);
 
       let balanceTotal = 0;
 
@@ -210,17 +215,146 @@ export class EthereumService implements ProtocolInterface {
     }
   }
 
-  // async getTransaction(transactionHash: string): Promise<any> {
-  //   try {
-  //     const transaction = await this.web3.eth.getTransaction(transactionHash);
+  async getFeeTransfer(): Promise<number> {
+    try {
+      const response = await axios.get(
+        'https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=ZAXW568KING2VVBGAMBU7399KH7NBB8QX6',
+      );
+      const wei = response.data.result.SafeGasPrice as string;
 
-  //     if (!transaction) {
-  //       throw new Error(`Error: Transaction not found`);
-  //     }
+      if (!wei) throw new Error(`Error getting gas price`);
 
-  //     return transaction;
-  //   } catch (error) {
-  //     throw new ExceptionHandler(error);
-  //   }
-  // }
+      let gasLimit = 21000;
+
+      return Number(this.web3.utils.fromWei(gasLimit * Number(Number(wei).toFixed(2)), 'gwei'));
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async getFeeTransferToken(): Promise<number> {
+    try {
+      const response = await axios.get(
+        'https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=ZAXW568KING2VVBGAMBU7399KH7NBB8QX6',
+      );
+      const wei = response.data.result.SafeGasPrice as string;
+
+      if (!wei) throw new Error(`Error getting gas price`);
+
+      let gasLimit = 55000;
+
+      return Number(this.web3.utils.fromWei(gasLimit * Number(Number(wei).toFixed(2)), 'gwei'));
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async previewSwap(fromToken: any, toToken: any, amount: number, address: string | undefined): Promise<any> {
+    try {
+      if (!fromToken && !toToken) {
+        throw new Error(`Error: You must select a token to swap`);
+      }
+
+      if (!fromToken) {
+        fromToken = {
+          decimals: 18,
+          contract: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+        };
+      }
+      if (!toToken) {
+        toToken = {
+          decimals: 18,
+          contract: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+        };
+      }
+
+      let value = Math.pow(10, fromToken.decimals);
+      const srcAmount = amount * value;
+
+      const priceRoute: OptimalRate = await this.paraSwap.swap.getRate({
+        srcToken: fromToken.contract,
+        destToken: toToken.contract,
+        amount: srcAmount.toLocaleString('fullwide', { useGrouping: false }),
+      });
+
+      const response = await axios.get(
+        'https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=ZAXW568KING2VVBGAMBU7399KH7NBB8QX6',
+      );
+      let wei = response.data.result.SafeGasPrice;
+
+      let feeTransfer = '0';
+      let porcentFee = 0;
+
+      const feeGas = this.web3.utils.fromWei(String((Number(priceRoute.gasCost) * wei).toFixed(0)), 'gwei');
+
+      const srcFee = String(Number(feeTransfer) + Number(feeGas));
+
+      let fee2 = String(Number(srcFee) * porcentFee);
+
+      const swapRate = String(
+        Number(priceRoute.destAmount) /
+          Math.pow(10, toToken.decimals) /
+          (Number(priceRoute.srcAmount) / Math.pow(10, fromToken.decimals)),
+      );
+
+      const dataSwap = {
+        exchange: priceRoute.bestRoute[0].swaps[0].swapExchanges[0].exchange,
+        fromAmount: priceRoute.srcAmount,
+        fromDecimals: fromToken.decimals,
+        toAmount: priceRoute.destAmount,
+        toDecimals: toToken.decimals,
+        block: priceRoute.blockNumber,
+        swapRate,
+        contract: priceRoute.contractAddress,
+        fee: srcFee,
+        fee2: fee2,
+        feeTotal: String(Number(srcFee) + Number(fee2)),
+      };
+
+      return { dataSwap, priceRoute };
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async swap(priceRoute: any, privateKey: string, address: string): Promise<any> {
+    try {
+      const signer = this.web3.eth.accounts.privateKeyToAccount(privateKey);
+
+      const txParams = await this.paraSwap.swap.buildTx({
+        srcToken: priceRoute.srcToken,
+        destToken: priceRoute.destToken,
+        srcAmount: priceRoute.srcAmount,
+        destAmount: priceRoute.destAmount,
+        priceRoute: priceRoute,
+        userAddress: address,
+      });
+
+      const txSigned = await signer.signTransaction(txParams);
+
+      if (!txSigned.rawTransaction) throw new Error(`Failed to sign swap.`);
+
+      const result = await this.web3.eth.sendSignedTransaction(txSigned.rawTransaction);
+
+      // setTimeout(() => {
+      //   console.log("sleep");
+      // }, 20000);
+
+      const transactionHash = result.transactionHash;
+
+      if (!transactionHash) throw new Error(`Failed to send swap, transaction Hash.`);
+
+      const srcAmount = String(Number(priceRoute.srcAmount) / Math.pow(10, priceRoute.srcDecimals));
+      const destAmount = String(Number(priceRoute.destAmount) / Math.pow(10, priceRoute.destDecimals));
+
+      return {
+        transactionHash,
+        srcAmount: srcAmount,
+        destAmount: destAmount,
+        block: priceRoute.blockNumber,
+      };
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
 }

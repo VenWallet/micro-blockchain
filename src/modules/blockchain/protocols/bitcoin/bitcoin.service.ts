@@ -174,17 +174,32 @@ export class BitcoinService implements ProtocolInterface {
     }
   }
 
-  // async getTransaction(transactionHash: string): Promise<any> {
-  //   try {
-  //     const transaction = await this.web3.eth.getTransaction(transactionHash);
+  async getFeeTransfer(
+    amount: number = 0.0003,
+    address: string = '15krWJTAriVnmXgZZzPENV3ohh2AwdQDgH',
+  ): Promise<number> {
+    try {
+      const fee = await this.bitcoinUtils.newTxFee(amount, address);
 
-  //     if (!transaction) {
-  //       throw new Error(`Error: Transaction not found`);
-  //     }
+      return fee;
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
 
-  //     return transaction;
-  //   } catch (error) {
-  //     throw new ExceptionHandler(error);
-  //   }
-  // }
+  async getFeeTransferToken(): Promise<number> {
+    try {
+      throw new Error('Method not implemented.');
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  previewSwap(fromCoin: string, toCoin: string, amount: number, address: string | undefined): Promise<any> {
+    throw new Error('Method not implemented.');
+  }
+
+  swap(priceRoute: any, privateKey: string, address: string): Promise<any> {
+    throw new Error('Method not implemented.');
+  }
 }

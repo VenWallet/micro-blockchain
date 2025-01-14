@@ -13,14 +13,16 @@ import { ConfigService } from '@nestjs/config';
 import { EnvironmentVariables } from '../../../../config/env';
 import { IndexEnum } from 'src/modules/network/enums/index.enum';
 import { ProtocolInterface } from '../procotol.inferface';
+import { ftGetTokensMetadata, fetchAllPools, estimateSwap, instantSwap } from '@ref-finance/ref-sdk';
 const BN = require('bn.js');
 const nearSeed = require('near-seed-phrase');
 
 @Injectable()
 export class NearService implements ProtocolInterface {
-  private readonly configService: ConfigService<EnvironmentVariables>;
-
-  constructor(private readonly nearUtils: NearUtils) {}
+  constructor(
+    private readonly nearUtils: NearUtils,
+    private readonly configService: ConfigService<EnvironmentVariables>,
+  ) {}
 
   async generateWallet() {
     try {
@@ -77,11 +79,9 @@ export class NearService implements ProtocolInterface {
       const is_address = await account
         .state()
         .then((response) => {
-          console.log(response);
           return true;
         })
         .catch((error) => {
-          console.log(error);
           return false;
         });
       return is_address;
@@ -144,17 +144,29 @@ export class NearService implements ProtocolInterface {
     try {
       const balance = await this.getBalance(fromAddress);
 
+      console.log('amountInYocto1');
+
       if (balance < amount) throw new Error(`Error: You do not have enough funds to make the transfer`);
 
       const keyStore = new keyStores.InMemoryKeyStore();
 
-      const keyPair = KeyPair.fromString(privateKey as utils.key_pair.KeyPairString);
+      console.log('amountInYocto2', privateKey);
+
+      const keyPair = KeyPair.fromString(privateKey as any);
+
+      console.log('amountInYocto2.1', keyPair);
+
+      console.log(this.configService.get('NEAR_ENV', { infer: true })!, fromAddress, keyPair);
 
       keyStore.setKey(this.configService.get('NEAR_ENV', { infer: true })!, fromAddress, keyPair);
+
+      console.log('amountInYocto3');
 
       const near = new Near(this.nearUtils.configNear(keyStore));
 
       const account = new AccountService(near.connection, fromAddress);
+
+      console.log('amountInYocto4');
 
       const amountInYocto = utils.format.parseNearAmount(String(amount));
 
@@ -227,6 +239,175 @@ export class NearService implements ProtocolInterface {
       return result.transaction.hash as string;
     } catch (error) {
       console.log('ERROR TRANSFER', error);
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async getFeeTransfer(): Promise<number> {
+    try {
+      return 0.001;
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async getFeeTransferToken(): Promise<number> {
+    try {
+      return 0.001;
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async previewSwap(
+    fromToken: any,
+    toToken: any,
+    amount: number,
+    address: string,
+  ): Promise<{ dataSwap: any; priceRoute: any }> {
+    try {
+      const tokenIn = fromToken?.contract || 'wrap.near';
+      const tokenOut = toToken?.contract || 'wrap.near';
+      const tokensMetadata = await ftGetTokensMetadata([tokenIn, tokenOut]);
+      const transactionsRef = await this.nearUtils.getTxSwapRef(
+        tokensMetadata[tokenIn],
+        tokensMetadata[tokenOut],
+        amount,
+        address,
+      );
+      const transactionsDcl = await this.nearUtils.getTxSwapDCL(
+        tokensMetadata[tokenIn],
+        tokensMetadata[tokenOut],
+        amount,
+      );
+      const minAmountRef = await this.nearUtils.getMinAmountOut(transactionsRef, tokenOut);
+      let minAmountDcl = await this.nearUtils.getMinAmountOut(transactionsDcl, tokenOut);
+      console.log(minAmountRef, minAmountDcl);
+      let txMain: any;
+      let minAmountOut: any = 0;
+      txMain = transactionsRef;
+      minAmountOut = minAmountRef;
+      if (!txMain || !minAmountOut) {
+        new ExceptionHandler(`Failed to create tx.`);
+      }
+      const transaction = txMain.find(
+        (element: { functionCalls: { methodName: string }[] }) =>
+          element.functionCalls[0].methodName === 'ft_transfer_call',
+      );
+      if (!transaction) {
+        new ExceptionHandler(`Failed to create tx.`);
+      }
+      const transfer: any = transaction.functionCalls[0].args;
+      const amountIn = transfer.amount;
+      let feeTransfer = '0.1';
+      let porcentFee = 0.1;
+      let secondNum;
+      if (tokenOut === `wrap.${'near'}`) {
+        secondNum = minAmountOut;
+        minAmountOut = utils.format.parseNearAmount(String(minAmountOut));
+      } else {
+        secondNum = minAmountOut / Math.pow(10, Number(tokensMetadata[tokenOut].decimals));
+      }
+      const firstNum = Number(amountIn) / Math.pow(10, Number(tokensMetadata[tokenIn].decimals));
+      const swapRate = String(secondNum / firstNum);
+      const dataSwap = {
+        exchange: 'Ref Finance',
+        fromAmount: amountIn,
+        fromDecimals: tokensMetadata[tokenIn].decimals,
+        toAmount: String(minAmountOut),
+        toDecimals: tokensMetadata[tokenOut].decimals,
+        swapRate,
+        contract: tokenIn,
+        fee: String(porcentFee),
+      };
+      return {
+        dataSwap,
+        priceRoute: { tokenIn, tokenOut, amountIn: String(amountIn), minAmountOut: String(minAmountOut), txMain },
+      };
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async swap(priceRoute: any, privateKey: string, address: string): Promise<any> {
+    try {
+      const transaction = priceRoute.txMain.find(
+        (element: { functionCalls: { methodName: string }[] }) =>
+          element.functionCalls[0].methodName === 'ft_transfer_call',
+      );
+      if (!transaction) throw new Error(`Failed to create tx.`);
+      const tokensMetadata = await ftGetTokensMetadata([priceRoute.tokenIn, priceRoute.tokenOut]);
+      const tokenIn = tokensMetadata[priceRoute.tokenIn];
+      const tokenOut = tokensMetadata[priceRoute.tokenOut];
+      const keyStore = new keyStores.InMemoryKeyStore();
+      const keyPair = KeyPair.fromString(privateKey as utils.key_pair.KeyPairString);
+      keyStore.setKey(process.env.NEAR_ENV!, address, keyPair);
+      const near = new Near(this.nearUtils.configNear(keyStore));
+      const account = new AccountService(near.connection, address);
+      let nearTransactions: any[] = [];
+      if (priceRoute.tokenIn.includes('wrap.')) {
+        const trx = await this.nearUtils.createTransactionFn(
+          priceRoute.tokenIn,
+          [await functionCall('near_deposit', {}, new BN('300000000000000'), new BN(priceRoute.amountIn))],
+          address,
+          near,
+        );
+        nearTransactions.push(trx);
+      }
+      const trxs = await Promise.all(
+        priceRoute.txMain.map(async (tx: any) => {
+          return await this.nearUtils.createTransactionFn(
+            tx.receiverId,
+            tx.functionCalls.map((fc: any) => {
+              return functionCall(
+                fc.methodName,
+                fc.args,
+                fc.gas,
+                new BN(String(utils.format.parseNearAmount(fc.amount))),
+              );
+            }),
+            address,
+            near,
+          );
+        }),
+      );
+      nearTransactions = nearTransactions.concat(trxs);
+      if (priceRoute.tokenOut.includes('wrap.')) {
+        const trx = await this.nearUtils.createTransactionFn(
+          priceRoute.tokenOut,
+          [
+            await functionCall(
+              'near_withdraw',
+              { amount: priceRoute.minAmountOut },
+              new BN('300000000000000'),
+              new BN('1'),
+            ),
+          ],
+          address,
+          near,
+        );
+        nearTransactions.push(trx);
+      }
+      let resultSwap: any;
+      for (let trx of nearTransactions) {
+        const result = await account.signAndSendTrx(trx);
+        if (trx.actions[0].functionCall.methodName === 'ft_transfer_call') {
+          resultSwap = result;
+        }
+      }
+      if (!resultSwap.transaction.hash) return false;
+      const transactionHash = resultSwap.transaction.hash;
+      const block = resultSwap.transaction_outcome.block_hash;
+      if (!transactionHash) return false;
+      const srcAmount = String(Number(priceRoute.amountIn) / Math.pow(10, tokenIn.decimals));
+      const destAmount = String(Number(priceRoute.minAmountOut) / Math.pow(10, tokenOut.decimals));
+      return {
+        transactionHash,
+        srcAmount,
+        destAmount,
+        block,
+      };
+    } catch (error) {
       throw new ExceptionHandler(error);
     }
   }

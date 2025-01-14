@@ -1,11 +1,20 @@
-import { Controller, Get, Post, Body, Patch, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiProperty, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Patch, Param, Query, HttpCode, HttpStatus, ParseBoolPipe } from '@nestjs/common';
+import { ApiProperty, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import { NetworksEnum } from '../network/enums/networks.enum';
 import { BlockchainService } from './blockchain.service';
-import { CreateWalletsDto, ImportWalletsDto, IsAddressDto, TransferDto, TransferTokenDto } from './blockchain.dto';
+import {
+  CreateWalletsDto,
+  ImportWalletsFromMnemonicDto,
+  IsAddressDto,
+  PreviewSwapDto,
+  SwapDto,
+  TransferDto,
+  TransferTokenDto,
+} from './blockchain.dto';
 import { IndexEnum } from '../network/enums/index.enum';
 import { IndexTokenEnum } from '../tokenData/enums/indexToken.enum';
+import { BooleanValidationPipe } from 'src/helpers/pipes/boolean-validate.pipe';
 
 @ApiTags('Blockchain')
 @Controller('blockchain')
@@ -17,10 +26,10 @@ export class BlockchainController {
     return this.blockchainService.createWallets(createWalletsDto);
   }
 
-  @Post('import-wallets')
+  @Post('import-wallets-from-mnemonic')
   @HttpCode(HttpStatus.OK)
-  importWallets(@Body() importWalletsDto: ImportWalletsDto) {
-    return this.blockchainService.importWallets(importWalletsDto);
+  importWalletsFromMnemonic(@Body() importWalletsFromMnemonic: ImportWalletsFromMnemonicDto) {
+    return this.blockchainService.importWalletsFromMnemonic(importWalletsFromMnemonic);
   }
 
   @Post('is-address')
@@ -35,17 +44,17 @@ export class BlockchainController {
   }
 
   @Get('balance-token/:userId')
-  getBalanceToken(
-    @Param('userId') userId: string,
-    @Query('network') network: IndexEnum,
-    @Query('token') token: IndexTokenEnum,
-  ) {
-    return this.blockchainService.getBalanceToken(userId, network, token);
+  getBalanceToken(@Param('userId') userId: string, @Query('token') token: string) {
+    return this.blockchainService.getBalanceToken(userId, token);
   }
 
   @Get('balances/:userId')
-  getBalances(@Param('userId') userId: string) {
-    return this.blockchainService.getBalances(userId);
+  @ApiQuery({ name: 'hasBalance', type: Boolean, required: false, description: 'Filter by balance status' })
+  getBalances(
+    @Param('userId') userId: string,
+    @Query('hasBalance', new BooleanValidationPipe()) hasBalance: string | boolean,
+  ) {
+    return this.blockchainService.getBalances(userId, hasBalance as boolean);
   }
 
   @Post('transfer')
@@ -58,5 +67,17 @@ export class BlockchainController {
   @HttpCode(HttpStatus.OK)
   transferToken(@Body() transferTokenDto: TransferTokenDto) {
     return this.blockchainService.transferToken(transferTokenDto);
+  }
+
+  @Post('preview-swap')
+  @HttpCode(HttpStatus.OK)
+  previewSwap(@Body() previewSwapDto: PreviewSwapDto) {
+    return this.blockchainService.previewSwap(previewSwapDto);
+  }
+
+  @Post('swap')
+  @HttpCode(HttpStatus.OK)
+  swap(@Body() swapDto: SwapDto) {
+    return this.blockchainService.swap(swapDto);
   }
 }

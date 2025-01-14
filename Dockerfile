@@ -7,8 +7,8 @@ WORKDIR /app
 # Copiar archivos necesarios para instalar dependencias
 COPY package*.json ./
 
-# Instalar dependencias
-RUN npm ci
+# Instalar dependencias con force
+RUN npm ci --force
 
 # Copiar el código fuente
 COPY . .
@@ -24,10 +24,13 @@ WORKDIR /app
 
 # Copiar solo las dependencias de producción
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci --only=production --force
 
 # Copiar los artefactos de la etapa de construcción
 COPY --from=builder /app/dist ./dist
+
+# Copiar exchangeInfo.json desde la raíz del proyecto a la raíz del contenedor
+COPY --from=builder /app/exchangeInfo.json ./exchangeInfo.json
 
 # Establecer usuario no privilegiado para mayor seguridad
 # RUN addgroup -S appgroup && adduser -S appuser -G appgroup

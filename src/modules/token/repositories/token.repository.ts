@@ -40,16 +40,16 @@ export class TokenRepository {
     });
   }
 
-  async findOne(id: string): Promise<TokenEntity | null> {
+  async findOneBySymbolNetworkId(symbol: string, networkId: string): Promise<TokenEntity | null> {
     return await this.repository.findOne({
-      where: { id },
+      where: { tokenData: { symbol }, network: { id: networkId } },
+      relations: ['tokenData'],
     });
   }
 
-  async findOneByNetworkAndTokenIndex(network: IndexEnum, token: IndexTokenEnum): Promise<TokenEntity | null> {
+  async findOne(id: string): Promise<TokenEntity | null> {
     return await this.repository.findOne({
-      where: { network: { index: network }, tokenData: { index: token } },
-      relations: ['tokenData', 'network'],
+      where: { id },
     });
   }
 

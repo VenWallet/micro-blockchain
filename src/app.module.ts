@@ -12,12 +12,18 @@ import { TokenModule } from './modules/token/token.module';
 import { UtilsModule } from './shared/utils/utils.module';
 import { DatabaseConfig } from './config/database/database.config';
 import { HttpCustomModule } from './shared/http/http.module';
-
+import { ExternalModule } from './external/external.module';
+import { SpotMarketModule } from './modules/spotMarket/spotMarket.module';
+import { TasksModule } from './tasks/tasks.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { PosModule } from './modules/pos/pos.module';
 @Module({
   imports: [
     AppConfigModule,
     CacheModule.register({ isGlobal: true }),
     TypeOrmModule.forRoot(DatabaseConfig.getDataSourceOptions()),
+    ScheduleModule.forRoot(),
+    TasksModule,
     UtilsModule,
     HttpCustomModule,
     NetworkModule,
@@ -25,6 +31,9 @@ import { HttpCustomModule } from './shared/http/http.module';
     BlockchainModule,
     TokenDataModule,
     TokenModule,
+    ExternalModule,
+    SpotMarketModule,
+    PosModule,
   ],
   controllers: [AppController],
   providers: [],

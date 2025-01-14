@@ -1,9 +1,9 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsUUID, IsEnum, IsNumber } from 'class-validator';
+import { IsString, IsNotEmpty, IsUUID, IsEnum, IsNumber, IsArray, ValidateNested } from 'class-validator';
 import { NetworksEnum } from '../network/enums/networks.enum';
 import { IndexEnum } from '../network/enums/index.enum';
-import { IndexTokenEnum } from '../tokenData/enums/indexToken.enum';
+import { Type } from 'class-transformer';
 
 export class CreateWalletsDto {
   @ApiProperty()
@@ -26,7 +26,7 @@ export class TransferDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  pkEncrypt: string;
+  privateKey: string;
 
   @ApiProperty()
   @IsNotEmpty()
@@ -53,7 +53,7 @@ export class TransferTokenDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  pkEncrypt: string;
+  privateKey: string;
 
   @ApiProperty()
   @IsNotEmpty()
@@ -71,9 +71,9 @@ export class TransferTokenDto {
   amount: number;
 
   @ApiProperty()
+  @IsString()
   @IsNotEmpty()
-  @IsEnum(IndexTokenEnum)
-  token: IndexTokenEnum;
+  token: string;
 }
 
 export class IsAddressDto {
@@ -88,7 +88,7 @@ export class IsAddressDto {
   network: IndexEnum;
 }
 
-export class ImportWalletsDto {
+export class ImportWalletsFromMnemonicDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
@@ -98,4 +98,100 @@ export class ImportWalletsDto {
   @IsString()
   @IsNotEmpty()
   userId: string;
+}
+
+export class PreviewSwapDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  userId: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  fromCoin: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  toCoin: string;
+
+  @ApiProperty()
+  @IsNumber()
+  amount: number;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsEnum(IndexEnum)
+  network: IndexEnum;
+}
+
+export class PriceRouteDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  tokenIn: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  tokenOut: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  amountIn: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  minAmountOut: number;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsArray()
+  txMain: any[];
+
+  @ApiProperty()
+  @IsUUID()
+  @IsNotEmpty()
+  networkId: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  fromToken: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  toToken: string;
+
+  @ApiProperty()
+  @IsNumber()
+  @IsNotEmpty()
+  amount: number;
+}
+
+export class SwapDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  userId: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  privateKey: string;
+
+  @ApiProperty({ type: PriceRouteDto })
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => PriceRouteDto)
+  priceRoute: PriceRouteDto;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsEnum(IndexEnum)
+  network: IndexEnum;
 }

@@ -16,24 +16,31 @@ import bs58 from 'bs58';
 import { HttpCustomService } from 'src/shared/http/http.service';
 import { derivePath } from 'ed25519-hd-key';
 import {
+  clusterApiUrl,
   Connection,
   Keypair,
   LAMPORTS_PER_SOL,
+  ParsedAccountData,
   PublicKey,
   sendAndConfirmTransaction,
   SystemProgram,
   Transaction,
+  TransactionMessage,
 } from '@solana/web3.js';
-import { getAccount, getAssociatedTokenAddressSync, getMint, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import {
+  createTransferInstruction,
+  getAccount,
+  getAssociatedTokenAddressSync,
+  getMint,
+  getOrCreateAssociatedTokenAccount,
+  TOKEN_PROGRAM_ID,
+} from '@solana/spl-token';
 
 @Injectable()
 export class SolanaService implements ProtocolInterface {
   private readonly connection: Connection;
 
-  constructor(
-    private readonly configService: ConfigService<EnvironmentVariables>,
-    private readonly httpService: HttpCustomService,
-  ) {
+  constructor() {
     this.connection = new Connection('https://api.mainnet-beta.solana.com');
   }
 
@@ -83,8 +90,6 @@ export class SolanaService implements ProtocolInterface {
 
       // Obtiene el balance en lamports (1 SOL = 1,000,000,000 lamports)
       const balanceLamports = await this.connection.getBalance(publicKey);
-
-      console.log('BALANCE', balanceLamports);
 
       // Convierte de lamports a SOL
       const balance = balanceLamports / LAMPORTS_PER_SOL;
@@ -162,23 +167,136 @@ export class SolanaService implements ProtocolInterface {
     decimals: number,
   ): Promise<string> {
     try {
+      console.log(await this.getNumberDecimals(contract));
+
+      const contractPublicKey = new PublicKey(contract);
+
+      // const fromPublicKey = new PublicKey(fromAddress);
+      const fromKeypair = Keypair.fromSecretKey(bs58.decode(privateKey));
+      const toPublicKey = new PublicKey(toAddress);
+
+      const sourceAccount = getAssociatedTokenAddressSync(contractPublicKey, fromKeypair.publicKey);
+
+      console.log('privateKey', privateKey);
+
+      // const ownerPublicKey = new PublicKey(fromAddress);
+      // const contractPublicKey = new PublicKey(contract);
+
+      // const addressToken = getAssociatedTokenAddressSync(contractPublicKey, ownerPublicKey);
+
+      contract = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+      console.log('contract', contract);
+
+      // let sourceAccount2 = await getOrCreateAssociatedTokenAccount(
+      //   this.connection,
+      //   fromKeypair,
+      //   new PublicKey(contract),
+      //   fromKeypair.publicKey,
+      // );
+
+      console.log('sourceAccount', sourceAccount);
+
       throw new Error('Method not implemented.');
     } catch (error) {
       throw new ExceptionHandler(error);
     }
   }
 
-  // async getTransaction(transactionHash: string): Promise<any> {
-  //   try {
-  //     const transaction = await this.web3.eth.getTransaction(transactionHash);
+  async getFeeTransfer(): Promise<number> {
+    try {
+      const connection = new Connection(clusterApiUrl('mainnet-beta'));
 
-  //     if (!transaction) {
-  //       throw new Error(`Error: Transaction not found`);
-  //     }
+      // Crea un remitente ficticio para calcular el mensaje
+      const payer = Keypair.generate();
 
-  //     return transaction;
-  //   } catch (error) {
-  //     throw new ExceptionHandler(error);
-  //   }
-  // }
+      // Define un mensaje de transacción simple (transferencia de SOL)
+      const recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+      const transferInstruction = SystemProgram.transfer({
+        fromPubkey: payer.publicKey, // Dirección ficticia
+        toPubkey: new PublicKey('11111111111111111111111111111111'), // Dirección genérica
+        lamports: 1, // Cantidad mínima para simular
+      });
+
+      // Crea un mensaje de transacción basado en el bloque reciente
+      const message = new TransactionMessage({
+        payerKey: payer.publicKey,
+        recentBlockhash: recentBlockhash,
+        instructions: [transferInstruction],
+      }).compileToV0Message();
+
+      // Obtén el costo de la transacción en lamports
+      const { value: feeInLamports } = await connection.getFeeForMessage(message);
+
+      if (feeInLamports === null) {
+        throw new Error('No se pudo obtener el costo de la transacción.');
+      }
+
+      // Convierte de lamports a SOL
+      const feeInSOL = feeInLamports / 1_000_000_000; // 1 SOL = 1,000,000,000 lamports
+      return feeInSOL;
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async getFeeTransferToken(): Promise<number> {
+    try {
+      const connection = new Connection(clusterApiUrl('mainnet-beta'));
+
+      // Generar claves ficticias para simulación
+      const payer = Keypair.generate(); // Paga los fees
+      const sourceTokenAccount = Keypair.generate().publicKey; // Cuenta de origen
+      const destinationTokenAccount = Keypair.generate().publicKey; // Cuenta destino
+
+      // Cantidad a transferir (en la unidad mínima del token, bigInt si es necesario)
+      const amount = 1; // Mínima cantidad para la simulación
+
+      // Obtén el último blockhash
+      const recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+      // Instrucción para transferir tokens SPL
+      const transferInstruction = createTransferInstruction(
+        sourceTokenAccount, // Cuenta de origen
+        destinationTokenAccount, // Cuenta destino
+        payer.publicKey, // Propietario de la cuenta de origen
+        amount, // Cantidad de tokens a transferir
+        [], // Multisigners (vacío para este caso)
+        TOKEN_PROGRAM_ID, // Programa de tokens SPL
+      );
+
+      // Crea el mensaje de transacción
+      const message = new TransactionMessage({
+        payerKey: payer.publicKey,
+        recentBlockhash: recentBlockhash,
+        instructions: [transferInstruction],
+      }).compileToV0Message();
+
+      // Calcula el costo de la transacción en lamports
+      const { value: feeInLamports } = await connection.getFeeForMessage(message);
+
+      if (feeInLamports === null) {
+        throw new Error('No se pudo calcular el costo de la transacción.');
+      }
+
+      // Convierte de lamports a SOL
+      const feeInSOL = feeInLamports / 1_000_000_000; // 1 SOL = 1,000,000,000 lamports
+      return feeInSOL;
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  previewSwap(fromCoin: string, toCoin: string, amount: number, address: string | undefined): Promise<any> {
+    throw new Error('Method not implemented.');
+  }
+
+  private async getNumberDecimals(mintAddress: string): Promise<number> {
+    const info = await this.connection.getParsedAccountInfo(new PublicKey(mintAddress));
+    const result = (info.value?.data as ParsedAccountData).parsed.info.decimals as number;
+    return result;
+  }
+
+  swap(priceRoute: any, privateKey: string, address: string): Promise<any> {
+    throw new Error('Method not implemented.');
+  }
 }

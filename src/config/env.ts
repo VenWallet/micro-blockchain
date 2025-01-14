@@ -10,6 +10,9 @@ export class EnvironmentVariables {
   @IsEnum(NearEnvEnum)
   NEAR_ENV: NearEnvEnum;
 
+  // @IsInt()
+  // PORT_WS!: number;
+
   @IsInt()
   PORT!: number;
 
@@ -45,4 +48,13 @@ export class EnvironmentVariables {
 
   @IsString()
   BLOCKCYPHER: string;
+
+  @IsString()
+  BINANCE_API_KEY: string;
+
+  @IsString()
+  BINANCE_API_SECRET: string;
+
+  @IsString()
+  TATUM_API_KEY: string;
 }

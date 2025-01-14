@@ -3,6 +3,7 @@ import { ExceptionHandler } from 'src/helpers/handlers/exception.handler';
 import { NetworkRepository } from './repositories/network.repository';
 import { NetworkEntity } from './entities/network.entity';
 import { NetworkDto, UpdateNetworkDto } from './dto/network.dto';
+import { IndexEnum } from './enums/index.enum';
 
 @Injectable()
 export class NetworkService {
@@ -35,6 +36,20 @@ export class NetworkService {
   async findOne(id: string): Promise<NetworkEntity> {
     try {
       const networkFound = await this.networkRepository.findOne(id);
+
+      if (!networkFound) {
+        throw new NotFoundException('Network not found');
+      }
+
+      return networkFound;
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async findOneByIndex(index: IndexEnum): Promise<NetworkEntity> {
+    try {
+      const networkFound = await this.networkRepository.findOneByIndex(index);
 
       if (!networkFound) {
         throw new NotFoundException('Network not found');

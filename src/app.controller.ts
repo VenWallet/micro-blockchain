@@ -1,5 +1,6 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, InternalServerErrorException, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import axios from 'axios';
 
 @ApiTags('Health')
 @Controller()

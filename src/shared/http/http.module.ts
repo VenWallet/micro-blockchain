@@ -1,6 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { HttpCustomService } from './http.service';
+import { HttpClient } from './http.client';
 
 @Global()
 @Module({

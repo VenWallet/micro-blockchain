@@ -1,14 +1,9 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { BadRequestException, HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
-import { KeyPair, utils, Account, keyStores, Near } from 'near-api-js';
-import { functionCall } from 'near-api-js/lib/transaction';
 import { ExceptionHandler } from 'src/helpers/handlers/exception.handler';
 import { NetworksEnum } from 'src/modules/network/enums/networks.enum';
 import { ethers, Wallet } from 'ethers';
-import Web3 from 'web3';
-import web3Utils from 'web3-utils';
-import { Web3Validator, isAddress } from 'web3-validator';
 import { ConfigService } from '@nestjs/config';
 import { EnvironmentVariables } from 'src/config/env';
 import { IndexEnum } from 'src/modules/network/enums/index.enum';
@@ -95,9 +90,11 @@ export class TronService implements ProtocolInterface {
 
       let balanceTotal = 0;
 
+      console.log('balance', balance);
+
       if (balance) {
         let value = Math.pow(10, decimals);
-        balanceTotal = balance / value;
+        balanceTotal = Number(balance) / value;
         if (!balanceTotal) {
           balanceTotal = 0;
         }
@@ -199,17 +196,47 @@ export class TronService implements ProtocolInterface {
     }
   }
 
-  // async getTransaction(transactionHash: string): Promise<any> {
-  //   try {
-  //     const transaction = await this.web3.eth.getTransaction(transactionHash);
+  async getFeeTransfer(): Promise<number> {
+    try {
+      const TRX_PER_BYTE = 0.002;
 
-  //     if (!transaction) {
-  //       throw new Error(`Error: Transaction not found`);
-  //     }
+      const transactionSizeBytes = 250;
 
-  //     return transaction;
-  //   } catch (error) {
-  //     throw new ExceptionHandler(error);
-  //   }
-  // }
+      // Calcula el costo en TRX
+      const feeInTRX = transactionSizeBytes * TRX_PER_BYTE;
+
+      return feeInTRX;
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async getFeeTransferToken(): Promise<number> {
+    try {
+      const TRX_PER_BYTE = 0.002; // Costo en TRX por byte de Bandwidth
+      const TRX_PER_ENERGY = 0.000002; // Costo en TRX por unidad de Energy
+      const APPROX_BANDWIDTH_BYTES = 700; // Tamaño promedio de transacción TRC-20
+      const APPROX_ENERGY_USED = 20_000; // Consumo promedio de Energy para USDT
+
+      const bandwidthCost = APPROX_BANDWIDTH_BYTES * TRX_PER_BYTE;
+
+      // Costo por Energy (si no hay suficiente gratuito)
+      const energyCost = APPROX_ENERGY_USED * TRX_PER_ENERGY;
+
+      // Costo total estimado
+      const totalFee = bandwidthCost + energyCost;
+
+      return totalFee;
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  previewSwap(fromCoin: string, toCoin: string, amount: number, address: string | undefined): Promise<any> {
+    throw new Error('Method not implemented.');
+  }
+
+  swap(priceRoute: any, privateKey: string, address: string): Promise<any> {
+    throw new Error('Method not implemented.');
+  }
 }
