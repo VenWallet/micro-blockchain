@@ -31,6 +31,10 @@ export class SpotMarketRepository {
     return await this.repository.find({ where: { status: SpotMarketStatusEnum.PENDING } });
   }
 
+  async findScheduled(): Promise<SpotMarketEntity[]> {
+    return await this.repository.find({ where: { status: SpotMarketStatusEnum.SCHEDULED } });
+  }
+
   async findOne(id: string): Promise<SpotMarketEntity | null> {
     return await this.repository.findOne({
       where: { id },
@@ -39,6 +43,7 @@ export class SpotMarketRepository {
 
   async update(id: string, updateData: Partial<SpotMarketEntity>): Promise<void> {
     const updateResult = await this.repository.update({ id }, updateData);
+
     if (updateResult.affected === 0) {
       throw new NotFoundException('SpotMarket not found');
     }
