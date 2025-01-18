@@ -14,7 +14,7 @@ import { BlockchainService } from '../blockchain/blockchain.service';
 import { create } from 'domain';
 import { IndexEnum } from '../network/enums/index.enum';
 import { NetworkService } from '../network/network.service';
-import { CreateSpotMarketDto, PreviewSpotMarketDto, SpotMarketDto } from './dto/spotMarket.dto';
+import { CreateSpotMarketDto, PreviewSpotMarketDto, SpotMarketDto, CancelLimitOrderDto } from './dto/spotMarket.dto';
 import { WalletService } from '../wallet/wallet.service';
 import { TokenService } from '../token/token.service';
 import * as fs from 'fs';
@@ -509,6 +509,76 @@ export class SpotMarketService {
 
         return { amountReceived, fees };
       }
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async cancelLimitOrder(cancelLimitOrderDto: CancelLimitOrderDto) {
+    try {
+      const spotMarket = await this.spotMarketRepository.findOne(cancelLimitOrderDto.spotMarketId);
+
+      if (!spotMarket) {
+        throw new NotFoundException('Spot market not found');
+      }
+
+      if (spotMarket.userId !== cancelLimitOrderDto.userId) {
+        throw new ConflictException('User not authorized');
+      }
+
+      if (spotMarket.status !== SpotMarketStatusEnum.SCHEDULED) {
+        throw new ConflictException('Spot market is not scheduled');
+      }
+
+      if (spotMarket.orderType !== OrderTypeEnum.LIMIT) {
+        throw new ConflictException('Spot market is not a limit order');
+      }
+
+      if (!spotMarket.orderData?.orderId) {
+        throw new NotFoundException('Order ID not found');
+      }
+
+      const fromWallet = await this.walletService.findOneByUserIdAndIndex(
+        spotMarket.userId,
+        spotMarket.fromNetwork as IndexEnum,
+      );
+
+      if (!fromWallet) {
+        throw new NotFoundException('Wallet not found');
+      }
+
+      const result = await this.binanceApiService.cancelLimitOrder(spotMarket.symbol, spotMarket.orderData.orderId);
+
+      console.log('result', result);
+
+      const toNetworkSymbol =
+        fromWallet.network.symbol === 'BNB'
+          ? 'BSC'
+          : fromWallet.network.symbol === 'ARB'
+            ? 'ARBITRUM'
+            : fromWallet.network.symbol;
+
+      setTimeout(async () => {
+        try {
+          const withdrawData = await this.binanceApiService.withdraw(
+            spotMarket.toCoin,
+            fromWallet.address,
+            Number(spotMarket.amount),
+            toNetworkSymbol,
+          );
+
+          console.log('withdrawData', withdrawData);
+
+          await this.spotMarketRepository.update(spotMarket.id, {
+            status: SpotMarketStatusEnum.CANCELED,
+            withdrawData: withdrawData,
+          });
+
+          console.log('Retiro ejecutado exitosamente.');
+        } catch (error) {
+          console.error('Error al ejecutar el retiro:', error);
+        }
+      }, 10000);
     } catch (error) {
       throw new ExceptionHandler(error);
     }

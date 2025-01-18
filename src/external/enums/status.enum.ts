@@ -3,5 +3,5 @@ export enum StatusEnum {
   IN_PROCESS = 'IN_PROCESS',
   COMPLETED = 'COMPLETED',
   FAILED = 'FAILED',
-  CANCELLED = 'CANCELLED',
+  CANCELED = 'CANCELED',
 }

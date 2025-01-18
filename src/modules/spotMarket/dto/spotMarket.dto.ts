@@ -172,3 +172,15 @@ export class PreviewSpotMarketDto {
   @IsOptional()
   price?: number;
 }
+
+export class CancelLimitOrderDto {
+  @ApiProperty()
+  @IsUUID()
+  @IsNotEmpty()
+  userId: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  spotMarketId: string;
+}

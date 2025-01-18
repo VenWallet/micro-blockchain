@@ -68,12 +68,11 @@ export class TasksService {
             const toNetworkSymbol =
               network.symbol === 'BNB' ? 'BSC' : network.symbol === 'ARB' ? 'ARBITRUM' : network.symbol;
 
-            const withdrawData = await this.withdraw(
+            const withdrawData = await this.binanceApiService.withdraw(
               spotMarket.toCoin,
               wallet.address,
               Number(spotMarket.amount),
               toNetworkSymbol,
-              network.decimals,
             );
 
             console.log('withdrawData', withdrawData);
@@ -92,7 +91,7 @@ export class TasksService {
             console.log('symbol', symbol);
 
             if (!symbol?.symbol) {
-              await this.spotMarketRepository.update(spotMarket.id, { status: SpotMarketStatusEnum.CANCELLED });
+              await this.spotMarketRepository.update(spotMarket.id, { status: SpotMarketStatusEnum.CANCELED });
               continue;
             }
 
@@ -138,7 +137,13 @@ export class TasksService {
 
             console.log('price', price);
 
-            const orderData = await this.trade(pair, side, Number(adjustedQuantity), spotMarket.orderType, price);
+            const orderData = await this.binanceApiService.trade(
+              pair,
+              side,
+              Number(adjustedQuantity),
+              spotMarket.orderType,
+              price,
+            );
 
             // const orderData: any = {
             //   symbol: 'NEARUSDT',
@@ -234,12 +239,11 @@ export class TasksService {
 
             setTimeout(async () => {
               try {
-                const withdrawData = await this.withdraw(
+                const withdrawData = await this.binanceApiService.withdraw(
                   spotMarket.toCoin,
                   wallet.address,
                   side === 'BUY' ? Number(orderData.executedQty) : Number(orderData.cummulativeQuoteQty),
                   toNetworkSymbol,
-                  network.decimals,
                 );
 
                 console.log('withdrawData', withdrawData);
@@ -298,12 +302,11 @@ export class TasksService {
 
           setTimeout(async () => {
             try {
-              const withdrawData = await this.withdraw(
+              const withdrawData = await this.binanceApiService.withdraw(
                 spotMarket.toCoin,
                 wallet.address,
                 spotMarket.side === 'BUY' ? Number(orderData.executedQty) : Number(orderData.cummulativeQuoteQty),
                 toNetworkSymbol,
-                network.decimals,
               );
 
               console.log('withdrawData', withdrawData);
@@ -355,87 +358,6 @@ export class TasksService {
       return response.data;
     } catch (error) {
       console.error('Error getOrder:', error);
-      throw error;
-    }
-  }
-
-  private async trade(symbol: string, side: string, quantity: number, orderType: string, price?: number) {
-    try {
-      const apiKey = process.env.BINANCE_API_KEY;
-      const apiSecret = process.env.BINANCE_API_SECRET;
-
-      if (!apiKey || !apiSecret) {
-        throw new Error('API Key and Secret not found');
-      }
-      const timestamp = Date.now();
-      let queryString = price
-        ? `symbol=${symbol}&side=${side}&type=${orderType}&quantity=${quantity.toFixed(6)}&price=${price.toFixed(2)}&timeInForce=GTC&timestamp=${timestamp}`
-        : `symbol=${symbol}&side=${side}&type=${orderType}&quantity=${quantity.toFixed(6)}&timestamp=${timestamp}`;
-
-      // Generate signature
-      const signature = crypto.createHmac('sha256', apiSecret).update(queryString).digest('hex');
-
-      const url = `https://api.binance.com/api/v3/order?${queryString}&signature=${signature}`;
-
-      console.log('url', url);
-      // Set headers with API Key
-      const headers = {
-        'X-MBX-APIKEY': apiKey,
-      };
-
-      // Send POST request to place order
-      const response = await axios.post(url, null, { headers });
-
-      console.log('response', response.data);
-
-      // Parse and log the order result
-      const orderData = response.data;
-
-      // const feeRate = 0.001; // Fee rate is typically 0.1% for spot trading
-      // const executedQty = parseFloat(orderData.executedQty); // Amount of base asset traded
-      // const priceData = parseFloat(orderData.fills[0].price); // Price per unit in quote asset
-
-      // Calculate fee in quote asset
-      // const feeInQuoteAsset = executedQty * priceData * feeRate;
-
-      return orderData;
-    } catch (error) {
-      console.log(error?.data || error.response.data || error);
-      throw new Error(error.message || error || 'Internal Server Error');
-    }
-  }
-
-  async withdraw(asset: string, address: string, amount: number, network: string, decimals: number): Promise<any> {
-    try {
-      const apiKey = process.env.BINANCE_API_KEY;
-      const apiSecret = process.env.BINANCE_API_SECRET;
-
-      if (!apiKey || !apiSecret) {
-        throw new Error('API Key and Secret not found');
-      }
-
-      const amountAfterFee = (amount * 0.99).toFixed(6);
-
-      const timestamp = Date.now();
-      let queryString = `coin=${asset}&address=${address}&amount=${amountAfterFee}&timestamp=${timestamp}&network=${network}`;
-
-      // Generate signature
-      const signature = crypto.createHmac('sha256', apiSecret).update(queryString).digest('hex');
-
-      const url = `https://api.binance.com/sapi/v1/capital/withdraw/apply?${queryString}&signature=${signature}`;
-
-      // Set headers with API Key
-      const headers = {
-        'X-MBX-APIKEY': apiKey,
-      };
-
-      // Send POST request to withdraw funds
-      const response = await axios.post(url, null, { headers });
-
-      // Return response data
-      return response.data;
-    } catch (error) {
-      console.error('Error withdrawing funds:', error);
       throw error;
     }
   }

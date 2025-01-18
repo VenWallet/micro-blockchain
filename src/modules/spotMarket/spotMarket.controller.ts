@@ -5,7 +5,7 @@ import { NetworksEnum } from '../network/enums/networks.enum';
 import { IndexEnum } from '../network/enums/index.enum';
 import { IndexTokenEnum } from '../tokenData/enums/indexToken.enum';
 import { SpotMarketService } from './spotMarket.service';
-import { CreateSpotMarketDto, PreviewSpotMarketDto } from './dto/spotMarket.dto';
+import { CancelLimitOrderDto, CreateSpotMarketDto, PreviewSpotMarketDto } from './dto/spotMarket.dto';
 
 @ApiTags('SpotMarket')
 @Controller('spot-market')
@@ -20,5 +20,10 @@ export class SpotMarketController {
   @Post('create-spot-market')
   createSpotMarket(@Body() createSpotMarketDto: CreateSpotMarketDto) {
     return this.spotMarketService.createSpotMarket(createSpotMarketDto);
+  }
+
+  @Post('cancel-limit-order')
+  cancelLimitOrder(@Body() cancelLimitOrderDto: CancelLimitOrderDto) {
+    return this.spotMarketService.cancelLimitOrder(cancelLimitOrderDto);
   }
 }
