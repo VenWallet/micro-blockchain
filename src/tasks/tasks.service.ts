@@ -43,7 +43,7 @@ export class TasksService {
 
           const deposit = deposits.find((d) => d.txId === spotMarket.hash);
 
-          console.log(deposit);
+          console.log('SpotMarketTask', deposit);
 
           if (!deposit) {
             continue;
@@ -91,7 +91,7 @@ export class TasksService {
             console.log('symbol', symbol);
 
             if (!symbol?.symbol) {
-              await this.spotMarketRepository.update(spotMarket.id, { status: SpotMarketStatusEnum.CANCELED });
+              await this.spotMarketRepository.update(spotMarket.id, { status: SpotMarketStatusEnum.FAILED });
               continue;
             }
 
@@ -321,6 +321,8 @@ export class TasksService {
               console.error('Error al ejecutar el retiro:', error);
             }
           }, 15000);
+        } else if (orderData.status === 'CANCELED') {
+          await this.spotMarketRepository.update(spotMarket.id, { status: SpotMarketStatusEnum.CANCELED });
         }
       }
     } catch (error) {

@@ -551,6 +551,10 @@ export class SpotMarketService {
 
       console.log('result', result);
 
+      if (result.status !== 'CANCELED') {
+        throw new ConflictException('Order not canceled');
+      }
+
       const toNetworkSymbol =
         fromWallet.network.symbol === 'BNB'
           ? 'BSC'
@@ -561,7 +565,7 @@ export class SpotMarketService {
       setTimeout(async () => {
         try {
           const withdrawData = await this.binanceApiService.withdraw(
-            spotMarket.toCoin,
+            spotMarket.fromCoin,
             fromWallet.address,
             Number(spotMarket.amount),
             toNetworkSymbol,
@@ -578,7 +582,23 @@ export class SpotMarketService {
         } catch (error) {
           console.error('Error al ejecutar el retiro:', error);
         }
-      }, 10000);
+      }, 5000);
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async getUserSpotMarkets(filters: {
+    userId: string;
+    status?: SpotMarketStatusEnum;
+    fromNetwork?: string;
+    toNetwork?: string;
+    fromCoin?: string;
+    toCoin?: string;
+    orderType?: OrderTypeEnum;
+  }) {
+    try {
+      return await this.spotMarketRepository.getUserSpotMarkets(filters);
     } catch (error) {
       throw new ExceptionHandler(error);
     }

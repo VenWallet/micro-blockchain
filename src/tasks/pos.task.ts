@@ -130,7 +130,7 @@ export class PosTask {
 
           const deposit = deposits.find((d) => d.txId === paymentRequest.hash);
 
-          console.log(deposit);
+          console.log('PosTask', deposit);
 
           if (!deposit) {
             continue;

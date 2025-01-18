@@ -5,6 +5,7 @@ import { plainToClass } from 'class-transformer';
 import { SpotMarketEntity } from '../entities/spotMarket.entity';
 import { SpotMarketDto } from '../dto/spotMarket.dto';
 import { SpotMarketStatusEnum } from '../enums/spotMarketStatus.enum';
+import { OrderTypeEnum } from '../enums/orderType.enum';
 
 @Injectable()
 export class SpotMarketRepository {
@@ -54,5 +55,40 @@ export class SpotMarketRepository {
     if (deleteResult.affected === 0) {
       throw new NotFoundException('SpotMarket not found');
     }
+  }
+
+  async getUserSpotMarkets(filters: {
+    userId: string;
+    status?: SpotMarketStatusEnum;
+    fromNetwork?: string;
+    toNetwork?: string;
+    fromCoin?: string;
+    toCoin?: string;
+    orderType?: OrderTypeEnum;
+  }) {
+    const query = this.repository.createQueryBuilder('spotMarket').where('spotMarket.userId = :userId', {
+      userId: filters.userId,
+    });
+
+    if (filters.status) {
+      query.andWhere('spotMarket.status = :status', { status: filters.status });
+    }
+    if (filters.fromNetwork) {
+      query.andWhere('spotMarket.fromNetwork = :fromNetwork', { fromNetwork: filters.fromNetwork });
+    }
+    if (filters.toNetwork) {
+      query.andWhere('spotMarket.toNetwork = :toNetwork', { toNetwork: filters.toNetwork });
+    }
+    if (filters.fromCoin) {
+      query.andWhere('spotMarket.fromCoin = :fromCoin', { fromCoin: filters.fromCoin });
+    }
+    if (filters.toCoin) {
+      query.andWhere('spotMarket.toCoin = :toCoin', { toCoin: filters.toCoin });
+    }
+    if (filters.orderType) {
+      query.andWhere('spotMarket.orderType = :orderType', { orderType: filters.orderType });
+    }
+
+    return await query.getMany();
   }
 }
