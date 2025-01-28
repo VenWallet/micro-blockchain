@@ -433,7 +433,6 @@ export class NearService implements ProtocolInterface {
             {
               token_id: tokenId,
               receiver_id: destination,
-              approval_id: '0',
             },
             new BN('30000000000000'),
             new BN('1'),
