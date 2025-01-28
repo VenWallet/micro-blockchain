@@ -435,7 +435,7 @@ export class NearService implements ProtocolInterface {
               receiver_id: destination,
             },
             new BN('30000000000000'),
-            new BN('1'),
+            new BN('0'),
           ),
         ],
         fromAddress,
