@@ -195,3 +195,35 @@ export class SwapDto {
   @IsEnum(IndexEnum)
   network: IndexEnum;
 }
+
+export class TransferNftDto {
+  @ApiProperty()
+  @IsUUID()
+  @IsNotEmpty()
+  userId: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  privateKey: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsEnum(IndexEnum)
+  network: IndexEnum;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  tokenId: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  contract: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  destination: string;
+}

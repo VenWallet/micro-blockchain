@@ -357,4 +357,18 @@ export class EthereumService implements ProtocolInterface {
       throw new ExceptionHandler(error);
     }
   }
+
+  async transferNft(
+    fromAddress: string,
+    privateKey: string,
+    tokenId: string,
+    contract: string,
+    destination: string,
+  ): Promise<string> {
+    try {
+      throw new Error('Method not implemented.');
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
 }

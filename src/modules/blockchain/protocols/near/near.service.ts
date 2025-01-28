@@ -411,4 +411,42 @@ export class NearService implements ProtocolInterface {
       throw new ExceptionHandler(error);
     }
   }
+
+  async transferNft(
+    fromAddress: string,
+    privateKey: string,
+    tokenId: string,
+    contract: string,
+    destination: string,
+  ): Promise<string> {
+    try {
+      const keyStore = new keyStores.InMemoryKeyStore();
+      const keyPair = KeyPair.fromString(privateKey as any);
+      keyStore.setKey(this.configService.get('NEAR_ENV', { infer: true })!, fromAddress, keyPair);
+      const near = new Near(this.nearUtils.configNear(keyStore));
+      const account = new AccountService(near.connection, fromAddress);
+      const trx = await this.nearUtils.createTransactionFn(
+        contract,
+        [
+          await functionCall(
+            'nft_transfer',
+            {
+              token_id: tokenId,
+              receiver_id: destination,
+              approval_id: '0',
+            },
+            new BN('30000000000000'),
+            new BN('1'),
+          ),
+        ],
+        fromAddress,
+        near,
+      );
+      const result = await account.signAndSendTrx(trx);
+      if (!result.transaction.hash) throw new Error(`Failed to send transfer.`);
+      return result.transaction.hash as string;
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
 }
