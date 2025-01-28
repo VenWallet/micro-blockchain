@@ -63,7 +63,6 @@ export class SpotMarketController {
     @Query('endDate') endDate?: string,
     @Query('csv') csv?: boolean,
   ) {
-    console.log('csv', csv);
     const data = await this.spotMarketService.getUserSpotMarkets({
       userId,
       status,
@@ -80,7 +79,7 @@ export class SpotMarketController {
       return this.spotMarketService.convertToCsv(data, res);
     }
 
-    return data;
+    res.json(data);
   }
 
   @Post('preview-spot-market')
