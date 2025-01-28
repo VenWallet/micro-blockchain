@@ -11,7 +11,6 @@ import {
 import { CoreServiceExternal } from 'src/external/core-service.external';
 import { ExceptionHandler } from 'src/helpers/handlers/exception.handler';
 import { BlockchainService } from '../blockchain/blockchain.service';
-import { create } from 'domain';
 import { IndexEnum } from '../network/enums/index.enum';
 import { NetworkService } from '../network/network.service';
 import { CreateSpotMarketDto, PreviewSpotMarketDto, SpotMarketDto, CancelLimitOrderDto } from './dto/spotMarket.dto';
@@ -26,6 +25,8 @@ import { ExchangeTypeEnum } from './enums/exchangeType.enum';
 import { BinanceApiService } from 'src/providers/binance-api/binance-api.service';
 import * as path from 'path';
 import { OrderTypeEnum } from './enums/orderType.enum';
+import { parse } from 'json2csv';
+import { Response } from 'express';
 
 const filePath = path.resolve(process.cwd(), 'exchangeInfo.json');
 const exchangeInfo = fs.readFileSync(filePath, 'utf8');
@@ -596,11 +597,39 @@ export class SpotMarketService {
     fromCoin?: string;
     toCoin?: string;
     orderType?: OrderTypeEnum;
+    startDate?: string;
+    endDate?: string;
   }) {
     try {
       return await this.spotMarketRepository.getUserSpotMarkets(filters);
     } catch (error) {
       throw new ExceptionHandler(error);
+    }
+  }
+
+  async convertToCsv(data: any, res: Response): Promise<void> {
+    try {
+      // Verificar que los datos no estén vacíos
+      if (!Array.isArray(data) || data.length === 0) {
+        throw new Error('No data available to convert to CSV.');
+      }
+
+      // Definir los campos del CSV
+      const fields = Object.keys(data[0]); // Usa las claves del primer objeto como encabezados
+      const opts = { fields };
+
+      // Convertir los datos a formato CSV
+      const csv = parse(data, opts);
+
+      // Configurar los encabezados para descargar el archivo
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename="spot_markets.csv"');
+
+      // Enviar el archivo CSV como respuesta
+      res.send(csv);
+    } catch (error) {
+      console.error('Error converting to CSV:', error);
+      throw new Error('Failed to convert data to CSV.');
     }
   }
 }

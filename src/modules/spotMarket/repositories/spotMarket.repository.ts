@@ -65,6 +65,8 @@ export class SpotMarketRepository {
     fromCoin?: string;
     toCoin?: string;
     orderType?: OrderTypeEnum;
+    startDate?: string;
+    endDate?: string;
   }) {
     const query = this.repository.createQueryBuilder('spotMarket').where('spotMarket.userId = :userId', {
       userId: filters.userId,
@@ -87,6 +89,17 @@ export class SpotMarketRepository {
     }
     if (filters.orderType) {
       query.andWhere('spotMarket.orderType = :orderType', { orderType: filters.orderType });
+    }
+
+    if (filters.startDate && filters.endDate) {
+      query.andWhere('spotMarket.timestamp BETWEEN :startDate AND :endDate', {
+        startDate: filters.startDate,
+        endDate: filters.endDate,
+      });
+    } else if (filters.startDate) {
+      query.andWhere('spotMarket.timestamp >= :startDate', { startDate: filters.startDate });
+    } else if (filters.endDate) {
+      query.andWhere('spotMarket.timestamp <= :endDate', { endDate: filters.endDate });
     }
 
     return await query.getMany();

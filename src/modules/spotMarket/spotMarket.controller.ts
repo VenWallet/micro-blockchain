@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Query, HttpCode, HttpStatus, ParseBoolPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Query,
+  HttpCode,
+  HttpStatus,
+  ParseBoolPipe,
+  Res,
+} from '@nestjs/common';
 import { ApiProperty, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import { NetworksEnum } from '../network/enums/networks.enum';
@@ -8,6 +20,7 @@ import { SpotMarketService } from './spotMarket.service';
 import { CancelLimitOrderDto, CreateSpotMarketDto, PreviewSpotMarketDto } from './dto/spotMarket.dto';
 import { SpotMarketStatusEnum } from './enums/spotMarketStatus.enum';
 import { OrderTypeEnum } from './enums/orderType.enum';
+import { Response } from 'express';
 
 @ApiTags('SpotMarket')
 @Controller('spot-market')
@@ -22,7 +35,23 @@ export class SpotMarketController {
   @ApiQuery({ name: 'fromCoin', required: false, type: String, description: 'Moneda de origen' })
   @ApiQuery({ name: 'toCoin', required: false, type: String, description: 'Moneda de destino' })
   @ApiQuery({ name: 'orderType', required: false, enum: OrderTypeEnum, description: 'Tipo de orden' })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Fecha de inicio',
+    example: '2024-12-01T17:20:48.111Zs o 2024-12-01',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'Fecha de fin',
+    example: '2024-12-01T17:20:48.111Zs o 2024-12-01',
+  })
+  @ApiQuery({ name: 'csv', required: false, type: Boolean, description: 'Exportar a CSV', example: 'true' })
   async getUserSpotMarkets(
+    @Res() res: Response,
     @Query('userId') userId: string,
     @Query('status') status?: SpotMarketStatusEnum,
     @Query('fromNetwork') fromNetwork?: string,
@@ -30,8 +59,12 @@ export class SpotMarketController {
     @Query('fromCoin') fromCoin?: string,
     @Query('toCoin') toCoin?: string,
     @Query('orderType') orderType?: OrderTypeEnum,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('csv') csv?: boolean,
   ) {
-    return this.spotMarketService.getUserSpotMarkets({
+    console.log('csv', csv);
+    const data = await this.spotMarketService.getUserSpotMarkets({
       userId,
       status,
       fromNetwork,
@@ -39,7 +72,15 @@ export class SpotMarketController {
       fromCoin,
       toCoin,
       orderType,
+      startDate,
+      endDate,
     });
+
+    if (csv) {
+      return this.spotMarketService.convertToCsv(data, res);
+    }
+
+    return data;
   }
 
   @Post('preview-spot-market')
