@@ -609,23 +609,18 @@ export class SpotMarketService {
 
   async convertToCsv(data: any, res: Response): Promise<void> {
     try {
-      // Verificar que los datos no estén vacíos
       if (!Array.isArray(data) || data.length === 0) {
         throw new Error('No data available to convert to CSV.');
       }
 
-      // Definir los campos del CSV
-      const fields = Object.keys(data[0]); // Usa las claves del primer objeto como encabezados
+      const fields = Object.keys(data[0]);
       const opts = { fields };
 
-      // Convertir los datos a formato CSV
       const csv = parse(data, opts);
 
-      // Configurar los encabezados para descargar el archivo
       res.setHeader('Content-Type', 'text/csv');
       res.setHeader('Content-Disposition', 'attachment; filename="spot_markets.csv"');
 
-      // Enviar el archivo CSV como respuesta
       res.send(csv);
     } catch (error) {
       console.error('Error converting to CSV:', error);
