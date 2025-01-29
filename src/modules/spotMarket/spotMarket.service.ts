@@ -27,6 +27,7 @@ import * as path from 'path';
 import { OrderTypeEnum } from './enums/orderType.enum';
 import { parse } from 'json2csv';
 import { Response } from 'express';
+import axios from 'axios';
 
 const filePath = path.resolve(process.cwd(), 'exchangeInfo.json');
 const exchangeInfo = fs.readFileSync(filePath, 'utf8');
@@ -173,6 +174,36 @@ export class SpotMarketService {
           createSpotMarketDto.typeOrder === OrderTypeEnum.LIMIT && createSpotMarketDto.price
             ? createSpotMarketDto.price
             : await this.binanceApiService.getTickerPrice(pair);
+
+        if (OrderTypeEnum.LIMIT && createSpotMarketDto.price) {
+          const priceFilter = symbol.filters.find((f) => f.filterType === 'PRICE_FILTER');
+          const percentPriceFilter = symbol.filters.find((f) => f.filterType === 'PERCENT_PRICE_BY_SIDE');
+
+          const avgPrice = await this.getAvgPrice(symbol.symbol);
+
+          const minPrice = parseFloat(priceFilter.minPrice);
+          const maxPrice = parseFloat(priceFilter.maxPrice);
+          const tickSize = parseFloat(priceFilter.tickSize);
+
+          const minAllowedPrice = avgPrice * parseFloat(percentPriceFilter.askMultiplierDown);
+          const maxAllowedPrice = avgPrice * parseFloat(percentPriceFilter.askMultiplierUp);
+
+          // Validar precio dentro del rango permitido
+          if (price < minPrice || price > maxPrice) {
+            console.error(`Error: Precio fuera de los límites (${minPrice} - ${maxPrice})`);
+            throw new HttpException(`Precio fuera de los límites (${minPrice} - ${maxPrice})`, HttpStatus.BAD_REQUEST);
+          }
+
+          if (price < minAllowedPrice || price > maxAllowedPrice) {
+            console.error(
+              `Error: Precio fuera del rango permitido por PERCENT_PRICE_BY_SIDE (${minAllowedPrice} - ${maxAllowedPrice})`,
+            );
+            throw new HttpException(
+              `Precio fuera del rango permitido por PERCENT_PRICE_BY_SIDE (${minAllowedPrice} - ${maxAllowedPrice})`,
+              HttpStatus.BAD_REQUEST,
+            );
+          }
+        }
 
         const side = createSpotMarketDto.fromCoin === symbol.baseAsset ? 'SELL' : 'BUY';
 
@@ -508,6 +539,39 @@ export class SpotMarketService {
           throw new NotFoundException('Amount is less than withdraw min, after fees');
         }
 
+        if (OrderTypeEnum.LIMIT && previewSpotMarketDto.price) {
+          console.log('ENTRO');
+          const priceFilter = symbol.filters.find((f) => f.filterType === 'PRICE_FILTER');
+          const percentPriceFilter = symbol.filters.find((f) => f.filterType === 'PERCENT_PRICE_BY_SIDE');
+
+          const avgPrice = await this.getAvgPrice(symbol.symbol);
+
+          const minPrice = parseFloat(priceFilter.minPrice);
+          const maxPrice = parseFloat(priceFilter.maxPrice);
+          const tickSize = parseFloat(priceFilter.tickSize);
+
+          const minAllowedPrice = avgPrice * parseFloat(percentPriceFilter.askMultiplierDown);
+          const maxAllowedPrice = avgPrice * parseFloat(percentPriceFilter.askMultiplierUp);
+
+          console.log('minAllowedPrice', minAllowedPrice);
+          console.log('maxAllowedPrice', maxAllowedPrice);
+          // Validar precio dentro del rango permitido
+          if (price < minPrice || price > maxPrice) {
+            console.error(`Error: Precio fuera de los límites (${minPrice} - ${maxPrice})`);
+            throw new HttpException(`Precio fuera de los límites (${minPrice} - ${maxPrice})`, HttpStatus.BAD_REQUEST);
+          }
+
+          if (price < minAllowedPrice || price > maxAllowedPrice) {
+            console.error(
+              `Error: Precio fuera del rango permitido por PERCENT_PRICE_BY_SIDE (${minAllowedPrice} - ${maxAllowedPrice})`,
+            );
+            throw new HttpException(
+              `Precio fuera del rango permitido por PERCENT_PRICE_BY_SIDE (${minAllowedPrice} - ${maxAllowedPrice})`,
+              HttpStatus.BAD_REQUEST,
+            );
+          }
+        }
+
         return { amountReceived, fees };
       }
     } catch (error) {
@@ -625,6 +689,15 @@ export class SpotMarketService {
     } catch (error) {
       console.error('Error converting to CSV:', error);
       throw new Error('Failed to convert data to CSV.');
+    }
+  }
+
+  async getAvgPrice(symbol) {
+    try {
+      const response = await axios.get(`https://api.binance.com/api/v3/avgPrice?symbol=${symbol}`);
+      return parseFloat(response.data.price);
+    } catch (error) {
+      throw error;
     }
   }
 }
