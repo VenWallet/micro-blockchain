@@ -118,6 +118,33 @@ export class TasksService {
               continue;
             }
 
+            if (price) {
+              const priceFilter = symbol.filters.find((f) => f.filterType === 'PRICE_FILTER');
+              const percentPriceFilter = symbol.filters.find((f) => f.filterType === 'PERCENT_PRICE_BY_SIDE');
+
+              const avgPrice = await this.getAvgPrice(symbol.symbol);
+
+              const minPrice = parseFloat(priceFilter.minPrice);
+              const maxPrice = parseFloat(priceFilter.maxPrice);
+              const tickSize = parseFloat(priceFilter.tickSize);
+
+              const minAllowedPrice = avgPrice * parseFloat(percentPriceFilter.askMultiplierDown);
+              const maxAllowedPrice = avgPrice * parseFloat(percentPriceFilter.askMultiplierUp);
+
+              // Validar precio dentro del rango permitido
+              if (price < minPrice || price > maxPrice) {
+                console.error(`Error: Precio fuera de los límites (${minPrice} - ${maxPrice})`);
+                continue;
+              }
+
+              if (price < minAllowedPrice || price > maxAllowedPrice) {
+                console.error(
+                  `Error: Precio fuera del rango permitido por PERCENT_PRICE_BY_SIDE (${minAllowedPrice} - ${maxAllowedPrice})`,
+                );
+                continue;
+              }
+            }
+
             const quantity = side === 'SELL' ? Number(spotMarket.amount) : Number(spotMarket.amount) / price;
 
             console.log('quantity', quantity);
@@ -360,6 +387,15 @@ export class TasksService {
       return response.data;
     } catch (error) {
       console.error('Error getOrder:', error);
+      throw error;
+    }
+  }
+
+  async getAvgPrice(symbol) {
+    try {
+      const response = await axios.get(`https://api.binance.com/api/v3/avgPrice?symbol=${symbol}`);
+      return parseFloat(response.data.price);
+    } catch (error) {
       throw error;
     }
   }
