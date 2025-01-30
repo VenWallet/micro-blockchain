@@ -215,6 +215,34 @@ export class SpotMarketService {
 
         console.log('quantity', quantity);
 
+        // 📌 Extraer filtros dinámicamente desde symbol
+        const minNotional = parseFloat(symbol.filters.find((f) => f.filterType === 'NOTIONAL')?.minNotional || '0');
+        const lotSizeFilter = symbol.filters.find((f) => f.filterType === 'LOT_SIZE');
+        const minQty = parseFloat(lotSizeFilter?.minQty || '0');
+        const stepSize2 = parseFloat(lotSizeFilter?.stepSize || '0');
+        const priceFilter = symbol.filters.find((f) => f.filterType === 'PRICE_FILTER');
+        const minPrice = parseFloat(priceFilter?.minPrice || '0');
+
+        // ⚠️ Validar NOTIONAL (cantidad * precio >= minNotional)
+        if (quantity * price < minNotional) {
+          throw new Error(`Cantidad demasiado baja. Debe ser al menos ${minNotional} USDT`);
+        }
+
+        // 🔄 Ajustar cantidad al múltiplo más cercano de stepSize
+        if (stepSize2 > 0) {
+          quantity = Math.floor(quantity / stepSize2) * stepSize2;
+        }
+
+        // ⚠️ Validar minQty (cantidad mínima permitida)
+        if (quantity < minQty) {
+          throw new Error(`La cantidad mínima permitida es ${minQty}`);
+        }
+
+        // ⚠️ Validar minPrice (precio mínimo permitido)
+        if (price < minPrice) {
+          throw new Error(`El precio mínimo permitido es ${minPrice}`);
+        }
+
         const feeWallet = quantity * 0.002;
 
         const feeTotal = feeWithdraw + feeWallet;
@@ -570,6 +598,34 @@ export class SpotMarketService {
               HttpStatus.BAD_REQUEST,
             );
           }
+        }
+
+        // 📌 Extraer filtros dinámicamente desde symbol
+        const minNotional = parseFloat(symbol.filters.find((f) => f.filterType === 'NOTIONAL')?.minNotional || '0');
+        const lotSizeFilter = symbol.filters.find((f) => f.filterType === 'LOT_SIZE');
+        const minQty = parseFloat(lotSizeFilter?.minQty || '0');
+        const stepSize2 = parseFloat(lotSizeFilter?.stepSize || '0');
+        const priceFilter = symbol.filters.find((f) => f.filterType === 'PRICE_FILTER');
+        const minPrice = parseFloat(priceFilter?.minPrice || '0');
+
+        // ⚠️ Validar NOTIONAL (cantidad * precio >= minNotional)
+        if (quantity * price < minNotional) {
+          throw new Error(`Cantidad demasiado baja. Debe ser al menos ${minNotional} USDT`);
+        }
+
+        // 🔄 Ajustar cantidad al múltiplo más cercano de stepSize
+        if (stepSize2 > 0) {
+          quantity = Math.floor(quantity / stepSize2) * stepSize2;
+        }
+
+        // ⚠️ Validar minQty (cantidad mínima permitida)
+        if (quantity < minQty) {
+          throw new Error(`La cantidad mínima permitida es ${minQty}`);
+        }
+
+        // ⚠️ Validar minPrice (precio mínimo permitido)
+        if (price < minPrice) {
+          throw new Error(`El precio mínimo permitido es ${minPrice}`);
         }
 
         return { amountReceived, fees };
