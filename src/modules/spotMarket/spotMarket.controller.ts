@@ -76,6 +76,10 @@ export class SpotMarketController {
     });
 
     if (csv) {
+      if (!data.length) {
+        return res.status(HttpStatus.NO_CONTENT).send('No data found');
+      }
+
       return this.spotMarketService.convertToCsv(data, res);
     }
 

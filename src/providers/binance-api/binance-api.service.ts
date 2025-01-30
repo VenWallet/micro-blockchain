@@ -178,10 +178,10 @@ export class BinanceApiService {
         throw new Error('API Key and Secret not found');
       }
 
-      const amountAfterFee = (amount * 0.99).toFixed(6);
+      const amountReceived = (amount * 0.99).toFixed(6);
 
       const timestamp = Date.now();
-      let queryString = `coin=${asset}&address=${address}&amount=${amountAfterFee}&timestamp=${timestamp}&network=${network}`;
+      let queryString = `coin=${asset}&address=${address}&amount=${amountReceived}&timestamp=${timestamp}&network=${network}`;
 
       // Generate signature
       const signature = crypto.createHmac('sha256', apiSecret).update(queryString).digest('hex');
@@ -197,7 +197,7 @@ export class BinanceApiService {
       const response = await axios.post(url, null, { headers });
 
       // Return response data
-      return response.data;
+      return { ...response.data, amountReceived };
     } catch (error) {
       console.error('Error withdrawing funds:', error);
       throw error;
