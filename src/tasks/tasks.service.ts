@@ -113,11 +113,6 @@ export class TasksService {
               }
             }
 
-            if (!price) {
-              console.log('price continue', price);
-              continue;
-            }
-
             if (price) {
               const priceFilter = symbol.filters.find((f) => f.filterType === 'PRICE_FILTER');
               const percentPriceFilter = symbol.filters.find((f) => f.filterType === 'PERCENT_PRICE_BY_SIDE');
