@@ -366,8 +366,35 @@ export class EthereumService implements ProtocolInterface {
     destination: string,
   ): Promise<string> {
     try {
-      throw new Error('Method not implemented.');
+      const provider = new ethers.InfuraProvider(
+        'mainnet',
+        this.configService.get('INFURA_PROJECT_ID', { infer: true })!,
+      );
+
+      const wallet = new ethers.Wallet(privateKey, provider);
+
+      const minABI = ['function safeTransferFrom(address from, address to, uint256 tokenId) external'];
+
+      const nftContract = new ethers.Contract(contract, minABI, wallet);
+
+      // Verificar si el usuario es el dueño del NFT
+      const owner = await nftContract.ownerOf(tokenId);
+      if (owner.toLowerCase() !== fromAddress.toLowerCase()) {
+        throw new Error('You are not the owner of this NFT.');
+      }
+
+      // Estimar gas
+      const gasLimit = await (nftContract.estimateGas as any).safeTransferFrom(fromAddress, destination, tokenId);
+
+      // Ejecutar la transacción
+      const tx = await (nftContract.estimateGas as any).safeTransferFrom(fromAddress, destination, tokenId, {
+        gasLimit,
+      });
+
+      console.log('NFT transfer initiated', tx.hash);
+      return tx.hash;
     } catch (error) {
+      console.log('ERROR TRANSFER NFT', error);
       throw new ExceptionHandler(error);
     }
   }
