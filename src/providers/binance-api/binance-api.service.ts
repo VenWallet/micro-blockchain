@@ -132,9 +132,10 @@ export class BinanceApiService {
         throw new Error('API Key and Secret not found');
       }
       const timestamp = Date.now();
-      let queryString = price
-        ? `symbol=${symbol}&side=${side}&type=${orderType}&quantity=${quantity.toFixed(6)}&price=${price.toFixed(2)}&timeInForce=GTC&timestamp=${timestamp}`
-        : `symbol=${symbol}&side=${side}&type=${orderType}&quantity=${quantity.toFixed(6)}&timestamp=${timestamp}`;
+      let queryString =
+        price && orderType === 'LIMIT'
+          ? `symbol=${symbol}&side=${side}&type=${orderType}&quantity=${quantity.toFixed(6)}&price=${price.toFixed(2)}&timeInForce=GTC&timestamp=${timestamp}`
+          : `symbol=${symbol}&side=${side}&type=${orderType}&quantity=${quantity.toFixed(6)}&timestamp=${timestamp}`;
 
       // Generate signature
       const signature = crypto.createHmac('sha256', apiSecret).update(queryString).digest('hex');
