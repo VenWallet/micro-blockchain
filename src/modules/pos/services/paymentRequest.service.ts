@@ -23,7 +23,6 @@ import { BlockchainService } from '../../blockchain/blockchain.service';
 import { TransferDto, TransferTokenDto } from 'src/modules/blockchain/blockchain.dto';
 import { WalletService } from 'src/modules/wallet/wallet.service';
 import { TokenService } from 'src/modules/token/token.service';
-import { PosSocket } from '../sockets/pos.socket';
 import { NetworkRepository } from 'src/modules/network/repositories/network.repository';
 import { IndexEnum } from 'src/modules/network/enums/index.enum';
 import { ExchangeTypeEnum } from 'src/modules/spotMarket/enums/exchangeType.enum';
@@ -34,6 +33,7 @@ import * as fs from 'fs';
 import { OrderTypeEnum } from 'src/modules/spotMarket/enums/orderType.enum';
 import { BinanceApiService } from 'src/providers/binance-api/binance-api.service';
 import { DepositAddressEnum } from 'src/modules/spotMarket/enums/depositAddress.enum';
+import { WebSocketGatewayService } from 'src/websocket/websocket-gateway.service';
 
 const filePath = path.resolve(process.cwd(), 'exchangeInfo.json');
 const exchangeInfo = fs.readFileSync(filePath, 'utf8');
@@ -46,7 +46,7 @@ export class PaymentRequestService {
     private readonly blockchainService: BlockchainService,
     private readonly walletService: WalletService,
     private readonly tokenService: TokenService,
-    private readonly posSocket: PosSocket,
+    private readonly socketService: WebSocketGatewayService,
     private readonly networkRepository: NetworkRepository,
     private readonly posSettingsRepository: PosSettingsRepository,
     private readonly binanceApiService: BinanceApiService,
@@ -558,7 +558,7 @@ export class PaymentRequestService {
 
       await this.paymentRequestRepository.update(paymentRequest.id, { isPaid: true, hash, exchangeType: exchangeType });
 
-      await this.posSocket.emitEvent(
+      await this.socketService.emitEvent(
         paymentRequest.socketId,
         'payment-request:pay-status',
         await this.paymentRequestRepository.findOne(paymentRequestPayDto.paymentRequestId),
@@ -627,7 +627,7 @@ export class PaymentRequestService {
     } catch (error) {
       await this.paymentRequestRepository.update(paymentRequest.id, { status: PaymentStatusEnum.FAILED });
 
-      await this.posSocket.emitEvent(
+      await this.socketService.emitEvent(
         paymentRequest.socketId,
         'payment-request:pay-status',
         await this.paymentRequestRepository.findOne(paymentRequestPayDto.paymentRequestId),

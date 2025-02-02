@@ -17,6 +17,8 @@ import { SpotMarketModule } from './modules/spotMarket/spotMarket.module';
 import { TasksModule } from './tasks/tasks.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PosModule } from './modules/pos/pos.module';
+import { WebsocketModule } from './websocket/websocket.module';
+import { WebSocketGatewayService } from './websocket/websocket-gateway.service';
 @Module({
   imports: [
     AppConfigModule,
@@ -34,6 +36,7 @@ import { PosModule } from './modules/pos/pos.module';
     ExternalModule,
     SpotMarketModule,
     PosModule,
+    WebsocketModule,
   ],
   controllers: [AppController],
   providers: [],
