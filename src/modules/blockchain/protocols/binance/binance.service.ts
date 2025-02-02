@@ -248,4 +248,12 @@ export class BinanceService implements ProtocolInterface {
       throw new ExceptionHandler(error);
     }
   }
+
+  getLinkTransaction(txId: string): string {
+    try {
+      throw new Error('Method not implemented.');
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
 }

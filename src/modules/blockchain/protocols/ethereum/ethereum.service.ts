@@ -398,4 +398,12 @@ export class EthereumService implements ProtocolInterface {
       throw new ExceptionHandler(error);
     }
   }
+
+  getLinkTransaction(txId: string): string {
+    try {
+      return `https://etherscan.io/tx/${txId}`;
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
 }

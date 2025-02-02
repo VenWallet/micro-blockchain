@@ -225,7 +225,11 @@ export class SpotMarketService {
 
         // ⚠️ Validar NOTIONAL (cantidad * precio >= minNotional)
         if (quantity * price < minNotional) {
-          throw new Error(`Cantidad demasiado baja. Debe ser al menos ${minNotional} USDT`);
+          throw new Error(
+            `Cantidad demasiado baja. Debe ser al menos ${minNotional} ` + side === 'SELL'
+              ? createSpotMarketDto.toCoin
+              : createSpotMarketDto.fromCoin,
+          );
         }
 
         // 🔄 Ajustar cantidad al múltiplo más cercano de stepSize
@@ -610,7 +614,11 @@ export class SpotMarketService {
 
         // ⚠️ Validar NOTIONAL (cantidad * precio >= minNotional)
         if (quantity * price < minNotional) {
-          throw new Error(`Cantidad demasiado baja. Debe ser al menos ${minNotional} USDT`);
+          throw new Error(
+            `Cantidad demasiado baja. Debe ser al menos ${minNotional} ` + side === 'SELL'
+              ? previewSpotMarketDto.toCoin
+              : previewSpotMarketDto.fromCoin,
+          );
         }
 
         // 🔄 Ajustar cantidad al múltiplo más cercano de stepSize

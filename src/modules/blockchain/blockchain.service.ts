@@ -390,7 +390,7 @@ export class BlockchainService {
         token.decimals,
       );
 
-      if (!movement) {
+      if (movement) {
         const movement: MovementDto = {
           userId: transferDto.userId,
           movementType: MovementTypeEnum.TRANSFER,
@@ -518,6 +518,7 @@ export class BlockchainService {
     network: NetworksEnum;
     index: IndexEnum;
     hash: string;
+    txLink: string;
   }> {
     try {
       console.log('transferNftDto', transferNftDto);
@@ -537,25 +538,27 @@ export class BlockchainService {
 
       console.log('txHash', txHash);
 
-      // if (movement) {
-      //   const movement: MovementDto = {
-      //     userId: transferDto.userId,
-      //     movementType: MovementTypeEnum.TRANSFER,
-      //     movementDate: new Date(),
-      //     status: StatusEnum.COMPLETED,
-      //     amount: transferDto.amount,
-      //     currency: wallet.network.symbol,
-      //     transactionHash: txHash,
-      //     fromAccount: wallet.address,
-      //     toAccount: transferDto.toAddress,
-      //     fromNetwork: wallet.network.name,
-      //     toNetwork: wallet.network.name,
-      //   };
+      const movement: MovementDto = {
+        userId: transferNftDto.userId,
+        movementType: MovementTypeEnum.TRANSFER_NFT,
+        movementDate: new Date(),
+        status: StatusEnum.COMPLETED,
+        currency: wallet.network.symbol,
+        transactionHash: txHash,
+        fromAccount: wallet.address,
+        toAccount: transferNftDto.destination,
+        fromNetwork: wallet.network.name,
+        toNetwork: wallet.network.name,
+      };
 
-      //   this.coreServiceExternal.createMovement(movement);
-      // }
+      this.coreServiceExternal.createMovement(movement);
 
-      return { network: wallet.network.name, index: wallet.network.index, hash: txHash };
+      return {
+        network: wallet.network.name,
+        index: wallet.network.index,
+        hash: txHash,
+        txLink: service.getLinkTransaction(txHash),
+      };
     } catch (error) {
       throw new ExceptionHandler(error);
     }

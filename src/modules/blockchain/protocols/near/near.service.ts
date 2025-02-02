@@ -448,4 +448,12 @@ export class NearService implements ProtocolInterface {
       throw new ExceptionHandler(error);
     }
   }
+
+  getLinkTransaction(txId: string): string {
+    try {
+      return `https://nearblocks.io/es/txns/${txId}`;
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
 }

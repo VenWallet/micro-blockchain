@@ -32,4 +32,5 @@ export interface ProtocolInterface {
     contract: string,
     destination: string,
   ): Promise<string>;
+  getLinkTransaction(txId: string): string;
 }
