@@ -7,10 +7,12 @@ import { ConfigService } from '@nestjs/config';
 import { EnvironmentVariables } from './config/env';
 import * as fs from 'fs';
 import * as https from 'https';
+import * as http from 'http';
+import { IoAdapter } from '@nestjs/platform-socket.io';
+import { AppWsModule } from './app-ws.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-
   const configService = app.get(ConfigService<EnvironmentVariables>);
 
   const port = configService.get('PORT', { infer: true })!;
@@ -31,24 +33,28 @@ async function bootstrap() {
 
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
 
-  // await app.listen(port);
+  await app.listen(port);
 
-  // const url = await app.getUrl();
-
-  // console.log(`Server is running on ${url}`);
-
-  app.init();
+  const url = await app.getUrl();
 
   const httpsOptions = {
-    key: fs.readFileSync('certs/ssl-key.pem'),
-    cert: fs.readFileSync('certs/ssl-cert.pem'),
+    key: fs.readFileSync('/etc/letsencrypt/live/app.venwallet.xyz/privkey.pem'),
+    cert: fs.readFileSync('/etc/letsencrypt/live/app.venwallet.xyz/fullchain.pem'),
   };
-
-  const httpsServer = https.createServer(httpsOptions, app.getHttpAdapter().getInstance());
-
-  httpsServer.listen(port, () => {
-    console.log(`✅ API REST y WebSockets en: https://localhost:${port}`);
+  const appWs = await NestFactory.create(AppWsModule, {
+    httpsOptions,
   });
+
+  const wsPort = configService.get('PORT_WS', { infer: true })!;
+
+  appWs.useWebSocketAdapter(new IoAdapter(appWs));
+
+  appWs.init();
+
+  await appWs.listen(wsPort);
+
+  console.log(`Server is running on ${url}`);
+  console.log(`Ws is running on ${wsPort}`);
 }
 
 bootstrap();

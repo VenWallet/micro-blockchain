@@ -16,7 +16,7 @@ import { PaymentRequestRepository } from 'src/modules/pos/repositories/paymentRe
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-@WebSocketGateway(Number(process.env.PORT_WS!), {
+@WebSocketGateway({
   namespace: 'socket',
   cors: { origin: '*' },
 })
@@ -32,6 +32,11 @@ export class WebSocketGatewayService implements OnGatewayConnection, OnGatewayDi
 
   handleConnection(client: Socket) {
     console.log(`Cliente conectado: ${client.id}`);
+
+    client.on('ping', () => {
+      console.log(`Ping received from client: ${client.id}`);
+      client.emit('pong');
+    });
   }
 
   handleDisconnect(client: Socket) {
