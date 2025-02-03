@@ -10,6 +10,8 @@ import * as https from 'https';
 import * as http from 'http';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import { AppWsModule } from './app-ws.module';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -38,8 +40,8 @@ async function bootstrap() {
   const url = await app.getUrl();
 
   const httpsOptions = {
-    key: fs.readFileSync('/etc/letsencrypt/live/app.venwallet.xyz/privkey.pem'),
-    cert: fs.readFileSync('/etc/letsencrypt/live/app.venwallet.xyz/fullchain.pem'),
+    cert: fs.readFileSync(process.env.SSL_CERT_PATH!),
+    key: fs.readFileSync(process.env.SSL_KEY_PATH!),
   };
   const appWs = await NestFactory.create(AppWsModule, {
     httpsOptions,
