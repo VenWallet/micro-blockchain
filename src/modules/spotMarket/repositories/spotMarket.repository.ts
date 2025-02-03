@@ -5,6 +5,7 @@ import { plainToClass } from 'class-transformer';
 import { SpotMarketEntity } from '../entities/spotMarket.entity';
 import { SpotMarketDto } from '../dto/spotMarket.dto';
 import { SpotMarketStatusEnum } from '../enums/spotMarketStatus.enum';
+import { OrderTypeEnum } from '../enums/orderType.enum';
 
 @Injectable()
 export class SpotMarketRepository {
@@ -31,6 +32,10 @@ export class SpotMarketRepository {
     return await this.repository.find({ where: { status: SpotMarketStatusEnum.PENDING } });
   }
 
+  async findScheduled(): Promise<SpotMarketEntity[]> {
+    return await this.repository.find({ where: { status: SpotMarketStatusEnum.SCHEDULED } });
+  }
+
   async findOne(id: string): Promise<SpotMarketEntity | null> {
     return await this.repository.findOne({
       where: { id },
@@ -39,6 +44,7 @@ export class SpotMarketRepository {
 
   async update(id: string, updateData: Partial<SpotMarketEntity>): Promise<void> {
     const updateResult = await this.repository.update({ id }, updateData);
+
     if (updateResult.affected === 0) {
       throw new NotFoundException('SpotMarket not found');
     }
@@ -49,5 +55,53 @@ export class SpotMarketRepository {
     if (deleteResult.affected === 0) {
       throw new NotFoundException('SpotMarket not found');
     }
+  }
+
+  async getUserSpotMarkets(filters: {
+    userId: string;
+    status?: SpotMarketStatusEnum;
+    fromNetwork?: string;
+    toNetwork?: string;
+    fromCoin?: string;
+    toCoin?: string;
+    orderType?: OrderTypeEnum;
+    startDate?: string;
+    endDate?: string;
+  }) {
+    const query = this.repository.createQueryBuilder('spotMarket').where('spotMarket.userId = :userId', {
+      userId: filters.userId,
+    });
+
+    if (filters.status) {
+      query.andWhere('spotMarket.status = :status', { status: filters.status });
+    }
+    if (filters.fromNetwork) {
+      query.andWhere('spotMarket.fromNetwork = :fromNetwork', { fromNetwork: filters.fromNetwork });
+    }
+    if (filters.toNetwork) {
+      query.andWhere('spotMarket.toNetwork = :toNetwork', { toNetwork: filters.toNetwork });
+    }
+    if (filters.fromCoin) {
+      query.andWhere('spotMarket.fromCoin = :fromCoin', { fromCoin: filters.fromCoin });
+    }
+    if (filters.toCoin) {
+      query.andWhere('spotMarket.toCoin = :toCoin', { toCoin: filters.toCoin });
+    }
+    if (filters.orderType) {
+      query.andWhere('spotMarket.orderType = :orderType', { orderType: filters.orderType });
+    }
+
+    if (filters.startDate && filters.endDate) {
+      query.andWhere('spotMarket.timestamp BETWEEN :startDate AND :endDate', {
+        startDate: filters.startDate,
+        endDate: filters.endDate,
+      });
+    } else if (filters.startDate) {
+      query.andWhere('spotMarket.timestamp >= :startDate', { startDate: filters.startDate });
+    } else if (filters.endDate) {
+      query.andWhere('spotMarket.timestamp <= :endDate', { endDate: filters.endDate });
+    }
+
+    return await query.getMany();
   }
 }

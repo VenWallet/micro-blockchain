@@ -10,6 +10,7 @@ import {
   PreviewSwapDto,
   SwapDto,
   TransferDto,
+  TransferNftDto,
   TransferTokenDto,
 } from './blockchain.dto';
 import { IndexEnum } from '../network/enums/index.enum';
@@ -79,5 +80,11 @@ export class BlockchainController {
   @HttpCode(HttpStatus.OK)
   swap(@Body() swapDto: SwapDto) {
     return this.blockchainService.swap(swapDto);
+  }
+
+  @Post('transfer-nft')
+  @HttpCode(HttpStatus.OK)
+  transferNft(@Body() transferNftDto: TransferNftDto) {
+    return this.blockchainService.transferNft(transferNftDto);
   }
 }

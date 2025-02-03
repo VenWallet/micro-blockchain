@@ -15,9 +15,10 @@ import { PaymentRequestRepository } from 'src/modules/pos/repositories/paymentRe
 import { PosLinkRepository } from 'src/modules/pos/repositories/posLink.repository';
 import { PosSettingsRepository } from 'src/modules/pos/repositories/posSettings.repository';
 import { PaymentStatusEnum } from 'src/modules/pos/enums/paymentStatus.enum';
-import { PosSocket } from 'src/modules/pos/sockets/pos.socket';
 import { NetworksEnum } from 'src/modules/network/enums/networks.enum';
 import { from } from 'form-data';
+import { OrderTypeEnum } from 'src/modules/spotMarket/enums/orderType.enum';
+import { WebSocketGatewayService } from 'src/websocket/websocket-gateway.service';
 
 @Injectable()
 export class PosTask {
@@ -27,7 +28,7 @@ export class PosTask {
     private readonly posSettingsRepository: PosSettingsRepository,
     private readonly walletRepository: WalletRepository,
     private readonly binanceApiService: BinanceApiService,
-    private readonly posSocket: PosSocket,
+    private readonly socketService: WebSocketGatewayService,
   ) {}
 
   @Cron('*/1 * * * *')
@@ -129,7 +130,7 @@ export class PosTask {
 
           const deposit = deposits.find((d) => d.txId === paymentRequest.hash);
 
-          console.log(deposit);
+          console.log('PosTask', deposit);
 
           if (!deposit) {
             continue;
@@ -228,12 +229,11 @@ export class PosTask {
 
             console.log('Withdraw to address', wallet.address);
 
-            const withdrawData = await this.withdraw(
+            const withdrawData = await this.binanceApiService.withdraw(
               toCoin,
               wallet.address,
               Number(paymentRequest.amount),
               toNetworkSymbol,
-              network.decimals,
             );
 
             console.log('withdrawData', withdrawData);
@@ -243,7 +243,7 @@ export class PosTask {
               withdrawData: withdrawData,
             });
 
-            await this.posSocket.emitEvent(
+            await this.socketService.emitEvent(
               paymentRequest.socketId,
               'payment-request:pay-status',
               await this.paymentRequestRepository.findOne(paymentRequest.id),
@@ -259,7 +259,7 @@ export class PosTask {
             console.log('symbol', symbol);
 
             if (!symbol?.symbol) {
-              await this.paymentRequestRepository.update(paymentRequest.id, { status: PaymentStatusEnum.CANCELLED });
+              await this.paymentRequestRepository.update(paymentRequest.id, { status: PaymentStatusEnum.CANCELED });
               continue;
             }
 
@@ -298,7 +298,12 @@ export class PosTask {
 
             console.log('adjustedQuantity', adjustedQuantity);
 
-            const orderData = await this.trade(pair, side, Number(adjustedQuantity));
+            const orderData = await this.binanceApiService.trade(
+              pair,
+              side,
+              Number(adjustedQuantity),
+              OrderTypeEnum.MARKET,
+            );
             // const orderData = {
             //   symbol: 'NEARUSDT',
             //   orderId: 3420040618,
@@ -349,12 +354,11 @@ export class PosTask {
 
             setTimeout(async () => {
               try {
-                const withdrawData = await this.withdraw(
+                const withdrawData = await this.binanceApiService.withdraw(
                   toCoin,
                   wallet.address,
                   side === 'BUY' ? Number(orderData.executedQty) : Number(orderData.cummulativeQuoteQty),
                   toNetworkSymbol,
-                  network.decimals,
                 );
 
                 console.log('withdrawData', withdrawData);
@@ -364,7 +368,7 @@ export class PosTask {
                   withdrawData: withdrawData,
                 });
 
-                await this.posSocket.emitEvent(
+                await this.socketService.emitEvent(
                   paymentRequest.socketId,
                   'payment-request:pay-status',
                   await this.paymentRequestRepository.findOne(paymentRequest.id),
@@ -383,83 +387,6 @@ export class PosTask {
       }
     } catch (error) {
       console.log('error', error?.data || error.response.data);
-    }
-  }
-
-  private async trade(symbol: string, side: string, quantity: number) {
-    try {
-      const apiKey = process.env.BINANCE_API_KEY;
-      const apiSecret = process.env.BINANCE_API_SECRET;
-
-      if (!apiKey || !apiSecret) {
-        throw new Error('API Key and Secret not found');
-      }
-      const timestamp = Date.now();
-      const queryString = `symbol=${symbol}&side=${side}&type=MARKET&quantity=${quantity.toFixed(6)}&timestamp=${timestamp}`;
-
-      // Generate signature
-      const signature = crypto.createHmac('sha256', apiSecret).update(queryString).digest('hex');
-
-      const url = `https://api.binance.com/api/v3/order?${queryString}&signature=${signature}`;
-
-      console.log('url', url);
-      // Set headers with API Key
-      const headers = {
-        'X-MBX-APIKEY': apiKey,
-      };
-
-      // Send POST request to place order
-      const response = await axios.post(url, null, { headers });
-
-      // Parse and log the order result
-      const orderData = response.data;
-
-      const feeRate = 0.001; // Fee rate is typically 0.1% for spot trading
-      const executedQty = parseFloat(orderData.executedQty); // Amount of base asset traded
-      const price = parseFloat(orderData.fills[0].price); // Price per unit in quote asset
-
-      // Calculate fee in quote asset
-      const feeInQuoteAsset = executedQty * price * feeRate;
-
-      return orderData;
-    } catch (error) {
-      console.log(error?.data || error.response.data || error);
-      throw new Error(error.message || error || 'Internal Server Error');
-    }
-  }
-
-  async withdraw(asset: string, address: string, amount: number, network: string, decimals: number): Promise<any> {
-    try {
-      const apiKey = process.env.BINANCE_API_KEY;
-      const apiSecret = process.env.BINANCE_API_SECRET;
-
-      if (!apiKey || !apiSecret) {
-        throw new Error('API Key and Secret not found');
-      }
-
-      const amountAfterFee = (amount * 0.999).toFixed(6);
-
-      const timestamp = Date.now();
-      let queryString = `coin=${asset}&address=${address}&amount=${amountAfterFee}&timestamp=${timestamp}&network=${network}`;
-
-      // Generate signature
-      const signature = crypto.createHmac('sha256', apiSecret).update(queryString).digest('hex');
-
-      const url = `https://api.binance.com/sapi/v1/capital/withdraw/apply?${queryString}&signature=${signature}`;
-
-      // Set headers with API Key
-      const headers = {
-        'X-MBX-APIKEY': apiKey,
-      };
-
-      // Send POST request to withdraw funds
-      const response = await axios.post(url, null, { headers });
-
-      // Return response data
-      return response.data;
-    } catch (error) {
-      console.error('Error withdrawing funds:', error);
-      throw error;
     }
   }
 }

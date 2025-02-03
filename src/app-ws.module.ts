@@ -25,7 +25,6 @@ import { WebSocketGatewayService } from './websocket/websocket-gateway.service';
     CacheModule.register({ isGlobal: true }),
     TypeOrmModule.forRoot(DatabaseConfig.getDataSourceOptions()),
     ScheduleModule.forRoot(),
-    TasksModule,
     UtilsModule,
     HttpCustomModule,
     NetworkModule,
@@ -36,8 +35,9 @@ import { WebSocketGatewayService } from './websocket/websocket-gateway.service';
     ExternalModule,
     SpotMarketModule,
     PosModule,
+    WebsocketModule,
   ],
   controllers: [AppController],
   providers: [],
 })
-export class AppModule {}
+export class AppWsModule {}

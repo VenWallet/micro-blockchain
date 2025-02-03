@@ -25,4 +25,12 @@ export interface ProtocolInterface {
   getFeeTransferToken?(amount: number | undefined, address: string | undefined): Promise<number>;
   previewSwap?(fromToken: any, toToken: any, amount: number, address: string | undefined): Promise<any>;
   swap?(priceRoute: any, privateKey: string, address: string): Promise<{ dataSwap: any; priceRoute: any }>;
+  transferNft(
+    fromAddress: string,
+    privateKey: string,
+    tokenId: string,
+    contract: string,
+    destination: string,
+  ): Promise<string>;
+  getLinkTransaction(txId: string): string;
 }

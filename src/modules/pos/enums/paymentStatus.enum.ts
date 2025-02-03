@@ -3,6 +3,6 @@ export enum PaymentStatusEnum {
   COMPLETED = 'Completado',
   FAILED = 'Fallido',
   SCHEDULED = 'Programado',
-  CANCELLED = 'Cancelado',
+  CANCELED = 'Cancelado',
   PROCESSING = 'Procesando',
 }

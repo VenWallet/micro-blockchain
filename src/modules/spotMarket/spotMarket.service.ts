@@ -11,10 +11,9 @@ import {
 import { CoreServiceExternal } from 'src/external/core-service.external';
 import { ExceptionHandler } from 'src/helpers/handlers/exception.handler';
 import { BlockchainService } from '../blockchain/blockchain.service';
-import { create } from 'domain';
 import { IndexEnum } from '../network/enums/index.enum';
 import { NetworkService } from '../network/network.service';
-import { CreateSpotMarketDto, PreviewSpotMarketDto, SpotMarketDto } from './dto/spotMarket.dto';
+import { CreateSpotMarketDto, PreviewSpotMarketDto, SpotMarketDto, CancelLimitOrderDto } from './dto/spotMarket.dto';
 import { WalletService } from '../wallet/wallet.service';
 import { TokenService } from '../token/token.service';
 import * as fs from 'fs';
@@ -26,6 +25,9 @@ import { ExchangeTypeEnum } from './enums/exchangeType.enum';
 import { BinanceApiService } from 'src/providers/binance-api/binance-api.service';
 import * as path from 'path';
 import { OrderTypeEnum } from './enums/orderType.enum';
+import { parse } from 'json2csv';
+import { Response } from 'express';
+import axios from 'axios';
 
 const filePath = path.resolve(process.cwd(), 'exchangeInfo.json');
 const exchangeInfo = fs.readFileSync(filePath, 'utf8');
@@ -173,6 +175,36 @@ export class SpotMarketService {
             ? createSpotMarketDto.price
             : await this.binanceApiService.getTickerPrice(pair);
 
+        if (OrderTypeEnum.LIMIT && createSpotMarketDto.price) {
+          const priceFilter = symbol.filters.find((f) => f.filterType === 'PRICE_FILTER');
+          const percentPriceFilter = symbol.filters.find((f) => f.filterType === 'PERCENT_PRICE_BY_SIDE');
+
+          const avgPrice = await this.getAvgPrice(symbol.symbol);
+
+          const minPrice = parseFloat(priceFilter.minPrice);
+          const maxPrice = parseFloat(priceFilter.maxPrice);
+          const tickSize = parseFloat(priceFilter.tickSize);
+
+          const minAllowedPrice = avgPrice * parseFloat(percentPriceFilter.askMultiplierDown);
+          const maxAllowedPrice = avgPrice * parseFloat(percentPriceFilter.askMultiplierUp);
+
+          // Validar precio dentro del rango permitido
+          if (price < minPrice || price > maxPrice) {
+            console.error(`Error: Precio fuera de los límites (${minPrice} - ${maxPrice})`);
+            throw new HttpException(`Precio fuera de los límites (${minPrice} - ${maxPrice})`, HttpStatus.BAD_REQUEST);
+          }
+
+          if (price < minAllowedPrice || price > maxAllowedPrice) {
+            console.error(
+              `Error: Precio fuera del rango permitido por PERCENT_PRICE_BY_SIDE (${minAllowedPrice} - ${maxAllowedPrice})`,
+            );
+            throw new HttpException(
+              `Precio fuera del rango permitido por PERCENT_PRICE_BY_SIDE (${minAllowedPrice} - ${maxAllowedPrice})`,
+              HttpStatus.BAD_REQUEST,
+            );
+          }
+        }
+
         const side = createSpotMarketDto.fromCoin === symbol.baseAsset ? 'SELL' : 'BUY';
 
         const stepSize = parseFloat(symbol.filters.find((f) => f.filterType === 'LOT_SIZE')?.stepSize || '0.1');
@@ -182,6 +214,38 @@ export class SpotMarketService {
         quantity = Math.floor(quantity / stepSize) * stepSize;
 
         console.log('quantity', quantity);
+
+        // 📌 Extraer filtros dinámicamente desde symbol
+        const minNotional = parseFloat(symbol.filters.find((f) => f.filterType === 'NOTIONAL')?.minNotional || '0');
+        const lotSizeFilter = symbol.filters.find((f) => f.filterType === 'LOT_SIZE');
+        const minQty = parseFloat(lotSizeFilter?.minQty || '0');
+        const stepSize2 = parseFloat(lotSizeFilter?.stepSize || '0');
+        const priceFilter = symbol.filters.find((f) => f.filterType === 'PRICE_FILTER');
+        const minPrice = parseFloat(priceFilter?.minPrice || '0');
+
+        // ⚠️ Validar NOTIONAL (cantidad * precio >= minNotional)
+        if (quantity * price < minNotional) {
+          throw new Error(
+            `Cantidad demasiado baja. Debe ser al menos ${minNotional} ` + side === 'SELL'
+              ? createSpotMarketDto.toCoin
+              : createSpotMarketDto.fromCoin,
+          );
+        }
+
+        // 🔄 Ajustar cantidad al múltiplo más cercano de stepSize
+        if (stepSize2 > 0) {
+          quantity = Math.floor(quantity / stepSize2) * stepSize2;
+        }
+
+        // ⚠️ Validar minQty (cantidad mínima permitida)
+        if (quantity < minQty) {
+          throw new Error(`La cantidad mínima permitida es ${minQty}`);
+        }
+
+        // ⚠️ Validar minPrice (precio mínimo permitido)
+        if (price < minPrice) {
+          throw new Error(`El precio mínimo permitido es ${minPrice}`);
+        }
 
         const feeWallet = quantity * 0.002;
 
@@ -507,10 +571,197 @@ export class SpotMarketService {
           throw new NotFoundException('Amount is less than withdraw min, after fees');
         }
 
+        if (OrderTypeEnum.LIMIT && previewSpotMarketDto.price) {
+          console.log('ENTRO');
+          const priceFilter = symbol.filters.find((f) => f.filterType === 'PRICE_FILTER');
+          const percentPriceFilter = symbol.filters.find((f) => f.filterType === 'PERCENT_PRICE_BY_SIDE');
+
+          const avgPrice = await this.getAvgPrice(symbol.symbol);
+
+          const minPrice = parseFloat(priceFilter.minPrice);
+          const maxPrice = parseFloat(priceFilter.maxPrice);
+          const tickSize = parseFloat(priceFilter.tickSize);
+
+          const minAllowedPrice = avgPrice * parseFloat(percentPriceFilter.askMultiplierDown);
+          const maxAllowedPrice = avgPrice * parseFloat(percentPriceFilter.askMultiplierUp);
+
+          console.log('minAllowedPrice', minAllowedPrice);
+          console.log('maxAllowedPrice', maxAllowedPrice);
+          // Validar precio dentro del rango permitido
+          if (price < minPrice || price > maxPrice) {
+            console.error(`Error: Precio fuera de los límites (${minPrice} - ${maxPrice})`);
+            throw new HttpException(`Precio fuera de los límites (${minPrice} - ${maxPrice})`, HttpStatus.BAD_REQUEST);
+          }
+
+          if (price < minAllowedPrice || price > maxAllowedPrice) {
+            console.error(
+              `Error: Precio fuera del rango permitido por PERCENT_PRICE_BY_SIDE (${minAllowedPrice} - ${maxAllowedPrice})`,
+            );
+            throw new HttpException(
+              `Precio fuera del rango permitido por PERCENT_PRICE_BY_SIDE (${minAllowedPrice} - ${maxAllowedPrice})`,
+              HttpStatus.BAD_REQUEST,
+            );
+          }
+        }
+
+        // 📌 Extraer filtros dinámicamente desde symbol
+        const minNotional = parseFloat(symbol.filters.find((f) => f.filterType === 'NOTIONAL')?.minNotional || '0');
+        const lotSizeFilter = symbol.filters.find((f) => f.filterType === 'LOT_SIZE');
+        const minQty = parseFloat(lotSizeFilter?.minQty || '0');
+        const stepSize2 = parseFloat(lotSizeFilter?.stepSize || '0');
+        const priceFilter = symbol.filters.find((f) => f.filterType === 'PRICE_FILTER');
+        const minPrice = parseFloat(priceFilter?.minPrice || '0');
+
+        // ⚠️ Validar NOTIONAL (cantidad * precio >= minNotional)
+        if (quantity * price < minNotional) {
+          throw new Error(
+            `Cantidad demasiado baja. Debe ser al menos ${minNotional} ` + side === 'SELL'
+              ? previewSpotMarketDto.toCoin
+              : previewSpotMarketDto.fromCoin,
+          );
+        }
+
+        // 🔄 Ajustar cantidad al múltiplo más cercano de stepSize
+        if (stepSize2 > 0) {
+          quantity = Math.floor(quantity / stepSize2) * stepSize2;
+        }
+
+        // ⚠️ Validar minQty (cantidad mínima permitida)
+        if (quantity < minQty) {
+          throw new Error(`La cantidad mínima permitida es ${minQty}`);
+        }
+
+        // ⚠️ Validar minPrice (precio mínimo permitido)
+        if (price < minPrice) {
+          throw new Error(`El precio mínimo permitido es ${minPrice}`);
+        }
+
         return { amountReceived, fees };
       }
     } catch (error) {
       throw new ExceptionHandler(error);
+    }
+  }
+
+  async cancelLimitOrder(cancelLimitOrderDto: CancelLimitOrderDto) {
+    try {
+      const spotMarket = await this.spotMarketRepository.findOne(cancelLimitOrderDto.spotMarketId);
+
+      if (!spotMarket) {
+        throw new NotFoundException('Spot market not found');
+      }
+
+      if (spotMarket.userId !== cancelLimitOrderDto.userId) {
+        throw new ConflictException('User not authorized');
+      }
+
+      if (spotMarket.status !== SpotMarketStatusEnum.SCHEDULED) {
+        throw new ConflictException('Spot market is not scheduled');
+      }
+
+      if (spotMarket.orderType !== OrderTypeEnum.LIMIT) {
+        throw new ConflictException('Spot market is not a limit order');
+      }
+
+      if (!spotMarket.orderData?.orderId) {
+        throw new NotFoundException('Order ID not found');
+      }
+
+      const fromWallet = await this.walletService.findOneByUserIdAndIndex(
+        spotMarket.userId,
+        spotMarket.fromNetwork as IndexEnum,
+      );
+
+      if (!fromWallet) {
+        throw new NotFoundException('Wallet not found');
+      }
+
+      const result = await this.binanceApiService.cancelLimitOrder(spotMarket.symbol, spotMarket.orderData.orderId);
+
+      console.log('result', result);
+
+      if (result.status !== 'CANCELED') {
+        throw new ConflictException('Order not canceled');
+      }
+
+      const toNetworkSymbol =
+        fromWallet.network.symbol === 'BNB'
+          ? 'BSC'
+          : fromWallet.network.symbol === 'ARB'
+            ? 'ARBITRUM'
+            : fromWallet.network.symbol;
+
+      setTimeout(async () => {
+        try {
+          const withdrawData = await this.binanceApiService.withdraw(
+            spotMarket.fromCoin,
+            fromWallet.address,
+            Number(spotMarket.amount),
+            toNetworkSymbol,
+          );
+
+          console.log('withdrawData', withdrawData);
+
+          await this.spotMarketRepository.update(spotMarket.id, {
+            status: SpotMarketStatusEnum.CANCELED,
+            withdrawData: withdrawData,
+          });
+
+          console.log('Retiro ejecutado exitosamente.');
+        } catch (error) {
+          console.error('Error al ejecutar el retiro:', error);
+        }
+      }, 5000);
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async getUserSpotMarkets(filters: {
+    userId: string;
+    status?: SpotMarketStatusEnum;
+    fromNetwork?: string;
+    toNetwork?: string;
+    fromCoin?: string;
+    toCoin?: string;
+    orderType?: OrderTypeEnum;
+    startDate?: string;
+    endDate?: string;
+  }) {
+    try {
+      return await this.spotMarketRepository.getUserSpotMarkets(filters);
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async convertToCsv(data: any, res: Response): Promise<void> {
+    try {
+      if (!Array.isArray(data) || data.length === 0) {
+        throw new Error('No data available to convert to CSV.');
+      }
+
+      const fields = Object.keys(data[0]);
+      const opts = { fields };
+
+      const csv = parse(data, opts);
+
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename="spot_markets.csv"');
+
+      res.send(csv);
+    } catch (error) {
+      console.error('Error converting to CSV:', error);
+      throw new Error('Failed to convert data to CSV.');
+    }
+  }
+
+  async getAvgPrice(symbol) {
+    try {
+      const response = await axios.get(`https://api.binance.com/api/v3/avgPrice?symbol=${symbol}`);
+      return parseFloat(response.data.price);
+    } catch (error) {
+      throw error;
     }
   }
 }

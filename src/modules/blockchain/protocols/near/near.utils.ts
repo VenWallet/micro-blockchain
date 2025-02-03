@@ -7,17 +7,6 @@ import { Injectable } from '@nestjs/common';
 import { AccountService } from './account.service';
 import { EnvironmentVariables } from 'src/config/env';
 import { ConfigService } from '@nestjs/config';
-import {
-  DCLSwap,
-  estimateSwap,
-  fetchAllPools,
-  getDCLPoolId,
-  getStablePools,
-  instantSwap,
-  Pool,
-  StablePool,
-  SwapOptions,
-} from '@ref-finance/ref-sdk';
 import axios from 'axios';
 
 const configService = new ConfigService<EnvironmentVariables>();
@@ -138,61 +127,61 @@ export class NearUtils {
     }
   }
 
-  public async getTxSwapRef(tokenMetadataA: any, tokenMetadataB: any, amount: number, address: string) {
-    const { ratedPools, unRatedPools, simplePools } = await fetchAllPools();
+  // public async getTxSwapRef(tokenMetadataA: any, tokenMetadataB: any, amount: number, address: string) {
+  //   const { ratedPools, unRatedPools, simplePools } = await fetchAllPools();
 
-    const stablePools: Pool[] = unRatedPools.concat(ratedPools);
+  //   const stablePools: Pool[] = unRatedPools.concat(ratedPools);
 
-    const stablePoolsDetail: StablePool[] = await getStablePools(stablePools);
+  //   const stablePoolsDetail: StablePool[] = await getStablePools(stablePools);
 
-    const options: SwapOptions = {
-      enableSmartRouting: true,
-      stablePools,
-      stablePoolsDetail,
-    };
+  //   const options: SwapOptions = {
+  //     enableSmartRouting: true,
+  //     stablePools,
+  //     stablePoolsDetail,
+  //   };
 
-    const swapAlls = await estimateSwap({
-      tokenIn: tokenMetadataA,
-      tokenOut: tokenMetadataB,
-      amountIn: String(amount),
-      simplePools: simplePools,
-      options,
-    });
+  //   const swapAlls = await estimateSwap({
+  //     tokenIn: tokenMetadataA,
+  //     tokenOut: tokenMetadataB,
+  //     amountIn: String(amount),
+  //     simplePools: simplePools,
+  //     options,
+  //   });
 
-    const transactionsRef = await instantSwap({
-      tokenIn: tokenMetadataA,
-      tokenOut: tokenMetadataB,
-      amountIn: String(amount),
-      swapTodos: swapAlls,
-      slippageTolerance: 0.01,
-      AccountId: address,
-    });
+  //   const transactionsRef = await instantSwap({
+  //     tokenIn: tokenMetadataA,
+  //     tokenOut: tokenMetadataB,
+  //     amountIn: String(amount),
+  //     swapTodos: swapAlls,
+  //     slippageTolerance: 0.01,
+  //     AccountId: address,
+  //   });
 
-    return transactionsRef;
-  }
+  //   return transactionsRef;
+  // }
 
-  public async getTxSwapDCL(tokenMetadataA: any, tokenMetadataB: any, amount: number) {
-    const nearUsd = await this.getNearPrice();
+  // public async getTxSwapDCL(tokenMetadataA: any, tokenMetadataB: any, amount: number) {
+  //   const nearUsd = await this.getNearPrice();
 
-    const fee = 2000;
+  //   const fee = 2000;
 
-    const pool_ids = [getDCLPoolId(tokenMetadataA.id, tokenMetadataB.id, fee)];
+  //   const pool_ids = [getDCLPoolId(tokenMetadataA.id, tokenMetadataB.id, fee)];
 
-    const transactionsDcl = await DCLSwap({
-      swapInfo: {
-        amountA: String(amount),
-        tokenA: tokenMetadataA,
-        tokenB: tokenMetadataB,
-      },
-      Swap: {
-        pool_ids,
-        min_output_amount: String(Math.round(amount * nearUsd * 0.99 * Math.pow(10, tokenMetadataB.decimals))),
-      },
-      AccountId: tokenMetadataA.id,
-    });
+  //   const transactionsDcl = await DCLSwap({
+  //     swapInfo: {
+  //       amountA: String(amount),
+  //       tokenA: tokenMetadataA,
+  //       tokenB: tokenMetadataB,
+  //     },
+  //     Swap: {
+  //       pool_ids,
+  //       min_output_amount: String(Math.round(amount * nearUsd * 0.99 * Math.pow(10, tokenMetadataB.decimals))),
+  //     },
+  //     AccountId: tokenMetadataA.id,
+  //   });
 
-    return transactionsDcl;
-  }
+  //   return transactionsDcl;
+  // }
 
   async getNearPrice() {
     try {

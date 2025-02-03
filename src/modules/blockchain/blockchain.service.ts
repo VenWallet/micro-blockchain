@@ -18,6 +18,7 @@ import {
   PreviewSwapDto,
   SwapDto,
   ImportWalletsFromMnemonicDto,
+  TransferNftDto,
 } from './blockchain.dto';
 import { CryptShared } from 'src/shared/utils/crypt.shared';
 import { IndexEnum } from '../network/enums/index.enum';
@@ -389,7 +390,7 @@ export class BlockchainService {
         token.decimals,
       );
 
-      if (!movement) {
+      if (movement) {
         const movement: MovementDto = {
           userId: transferDto.userId,
           movementType: MovementTypeEnum.TRANSFER,
@@ -508,6 +509,56 @@ export class BlockchainService {
       this.coreServiceExternal.createMovement(movement);
 
       return swap;
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async transferNft(transferNftDto: TransferNftDto): Promise<{
+    network: NetworksEnum;
+    index: IndexEnum;
+    hash: string;
+    txLink: string;
+  }> {
+    try {
+      console.log('transferNftDto', transferNftDto);
+      const wallet = await this.walletService.findOneByUserIdAndIndex(transferNftDto.userId, transferNftDto.network);
+
+      const service = this.protocolIndex.getProtocolService(transferNftDto.network);
+
+      console.log('wallet', wallet);
+
+      const txHash = await service.transferNft(
+        wallet.address,
+        transferNftDto.privateKey,
+        transferNftDto.tokenId,
+        transferNftDto.contract,
+        transferNftDto.destination,
+      );
+
+      console.log('txHash', txHash);
+
+      const movement: MovementDto = {
+        userId: transferNftDto.userId,
+        movementType: MovementTypeEnum.TRANSFER_NFT,
+        movementDate: new Date(),
+        status: StatusEnum.COMPLETED,
+        currency: wallet.network.symbol,
+        transactionHash: txHash,
+        fromAccount: wallet.address,
+        toAccount: transferNftDto.destination,
+        fromNetwork: wallet.network.name,
+        toNetwork: wallet.network.name,
+      };
+
+      this.coreServiceExternal.createMovement(movement);
+
+      return {
+        network: wallet.network.name,
+        index: wallet.network.index,
+        hash: txHash,
+        txLink: service.getLinkTransaction(txHash),
+      };
     } catch (error) {
       throw new ExceptionHandler(error);
     }

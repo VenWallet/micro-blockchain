@@ -234,4 +234,26 @@ export class BinanceService implements ProtocolInterface {
   swap(priceRoute: any, privateKey: string, address: string): Promise<any> {
     throw new Error('Method not implemented.');
   }
+
+  async transferNft(
+    fromAddress: string,
+    privateKey: string,
+    tokenId: string,
+    contract: string,
+    destination: string,
+  ): Promise<string> {
+    try {
+      throw new Error('Method not implemented.');
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  getLinkTransaction(txId: string): string {
+    try {
+      throw new Error('Method not implemented.');
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
 }

@@ -1,6 +1,7 @@
 export enum MovementTypeEnum {
   LOGIN = 'LOGIN',
   TRANSFER = 'TRANSFER',
+  TRANSFER_NFT = 'TRANSFER NFT',
   SWAP = 'SWAP',
   BRIDGE = 'BRIDGE',
   WITHDRAWAL = 'WITHDRAWAL',
