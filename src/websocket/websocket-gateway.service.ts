@@ -7,28 +7,21 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
+import * as socketIo from 'socket.io';
 import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
-import { PaymentRequestDto } from '../dto/pos.dto';
-import { PaymentRequestRepository } from '../repositories/paymentRequest.repository';
-import { PaymentRequestEntity } from '../entities/paymentRequest.entity';
 import { ConfigService } from '@nestjs/config';
-import { EnvironmentEnum } from 'src/shared/enums/environment.enum';
-import { EnvironmentVariables } from 'src/config/env';
-import { PosLinkRepository } from '../repositories/posLink.repository';
+import { Server, Socket } from 'socket.io';
+import { PosLinkRepository } from 'src/modules/pos/repositories/posLink.repository';
+import { PaymentRequestRepository } from 'src/modules/pos/repositories/paymentRequest.repository';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-const configService = new ConfigService<EnvironmentVariables>();
-
-@WebSocketGateway(Number(process.env.PORT_WS!) || 3100, {
-  namespace: 'pos',
+@WebSocketGateway({
+  namespace: 'socket',
   cors: { origin: '*' },
 })
 @Injectable()
-export class PosSocket implements OnGatewayConnection, OnGatewayDisconnect {
+export class WebSocketGatewayService implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
@@ -39,6 +32,11 @@ export class PosSocket implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleConnection(client: Socket) {
     console.log(`Cliente conectado: ${client.id}`);
+
+    client.on('ping', () => {
+      console.log(`Ping received from client: ${client.id}`);
+      client.emit('pong');
+    });
   }
 
   handleDisconnect(client: Socket) {

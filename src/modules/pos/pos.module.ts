@@ -13,9 +13,9 @@ import { PaymentRequestEntity } from './entities/paymentRequest.entity';
 import { BlockchainModule } from '../blockchain/blockchain.module';
 import { TokenModule } from '../token/token.module';
 import { WalletModule } from '../wallet/wallet.module';
-import { PosSocket } from './sockets/pos.socket';
 import { NetworkModule } from '../network/network.module';
 import { BinanceApiModule } from 'src/providers/binance-api/binance-api.module';
+import { WebsocketModule } from 'src/websocket/websocket.module';
 
 @Module({
   imports: [
@@ -25,6 +25,7 @@ import { BinanceApiModule } from 'src/providers/binance-api/binance-api.module';
     WalletModule,
     NetworkModule,
     BinanceApiModule,
+    forwardRef(() => WebsocketModule),
   ],
   exports: [
     PosSettingsService,
@@ -33,7 +34,6 @@ import { BinanceApiModule } from 'src/providers/binance-api/binance-api.module';
     PaymentRequestService,
     PosLinkRepository,
     PosLinkService,
-    PosSocket,
   ],
   controllers: [PosSettingsController],
   providers: [
@@ -43,7 +43,6 @@ import { BinanceApiModule } from 'src/providers/binance-api/binance-api.module';
     PaymentRequestService,
     PosLinkRepository,
     PosLinkService,
-    PosSocket,
   ],
 })
 export class PosModule {}

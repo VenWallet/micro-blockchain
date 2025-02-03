@@ -15,10 +15,10 @@ import { PaymentRequestRepository } from 'src/modules/pos/repositories/paymentRe
 import { PosLinkRepository } from 'src/modules/pos/repositories/posLink.repository';
 import { PosSettingsRepository } from 'src/modules/pos/repositories/posSettings.repository';
 import { PaymentStatusEnum } from 'src/modules/pos/enums/paymentStatus.enum';
-import { PosSocket } from 'src/modules/pos/sockets/pos.socket';
 import { NetworksEnum } from 'src/modules/network/enums/networks.enum';
 import { from } from 'form-data';
 import { OrderTypeEnum } from 'src/modules/spotMarket/enums/orderType.enum';
+import { WebSocketGatewayService } from 'src/websocket/websocket-gateway.service';
 
 @Injectable()
 export class PosTask {
@@ -28,7 +28,7 @@ export class PosTask {
     private readonly posSettingsRepository: PosSettingsRepository,
     private readonly walletRepository: WalletRepository,
     private readonly binanceApiService: BinanceApiService,
-    private readonly posSocket: PosSocket,
+    private readonly socketService: WebSocketGatewayService,
   ) {}
 
   @Cron('*/1 * * * *')
@@ -243,7 +243,7 @@ export class PosTask {
               withdrawData: withdrawData,
             });
 
-            await this.posSocket.emitEvent(
+            await this.socketService.emitEvent(
               paymentRequest.socketId,
               'payment-request:pay-status',
               await this.paymentRequestRepository.findOne(paymentRequest.id),
@@ -368,7 +368,7 @@ export class PosTask {
                   withdrawData: withdrawData,
                 });
 
-                await this.posSocket.emitEvent(
+                await this.socketService.emitEvent(
                   paymentRequest.socketId,
                   'payment-request:pay-status',
                   await this.paymentRequestRepository.findOne(paymentRequest.id),

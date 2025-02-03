@@ -5,17 +5,16 @@ import { ValidationPipe } from '@nestjs/common';
 import * as morgan from 'morgan';
 import { ConfigService } from '@nestjs/config';
 import { EnvironmentVariables } from './config/env';
-import { DatabaseConfig } from './config/database/database.config';
-import { SolanaService } from './modules/blockchain/protocols/solana/solana.service';
-import { EthereumService } from './modules/blockchain/protocols/ethereum/ethereum.service';
-import { ArbitrumService } from './modules/blockchain/protocols/arbitrum/arbitrum.service';
-import { BitcoinService } from './modules/blockchain/protocols/bitcoin/bitcoin.service';
-import { BinanceService } from './modules/blockchain/protocols/binance/binance.service';
-import { TasksService } from './tasks/tasks.service';
+import * as fs from 'fs';
+import * as https from 'https';
+import * as http from 'http';
+import { IoAdapter } from '@nestjs/platform-socket.io';
+import { AppWsModule } from './app-ws.module';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-
   const configService = app.get(ConfigService<EnvironmentVariables>);
 
   const port = configService.get('PORT', { infer: true })!;
@@ -40,11 +39,24 @@ async function bootstrap() {
 
   const url = await app.getUrl();
 
+  const httpsOptions = {
+    cert: fs.readFileSync(process.env.SSL_CERT_PATH!),
+    key: fs.readFileSync(process.env.SSL_KEY_PATH!),
+  };
+  const appWs = await NestFactory.create(AppWsModule, {
+    httpsOptions,
+  });
+
+  const wsPort = configService.get('PORT_WS', { infer: true })!;
+
+  appWs.useWebSocketAdapter(new IoAdapter(appWs));
+
+  appWs.init();
+
+  await appWs.listen(wsPort);
+
   console.log(`Server is running on ${url}`);
-
-  // const service = app.get(TasksService);
-
-  // console.log(await service.withdraw('USDC', '0x95Ffb8cE9E6B2657Bca6Dd432c246e8FA504fB9E', 23.76, 'BSC', 6));
+  console.log(`Ws is running on ${wsPort}`);
 }
 
 bootstrap();
