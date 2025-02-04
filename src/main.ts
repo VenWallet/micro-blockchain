@@ -56,8 +56,6 @@ async function bootstrap() {
 
   appWs.useWebSocketAdapter(new IoAdapter(appWs));
 
-  appWs.init();
-
   await appWs.listen(wsPort);
 
   console.log(`Server is running on ${url}`);
