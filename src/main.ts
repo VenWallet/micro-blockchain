@@ -47,6 +47,9 @@ async function bootstrap() {
   //         key: fs.readFileSync(process.env.SSL_KEY_PATH!),
   //       } as any);
 
+  console.log('process.env.SSL_CERT_PATH', process.env.SSL_CERT_PATH);
+  console.log('process.env.SSL_KEY_PATH', process.env.SSL_KEY_PATH);
+
   const appWs = await NestFactory.create(AppWsModule, {
     cert: fs.readFileSync(process.env.SSL_CERT_PATH!),
     key: fs.readFileSync(process.env.SSL_KEY_PATH!),
