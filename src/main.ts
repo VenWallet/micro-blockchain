@@ -39,22 +39,17 @@ async function bootstrap() {
 
   const url = await app.getUrl();
 
-  console.log('process.env.SSL_CERT_PATH', process.env.SSL_CERT_PATH);
-  console.log('process.env.SSL_KEY_PATH', process.env.SSL_KEY_PATH);
-
-  const httpsOptions = {
-    cert: fs.readFileSync(process.env.SSL_CERT_PATH!),
-    key: fs.readFileSync(process.env.SSL_KEY_PATH!),
-  };
-  const appWs = await NestFactory.create(AppWsModule, {
-    httpsOptions,
-  });
+  const appWs =
+    configService.get('NODE_ENV') === 'development'
+      ? await NestFactory.create(AppWsModule)
+      : await NestFactory.create(AppWsModule, {
+          cert: fs.readFileSync(process.env.SSL_CERT_PATH!),
+          key: fs.readFileSync(process.env.SSL_KEY_PATH!),
+        } as any);
 
   const wsPort = configService.get('PORT_WS', { infer: true })!;
 
   appWs.useWebSocketAdapter(new IoAdapter(appWs));
-
-  appWs.init();
 
   await appWs.listen(wsPort);
 
