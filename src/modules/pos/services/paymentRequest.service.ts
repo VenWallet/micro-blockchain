@@ -737,7 +737,7 @@ export class PaymentRequestService {
       }
 
       data.depositDust = fromNetworkConfig.depositDust;
-      data.depositDustCoin = fromCoin;
+      data.depositDustCoin = fromNetwork.symbol;
 
       ///////////////////////////////////////////////////
 
