@@ -48,12 +48,9 @@ async function bootstrap() {
   //         key: fs.readFileSync(process.env.SSL_KEY_PATH!),
   //       } as any);
 
-  const keyPath = process.env.SSL_KEY_PATH || '';
-  const certPath = process.env.SSL_CERT_PATH || '';
-
   const httpsOptions: any = {
-    key: fs.readFileSync(path.join(__dirname, keyPath)),
-    cert: fs.readFileSync(path.join(__dirname, certPath)),
+    key: fs.readFileSync(process.env.SSL_CERT_PATH!),
+    cert: fs.readFileSync(process.env.SSL_CERT_PATH!),
   };
 
   console.log('httpsOptions', httpsOptions);
