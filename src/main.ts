@@ -56,6 +56,8 @@ async function bootstrap() {
 
   appWs.useWebSocketAdapter(new IoAdapter(appWs));
 
+  appWs.init();
+
   await appWs.listen(wsPort);
 
   console.log('process.env.SSL_CERT_PATH', process.env.SSL_CERT_PATH);
