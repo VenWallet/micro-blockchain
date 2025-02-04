@@ -782,12 +782,6 @@ export class PaymentRequestService {
 
         data.withdrawMax = toNetworkConfig.withdrawMax;
         data.withdrawMaxCoin = toCoin;
-      } else if (exchangeType === ExchangeTypeEnum.SAME) {
-        data.withdrawMin = 0;
-        data.withdrawMinCoin = toCoin;
-        data.depositDust = 0;
-        data.withdrawMax = 0;
-        data.withdrawMaxCoin = toCoin;
       } else {
         data.withdrawMin = toNetworkConfig.withdrawMin;
         data.withdrawMinCoin = toCoin;
