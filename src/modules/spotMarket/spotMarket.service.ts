@@ -623,6 +623,7 @@ export class SpotMarketService {
         console.log('minNotional', minNotional);
         console.log('quantity', quantity);
         console.log('price', price);
+        console.log('side', side);
 
         if (side === 'SELL' ? quantity * price < minNotional : quantity / price < minNotional) {
           throw new BadRequestException(
