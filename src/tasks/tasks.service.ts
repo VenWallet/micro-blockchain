@@ -90,8 +90,6 @@ export class TasksService {
                 (s.baseAsset === spotMarket.toCoin && s.quoteAsset === spotMarket.fromCoin),
             );
 
-            console.log('symbol', symbol);
-
             if (!symbol?.symbol) {
               await this.spotMarketRepository.update(spotMarket.id, { status: SpotMarketStatusEnum.FAILED });
               continue;

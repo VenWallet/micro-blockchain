@@ -283,8 +283,6 @@ export class PosTask {
                 (s.baseAsset === toCoin && s.quoteAsset === fromCoin),
             );
 
-            console.log('symbol', symbol);
-
             if (!symbol?.symbol) {
               await this.paymentRequestRepository.update(paymentRequest.id, { status: PaymentStatusEnum.CANCELED });
               continue;
