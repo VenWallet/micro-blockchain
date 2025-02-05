@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { NestApplicationOptions, ValidationPipe } from '@nestjs/common';
 import * as morgan from 'morgan';
 import { ConfigService } from '@nestjs/config';
 import { EnvironmentVariables } from './config/env';
@@ -11,6 +11,7 @@ import * as http from 'http';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import { AppWsModule } from './app-ws.module';
 import * as dotenv from 'dotenv';
+import path from 'path';
 dotenv.config();
 
 async function bootstrap() {
@@ -47,19 +48,23 @@ async function bootstrap() {
   //         key: fs.readFileSync(process.env.SSL_KEY_PATH!),
   //       } as any);
 
-  const appWs = await NestFactory.create(AppWsModule, {
-    cert: fs.readFileSync(process.env.SSL_CERT_PATH!),
+  console.log('process.env.SSL_CERT_PATH', process.env.SSL_CERT_PATH);
+  console.log('process.env.SSL_KEY_PATH', process.env.SSL_KEY_PATH);
+
+  const httpsOptions: any = {
     key: fs.readFileSync(process.env.SSL_KEY_PATH!),
-  } as any);
+    cert: fs.readFileSync(process.env.SSL_CERT_PATH!),
+  };
+
+  console.log('httpsOptions', httpsOptions);
+
+  const appWs = await NestFactory.create(AppWsModule, { httpsOptions });
 
   const wsPort = configService.get('PORT_WS', { infer: true })!;
 
   appWs.useWebSocketAdapter(new IoAdapter(appWs));
 
   await appWs.listen(wsPort);
-
-  console.log('process.env.SSL_CERT_PATH', process.env.SSL_CERT_PATH);
-  console.log('process.env.SSL_KEY_PATH', process.env.SSL_KEY_PATH);
 
   console.log(`Server is running on ${url}`);
   console.log(`Ws is running in ${wsPort}`);
