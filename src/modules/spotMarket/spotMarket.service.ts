@@ -226,13 +226,9 @@ export class SpotMarketService {
         const minPrice = parseFloat(priceFilter?.minPrice || '0');
 
         // ⚠️ Validar NOTIONAL (cantidad * precio >= minNotional)
-        // if (quantity * price < minNotional) {
-        //   throw new Error(
-        //     `Cantidad demasiado baja. Debe ser al menos ${minNotional} ` + side === 'SELL'
-        //       ? createSpotMarketDto.toCoin
-        //       : createSpotMarketDto.fromCoin,
-        //   );
-        // }
+        if (quantity * price < minNotional) {
+          throw new BadRequestException(`Cantidad demasiado baja. Debe ser al menos ${minNotional} USD`);
+        }
 
         // 🔄 Ajustar cantidad al múltiplo más cercano de stepSize
         if (stepSize2 > 0) {
@@ -627,14 +623,9 @@ export class SpotMarketService {
         console.log('quantity', quantity);
         console.log('price', price);
 
-        // ⚠️ Validar NOTIONAL (cantidad * precio >= minNotional)
-        // if (quantity * price < minNotional) {
-        //   throw new BadRequestException(
-        //     `Cantidad demasiado baja. Debe ser al menos ${minNotional} ` + side === 'SELL'
-        //       ? previewSpotMarketDto.toCoin
-        //       : previewSpotMarketDto.fromCoin,
-        //   );
-        // }
+        if (quantity * price < minNotional) {
+          throw new BadRequestException(`Cantidad demasiado baja. Debe ser al menos ${minNotional} USD`);
+        }
 
         console.log('ENTRO 5');
 
