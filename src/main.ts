@@ -48,6 +48,9 @@ async function bootstrap() {
   //         key: fs.readFileSync(process.env.SSL_KEY_PATH!),
   //       } as any);
 
+  console.log('process.env.SSL_CERT_PATH', process.env.SSL_CERT_PATH);
+  console.log('process.env.SSL_KEY_PATH', process.env.SSL_KEY_PATH);
+
   const httpsOptions: any = {
     key: fs.readFileSync(process.env.SSL_KEY_PATH!),
     cert: fs.readFileSync(process.env.SSL_CERT_PATH!),
@@ -62,9 +65,6 @@ async function bootstrap() {
   appWs.useWebSocketAdapter(new IoAdapter(appWs));
 
   await appWs.listen(wsPort);
-
-  console.log('process.env.SSL_CERT_PATH', process.env.SSL_CERT_PATH);
-  console.log('process.env.SSL_KEY_PATH', process.env.SSL_KEY_PATH);
 
   console.log(`Server is running on ${url}`);
   console.log(`Ws is running in ${wsPort}`);
