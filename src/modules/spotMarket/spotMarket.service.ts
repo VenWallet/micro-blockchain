@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   forwardRef,
   HttpException,
@@ -625,7 +626,7 @@ export class SpotMarketService {
 
         // ⚠️ Validar NOTIONAL (cantidad * precio >= minNotional)
         if (quantity * price < minNotional) {
-          throw new Error(
+          throw new BadRequestException(
             `Cantidad demasiado baja. Debe ser al menos ${minNotional} ` + side === 'SELL'
               ? previewSpotMarketDto.toCoin
               : previewSpotMarketDto.fromCoin,
@@ -641,13 +642,13 @@ export class SpotMarketService {
 
         // ⚠️ Validar minQty (cantidad mínima permitida)
         if (quantity < minQty) {
-          throw new Error(`La cantidad mínima permitida es ${minQty}`);
+          throw new BadRequestException(`La cantidad mínima permitida es ${minQty}`);
         }
 
         console.log('ENTRO 6');
         // ⚠️ Validar minPrice (precio mínimo permitido)
         if (price < minPrice) {
-          throw new Error(`El precio mínimo permitido es ${minPrice}`);
+          throw new BadRequestException(`El precio mínimo permitido es ${minPrice}`);
         }
 
         return { amountReceived, fees };
