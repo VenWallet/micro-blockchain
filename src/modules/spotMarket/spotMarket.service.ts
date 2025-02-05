@@ -533,8 +533,6 @@ export class SpotMarketService {
             (s.baseAsset === previewSpotMarketDto.toCoin && s.quoteAsset === previewSpotMarketDto.fromCoin),
         );
 
-        console.log('symbol', symbol);
-
         if (!symbol?.symbol) {
           throw new NotFoundException('Pair not found');
         }
