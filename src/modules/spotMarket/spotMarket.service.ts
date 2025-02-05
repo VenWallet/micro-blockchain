@@ -593,7 +593,10 @@ export class SpotMarketService {
             throw new HttpException(`Precio fuera de los límites (${minPrice} - ${maxPrice})`, HttpStatus.BAD_REQUEST);
           }
 
+          console.log('price', price);
+
           if (price < minAllowedPrice || price > maxAllowedPrice) {
+            console.log('ENTRO 1');
             console.error(
               `Error: Precio fuera del rango permitido por PERCENT_PRICE_BY_SIDE (${minAllowedPrice} - ${maxAllowedPrice})`,
             );
@@ -602,8 +605,10 @@ export class SpotMarketService {
               HttpStatus.BAD_REQUEST,
             );
           }
-        }
 
+          console.log('ENTRO 2');
+        }
+        console.log('ENTRO 3');
         // 📌 Extraer filtros dinámicamente desde symbol
         const minNotional = parseFloat(symbol.filters.find((f) => f.filterType === 'NOTIONAL')?.minNotional || '0');
         const lotSizeFilter = symbol.filters.find((f) => f.filterType === 'LOT_SIZE');
@@ -611,6 +616,8 @@ export class SpotMarketService {
         const stepSize2 = parseFloat(lotSizeFilter?.stepSize || '0');
         const priceFilter = symbol.filters.find((f) => f.filterType === 'PRICE_FILTER');
         const minPrice = parseFloat(priceFilter?.minPrice || '0');
+
+        console.log('ENTRO 4');
 
         // ⚠️ Validar NOTIONAL (cantidad * precio >= minNotional)
         if (quantity * price < minNotional) {
@@ -620,6 +627,8 @@ export class SpotMarketService {
               : previewSpotMarketDto.fromCoin,
           );
         }
+
+        console.log('ENTRO 5');
 
         // 🔄 Ajustar cantidad al múltiplo más cercano de stepSize
         if (stepSize2 > 0) {
@@ -631,6 +640,7 @@ export class SpotMarketService {
           throw new Error(`La cantidad mínima permitida es ${minQty}`);
         }
 
+        console.log('ENTRO 6');
         // ⚠️ Validar minPrice (precio mínimo permitido)
         if (price < minPrice) {
           throw new Error(`El precio mínimo permitido es ${minPrice}`);
