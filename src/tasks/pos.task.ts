@@ -59,9 +59,12 @@ export class PosTask {
 
       if (toCancel.length) {
         for (const payment of toCancel) {
-          await this.paymentRequestRepository.update(payment.id, { status: PaymentStatusEnum.CANCELED });
+          console.log('Canceling payment', payment.id);
+          // await this.paymentRequestRepository.update(payment.id, { status: PaymentStatusEnum.CANCELED });
         }
       }
+
+      return;
 
       const allDeposits = await this.binanceApiService.getDeposits();
 
@@ -265,6 +268,8 @@ export class PosTask {
               withdrawData: withdrawData,
             });
 
+            console.log('payment-request:pay-status 1', paymentRequest.status);
+
             await this.socketService.emitEvent(
               paymentRequest.socketId,
               'payment-request:pay-status',
@@ -389,6 +394,8 @@ export class PosTask {
                   status: PaymentStatusEnum.COMPLETED,
                   withdrawData: withdrawData,
                 });
+
+                console.log('payment-request:pay-status 2', paymentRequest.status);
 
                 await this.socketService.emitEvent(
                   paymentRequest.socketId,

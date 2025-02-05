@@ -46,6 +46,8 @@ export class WebSocketGatewayService implements OnGatewayConnection, OnGatewayDi
   @SubscribeMessage('payment-request:pay')
   async handlePaymentRequestPay(@MessageBody() body: any, @ConnectedSocket() client: Socket) {
     try {
+      console.log('payment-request:pay');
+      console.log(body);
       const bodyData = JSON.parse(body);
 
       if (!bodyData?.paymentRequestId) {
@@ -59,6 +61,7 @@ export class WebSocketGatewayService implements OnGatewayConnection, OnGatewayDi
       const paymentRequest = await this.paymentRequestRepository.findOne(bodyData.paymentRequestId);
 
       if (!paymentRequest) {
+        console.log('payment-request:error');
         client.emit('payment-request:error', {
           status: 'error',
           message: 'No se encontró la solicitud de pago.',
@@ -67,6 +70,8 @@ export class WebSocketGatewayService implements OnGatewayConnection, OnGatewayDi
       }
 
       await this.paymentRequestRepository.update(paymentRequest.id, { socketId: client.id });
+
+      console.log('payment-request:pay-status', paymentRequest.status);
 
       client.emit('payment-request:pay-status', paymentRequest);
     } catch (error) {
