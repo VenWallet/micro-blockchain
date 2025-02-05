@@ -240,4 +240,15 @@ export class BinanceApiService {
       throw new Error(error.message || 'Internal Server Error');
     }
   }
+
+  async getExchangeInfo() {
+    try {
+      const response = await axios.get('https://api.binance.com/api/v3/exchangeInfo');
+
+      return response.data;
+    } catch (error) {
+      console.log(error);
+      throw new Error(error.message || error || 'Internal Server Error');
+    }
+  }
 }

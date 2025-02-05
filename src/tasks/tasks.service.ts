@@ -30,8 +30,10 @@ export class TasksService {
         return;
       }
 
-      const data = fs.readFileSync('./exchangeInfo.json', 'utf8');
-      const jsonData = JSON.parse(data);
+      // const data = fs.readFileSync('./exchangeInfo.json', 'utf8');
+      // const jsonData = JSON.parse(data);
+
+      const jsonData = await this.binanceApiService.getExchangeInfo();
 
       const deposits = await this.binanceApiService.getDeposits();
 

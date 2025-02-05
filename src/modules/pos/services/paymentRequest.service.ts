@@ -35,8 +35,8 @@ import { BinanceApiService } from 'src/providers/binance-api/binance-api.service
 import { DepositAddressEnum } from 'src/modules/spotMarket/enums/depositAddress.enum';
 import { WebSocketGatewayService } from 'src/websocket/websocket-gateway.service';
 
-const filePath = path.resolve(process.cwd(), 'exchangeInfo.json');
-const exchangeInfo = fs.readFileSync(filePath, 'utf8');
+// const filePath = path.resolve(process.cwd(), 'exchangeInfo.json');
+// const exchangeInfo = fs.readFileSync(filePath, 'utf8');
 
 @Injectable()
 export class PaymentRequestService {
@@ -234,7 +234,8 @@ export class PaymentRequestService {
       const feeWithdraw = Number(toNetworkConfig.withdrawFee);
 
       if (exchangeType !== ExchangeTypeEnum.BRIDGE && exchangeType !== ExchangeTypeEnum.SAME) {
-        const jsonData = JSON.parse(exchangeInfo);
+        // const jsonData = JSON.parse(exchangeInfo);
+        const jsonData = await this.binanceApiService.getExchangeInfo();
 
         const symbol = jsonData.symbols.find(
           (s) =>
@@ -450,7 +451,8 @@ export class PaymentRequestService {
       const feeWithdraw = Number(toNetworkConfig.withdrawFee);
 
       if (exchangeType !== ExchangeTypeEnum.BRIDGE) {
-        const jsonData = JSON.parse(exchangeInfo);
+        // const jsonData = JSON.parse(exchangeInfo);
+        const jsonData = await this.binanceApiService.getExchangeInfo();
 
         const symbol = jsonData.symbols.find(
           (s) =>
@@ -757,7 +759,8 @@ export class PaymentRequestService {
       }
 
       if (exchangeType !== ExchangeTypeEnum.BRIDGE && exchangeType !== ExchangeTypeEnum.SAME) {
-        const jsonData = JSON.parse(exchangeInfo);
+        // const jsonData = JSON.parse(exchangeInfo);
+        const jsonData = await this.binanceApiService.getExchangeInfo();
 
         const symbol = jsonData.symbols.find(
           (s) =>
