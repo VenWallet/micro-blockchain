@@ -628,13 +628,13 @@ export class SpotMarketService {
         console.log('price', price);
 
         // ⚠️ Validar NOTIONAL (cantidad * precio >= minNotional)
-        if (quantity * price < minNotional) {
-          throw new BadRequestException(
-            `Cantidad demasiado baja. Debe ser al menos ${minNotional} ` + side === 'SELL'
-              ? previewSpotMarketDto.toCoin
-              : previewSpotMarketDto.fromCoin,
-          );
-        }
+        // if (quantity * price < minNotional) {
+        //   throw new BadRequestException(
+        //     `Cantidad demasiado baja. Debe ser al menos ${minNotional} ` + side === 'SELL'
+        //       ? previewSpotMarketDto.toCoin
+        //       : previewSpotMarketDto.fromCoin,
+        //   );
+        // }
 
         console.log('ENTRO 5');
 
