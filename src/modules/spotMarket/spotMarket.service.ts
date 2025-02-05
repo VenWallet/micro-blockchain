@@ -225,9 +225,10 @@ export class SpotMarketService {
         const priceFilter = symbol.filters.find((f) => f.filterType === 'PRICE_FILTER');
         const minPrice = parseFloat(priceFilter?.minPrice || '0');
 
-        // ⚠️ Validar NOTIONAL (cantidad * precio >= minNotional)
-        if (quantity * price < minNotional) {
-          throw new BadRequestException(`Cantidad demasiado baja. Debe ser al menos ${minNotional} USD`);
+        if (side === 'SELL' ? quantity * price < minNotional : quantity / price < minNotional) {
+          throw new BadRequestException(
+            `Cantidad demasiado baja. Debe ser al menos ${minNotional} ${side === 'SELL' ? symbol.quoteAsset : symbol.baseAsset}`,
+          );
         }
 
         // 🔄 Ajustar cantidad al múltiplo más cercano de stepSize
@@ -623,8 +624,10 @@ export class SpotMarketService {
         console.log('quantity', quantity);
         console.log('price', price);
 
-        if (quantity * price < minNotional) {
-          throw new BadRequestException(`Cantidad demasiado baja. Debe ser al menos ${minNotional} USD`);
+        if (side === 'SELL' ? quantity * price < minNotional : quantity / price < minNotional) {
+          throw new BadRequestException(
+            `Cantidad demasiado baja. Debe ser al menos ${minNotional} ${side === 'SELL' ? symbol.quoteAsset : symbol.baseAsset}`,
+          );
         }
 
         console.log('ENTRO 5');
