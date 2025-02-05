@@ -225,7 +225,7 @@ export class SpotMarketService {
         const priceFilter = symbol.filters.find((f) => f.filterType === 'PRICE_FILTER');
         const minPrice = parseFloat(priceFilter?.minPrice || '0');
 
-        if (side === 'SELL' ? quantity * price < minNotional : quantity / price < minNotional) {
+        if (side === 'BUY' ? quantity < minNotional : quantity * price < minNotional) {
           throw new BadRequestException(
             `Cantidad demasiado baja. Debe ser al menos ${minNotional} ${side === 'SELL' ? symbol.quoteAsset : symbol.baseAsset}`,
           );
@@ -625,7 +625,7 @@ export class SpotMarketService {
         console.log('price', price);
         console.log('side', side);
 
-        if (side === 'SELL' ? quantity * price < minNotional : quantity / price < minNotional) {
+        if (side === 'BUY' ? quantity < minNotional : quantity * price < minNotional) {
           throw new BadRequestException(
             `Cantidad demasiado baja. Debe ser al menos ${minNotional} ${side === 'SELL' ? symbol.quoteAsset : symbol.baseAsset}`,
           );
