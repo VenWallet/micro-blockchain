@@ -619,6 +619,10 @@ export class SpotMarketService {
 
         console.log('ENTRO 4');
 
+        console.log('minNotional', minNotional);
+        console.log('quantity', quantity);
+        console.log('price', price);
+
         // ⚠️ Validar NOTIONAL (cantidad * precio >= minNotional)
         if (quantity * price < minNotional) {
           throw new Error(
