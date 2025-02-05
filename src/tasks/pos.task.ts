@@ -35,12 +35,32 @@ export class PosTask {
   async PosTaskPendings() {
     try {
       console.log('PosTaskPendings');
-      const paymentRequests = await this.paymentRequestRepository.findPendingsAgoThirtyMinutes();
+      const paymentRequestsAll = await this.paymentRequestRepository.findPendingsAgoThirtyMinutes();
 
-      console.log('paymentRequests', paymentRequests);
+      console.log('paymentRequestsAll', paymentRequestsAll);
 
-      if (!paymentRequests.length) {
+      if (!paymentRequestsAll.length) {
         return;
+      }
+
+      const now = new Date();
+      const thirtyMinutesAgo = new Date();
+      thirtyMinutesAgo.setMinutes(now.getMinutes() - 30);
+
+      const paymentRequests = paymentRequestsAll.filter((payment) => {
+        const createdAt = new Date(payment.createdAt);
+        return createdAt >= thirtyMinutesAgo;
+      });
+
+      const toCancel = paymentRequestsAll.filter((payment) => {
+        const createdAt = new Date(payment.createdAt);
+        return createdAt < thirtyMinutesAgo;
+      });
+
+      if (toCancel.length) {
+        for (const payment of toCancel) {
+          await this.paymentRequestRepository.update(payment.id, { status: PaymentStatusEnum.CANCELED });
+        }
       }
 
       const allDeposits = await this.binanceApiService.getDeposits();

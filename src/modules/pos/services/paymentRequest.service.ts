@@ -780,13 +780,13 @@ export class PaymentRequestService {
           throw new NotFoundException('Pair not available');
         }
 
-        data.withdrawMin = toNetworkConfig.withdrawMin;
+        data.withdrawMin = Number(toNetworkConfig.withdrawMin) + 1;
         data.withdrawMinCoin = toCoin;
 
         data.withdrawMax = toNetworkConfig.withdrawMax;
         data.withdrawMaxCoin = toCoin;
       } else {
-        data.withdrawMin = toNetworkConfig.withdrawMin;
+        data.withdrawMin = Number(toNetworkConfig.withdrawMin) + 1;
         data.withdrawMinCoin = toCoin;
 
         data.withdrawMax = toNetworkConfig.withdrawMax;
