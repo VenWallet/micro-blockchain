@@ -73,6 +73,15 @@ export class PaymentRequestRepository {
     });
   }
 
+  async findPendings(): Promise<PaymentRequestEntity[]> {
+    return await this.repository.find({
+      where: {
+        status: PaymentStatusEnum.PENDING,
+      },
+      relations: ['network', 'token', 'token.tokenData'],
+    });
+  }
+
   async findOneByUserId(userId: string): Promise<PaymentRequestEntity | null> {
     const thirtyMinutesAgo = new Date();
     thirtyMinutesAgo.setMinutes(thirtyMinutesAgo.getMinutes() - 30);

@@ -296,6 +296,7 @@ export class TasksService {
   @Cron('*/1 * * * *')
   async SpotMarketScheduledTask() {
     try {
+      console.log('SpotMarketScheduledTask');
       const spotMarkets = await this.spotMarketRepository.findScheduled();
 
       if (!spotMarkets.length) {
@@ -303,7 +304,7 @@ export class TasksService {
       }
 
       for (const spotMarket of spotMarkets) {
-        console.log('spotMarket', spotMarket);
+        console.log('SpotMarketScheduledTask Item', spotMarket);
 
         const orderData = await this.getOrder(spotMarket.symbol, spotMarket.orderData.orderId);
 

@@ -35,7 +35,7 @@ export class PosTask {
   async PosTaskPendings() {
     try {
       console.log('PosTaskPendings');
-      const paymentRequestsAll = await this.paymentRequestRepository.findPendingsAgoThirtyMinutes();
+      const paymentRequestsAll = await this.paymentRequestRepository.findPendings();
 
       console.log('paymentRequestsAll', paymentRequestsAll);
 
