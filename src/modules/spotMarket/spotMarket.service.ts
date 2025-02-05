@@ -30,8 +30,8 @@ import { parse } from 'json2csv';
 import { Response } from 'express';
 import axios from 'axios';
 
-const filePath = path.resolve(process.cwd(), 'exchangeInfo.json');
-const exchangeInfo = fs.readFileSync(filePath, 'utf8');
+// const filePath = path.resolve(process.cwd(), 'exchangeInfo.json');
+// const exchangeInfo = fs.readFileSync(filePath, 'utf8');
 
 @Injectable()
 export class SpotMarketService {
@@ -145,7 +145,8 @@ export class SpotMarketService {
       const feeWithdraw = Number(toNetworkConfig.withdrawFee);
 
       if (exchangeType !== ExchangeTypeEnum.BRIDGE) {
-        const jsonData = JSON.parse(exchangeInfo);
+        // const jsonData = JSON.parse(exchangeInfo);
+        const jsonData = await this.binanceApiService.getExchangeInfo();
 
         const symbol = jsonData.symbols.find(
           (s) =>
@@ -443,7 +444,8 @@ export class SpotMarketService {
       }
 
       if (exchangeType !== ExchangeTypeEnum.BRIDGE) {
-        const jsonData = JSON.parse(exchangeInfo);
+        // const jsonData = JSON.parse(exchangeInfo);
+        const jsonData = await this.binanceApiService.getExchangeInfo();
 
         const symbol = jsonData.symbols.find(
           (s) =>
@@ -525,7 +527,8 @@ export class SpotMarketService {
 
         return { amountReceived, fees };
       } else {
-        const jsonData = JSON.parse(exchangeInfo);
+        // const jsonData = JSON.parse(exchangeInfo);
+        const jsonData = await this.binanceApiService.getExchangeInfo();
 
         const symbol = jsonData.symbols.find(
           (s) =>
