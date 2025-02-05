@@ -226,13 +226,13 @@ export class SpotMarketService {
         const minPrice = parseFloat(priceFilter?.minPrice || '0');
 
         // ⚠️ Validar NOTIONAL (cantidad * precio >= minNotional)
-        if (quantity * price < minNotional) {
-          throw new Error(
-            `Cantidad demasiado baja. Debe ser al menos ${minNotional} ` + side === 'SELL'
-              ? createSpotMarketDto.toCoin
-              : createSpotMarketDto.fromCoin,
-          );
-        }
+        // if (quantity * price < minNotional) {
+        //   throw new Error(
+        //     `Cantidad demasiado baja. Debe ser al menos ${minNotional} ` + side === 'SELL'
+        //       ? createSpotMarketDto.toCoin
+        //       : createSpotMarketDto.fromCoin,
+        //   );
+        // }
 
         // 🔄 Ajustar cantidad al múltiplo más cercano de stepSize
         if (stepSize2 > 0) {
