@@ -17,7 +17,6 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 @WebSocketGateway({
-  namespace: 'socket',
   cors: { origin: '*' },
 })
 @Injectable()
@@ -136,11 +135,13 @@ export class WebSocketGatewayService implements OnGatewayConnection, OnGatewayDi
 
     const socket = (this.server as any).sockets.get(socketId);
 
+    console.log('socket:', socket);
+
     if (socket) {
       console.log(`✅ Emitiendo evento ${event} a ${socketId}`, data);
       socket.emit(event, data);
     } else {
-      console.warn(`⚠️ No se encontró un socket activo para el usuario con ID: ${socketId}`);
+      console.log(`⚠️ No se encontró un socket activo para el usuario con ID: ${socketId}`);
     }
   }
 }
