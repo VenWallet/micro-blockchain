@@ -47,7 +47,7 @@ async function bootstrap() {
   app.useWebSocketAdapter(new IoAdapter(app));
 
   await app.listen(port);
-  console.log(`Server http is running on ${port}`);
+  console.log(`Server is running on ${port}`);
 }
 
 bootstrap();
