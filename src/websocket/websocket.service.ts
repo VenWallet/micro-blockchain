@@ -16,10 +16,6 @@ import { PaymentRequestRepository } from 'src/modules/pos/repositories/paymentRe
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-// @WebSocketGateway({
-//   namespace: '/socket',
-//   cors: { origin: '*' },
-// })
 @Injectable()
 export class WebsocketService {
   server: Server;
@@ -133,16 +129,11 @@ export class WebsocketService {
   emitEvent(socketId: string, event: string, data: any) {
     console.log(`🔄 Intentando emitir evento ${event} a ${socketId}`);
 
-    // Verificar que el servidor WebSocket esté inicializado
     if (!this.server) {
       console.error('❌ Error: Servidor de WebSockets no inicializado.');
       return;
     }
 
-    console.log('server', this.server);
-    console.log('🔍 Estado del servidor:', this.server.sockets.sockets.size, 'sockets conectados.');
-
-    // Verificar si el socketId es válido
     const socket = this.server.sockets.sockets.get(socketId);
 
     if (socket) {
