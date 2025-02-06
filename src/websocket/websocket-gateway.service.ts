@@ -125,6 +125,12 @@ export class WebSocketGatewayService implements OnGatewayConnection, OnGatewayDi
   emitEvent(socketId: string, event: string, data: any) {
     console.log(`Intentando emitir evento ${event} a ${socketId}`);
 
+    console.log('this.server', this.server);
+
+    console.log('this.server.sockets', this.server.sockets);
+
+    console.log('this.server.sockets.sockets', this.server.sockets.sockets);
+
     const socket = this.server.sockets.sockets.get(socketId);
 
     if (socket) {

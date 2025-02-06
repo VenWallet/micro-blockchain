@@ -302,7 +302,7 @@ export class TasksService {
       }
 
       for (const spotMarket of spotMarkets) {
-        console.log('SpotMarketScheduledTask Item', spotMarket);
+        // console.log('SpotMarketScheduledTask Item', spotMarket);
 
         const orderData = await this.getOrder(spotMarket.symbol, spotMarket.orderData.orderId);
 

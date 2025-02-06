@@ -37,7 +37,7 @@ export class PosTask {
       console.log('PosTaskPendings');
       const paymentRequestsAll = await this.paymentRequestRepository.findPendings();
 
-      console.log('paymentRequestsAll', paymentRequestsAll);
+      // console.log('paymentRequestsAll', paymentRequestsAll);
 
       if (!paymentRequestsAll.length) {
         return;
