@@ -33,7 +33,7 @@ import * as fs from 'fs';
 import { OrderTypeEnum } from 'src/modules/spotMarket/enums/orderType.enum';
 import { BinanceApiService } from 'src/providers/binance-api/binance-api.service';
 import { DepositAddressEnum } from 'src/modules/spotMarket/enums/depositAddress.enum';
-import { WebSocketGatewayService } from 'src/websocket/websocket.service';
+import { WebsocketService } from 'src/websocket/websocket.service';
 
 // const filePath = path.resolve(process.cwd(), 'exchangeInfo.json');
 // const exchangeInfo = fs.readFileSync(filePath, 'utf8');
@@ -46,7 +46,7 @@ export class PaymentRequestService {
     private readonly blockchainService: BlockchainService,
     private readonly walletService: WalletService,
     private readonly tokenService: TokenService,
-    private readonly socketService: WebSocketGatewayService,
+    private readonly socketService: WebsocketService,
     private readonly networkRepository: NetworkRepository,
     private readonly posSettingsRepository: PosSettingsRepository,
     private readonly binanceApiService: BinanceApiService,
