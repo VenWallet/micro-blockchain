@@ -41,6 +41,9 @@ export class PosLinkService {
       }
 
       if (posLinkFound.userLinked) {
+        if (posLinkFound.userLinked === connectPosLinkDto.userId) {
+          return posLinkFound;
+        }
         throw new ConflictException('PosLink already connected');
       }
 
