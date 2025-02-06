@@ -36,31 +36,22 @@ async function bootstrap() {
 
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
 
+  app.useWebSocketAdapter(new IoAdapter(app));
+
   await app.listen(port);
 
-  const url = await app.getUrl();
+  console.log(`Server is running on ${port}`);
 
-  console.log('process.env.SSL_CERT_PATH', process.env.SSL_CERT_PATH);
-  console.log('process.env.SSL_KEY_PATH', process.env.SSL_KEY_PATH);
+  // console.log('process.env.SSL_CERT_PATH', process.env.SSL_CERT_PATH);
+  // console.log('process.env.SSL_KEY_PATH', process.env.SSL_KEY_PATH);
 
-  const httpsOptions = {
-    cert: fs.readFileSync(process.env.SSL_CERT_PATH!),
-    key: fs.readFileSync(process.env.SSL_KEY_PATH!),
-  };
-  const appWs = await NestFactory.create(AppWsModule, {
-    httpsOptions,
-  });
-
-  const wsPort = configService.get('PORT_WS', { infer: true })!;
-
-  appWs.useWebSocketAdapter(new IoAdapter(appWs));
-
-  appWs.init();
-
-  await appWs.listen(wsPort);
-
-  console.log(`Server is running on ${url}`);
-  console.log(`Ws is running in ${wsPort}`);
+  // const httpsOptions = {
+  //   cert: fs.readFileSync(process.env.SSL_CERT_PATH!),
+  //   key: fs.readFileSync(process.env.SSL_KEY_PATH!),
+  // };
+  // const appWs = await NestFactory.create(AppWsModule, {
+  //   httpsOptions,
+  // });
 }
 
 bootstrap();

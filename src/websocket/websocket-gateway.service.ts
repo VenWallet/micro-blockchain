@@ -24,8 +24,6 @@ export class WebSocketGatewayService implements OnGatewayConnection, OnGatewayDi
   @WebSocketServer()
   server: Server;
 
-  sockets: Socket[] = [];
-
   constructor(
     private readonly posLinkRepository: PosLinkRepository,
     private readonly paymentRequestRepository: PaymentRequestRepository,
@@ -34,22 +32,14 @@ export class WebSocketGatewayService implements OnGatewayConnection, OnGatewayDi
   handleConnection(client: Socket) {
     console.log(`Cliente conectado: ${client.id}`);
 
-    this.sockets.push(client);
-
     client.on('ping', () => {
       console.log(`Ping received from client: ${client.id}`);
       client.emit('pong');
     });
-
-    console.log('this.sockets', this.sockets);
-
-    console.log('serveer', this.server);
   }
 
   handleDisconnect(client: Socket) {
     console.log(`Cliente desconectado: ${client.id}`);
-
-    this.sockets = this.sockets.filter((socket) => socket.id !== client.id);
   }
 
   @SubscribeMessage('payment-request:pay')
@@ -140,16 +130,9 @@ export class WebSocketGatewayService implements OnGatewayConnection, OnGatewayDi
       throw new Error('❌ No se ha inicializado el servidor de WebSockets.');
     }
 
-    console.log('this.sockets', this.sockets);
-
-    const socket = this.sockets.find((socket) => socket.id === socketId);
-
-    console.log('socket', socket);
-    if (socket) {
-      console.log(`✅ Emitiendo evento ${event} a ${socketId}`, data);
-      const hola = socket.emit(event, data);
-
-      console.log('hola', hola);
+    if (socketId) {
+      this.server.to(socketId).emit(event, data);
+      console.log(`✅ Evento ${event} emitido a ${socketId}`);
     } else {
       console.log(`⚠️ No se encontró un socket activo para el usuario con ID: ${socketId}`);
     }
