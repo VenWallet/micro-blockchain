@@ -123,12 +123,15 @@ export class WebSocketGatewayService implements OnGatewayConnection, OnGatewayDi
   }
 
   emitEvent(socketId: string, event: string, data: any) {
-    console.log(`Emitiendo evento ${event} a ${socketId}`);
-    console.log(data);
-    if (socketId) {
-      this.server.to(socketId).emit(event, data);
+    console.log(`Intentando emitir evento ${event} a ${socketId}`);
+
+    const socket = this.server.sockets.sockets.get(socketId);
+
+    if (socket) {
+      console.log(`Emitido evento ${event} a ${socketId}`, data);
+      socket.emit(event, data);
     } else {
-      console.error(`No se encontró socket para el usuario con ID: ${socketId}`);
+      console.log(`No se encontró un socket activo para el usuario con ID: ${socketId}`);
     }
   }
 }

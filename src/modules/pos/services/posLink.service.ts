@@ -42,6 +42,8 @@ export class PosLinkService {
 
       if (posLinkFound.userLinked) {
         if (posLinkFound.userLinked === connectPosLinkDto.userId) {
+          await this.socketService.emitEvent(posLinkFound.socketId, 'pos-link:connected', posLinkFound);
+
           return posLinkFound;
         }
         throw new ConflictException('PosLink already connected');
