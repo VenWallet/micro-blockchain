@@ -17,6 +17,7 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 @WebSocketGateway({
+  namespace: '/socket',
   cors: { origin: '*' },
 })
 @Injectable()
