@@ -40,6 +40,10 @@ export class WebSocketGatewayService implements OnGatewayConnection, OnGatewayDi
       console.log(`Ping received from client: ${client.id}`);
       client.emit('pong');
     });
+
+    console.log('this.sockets', this.sockets);
+
+    console.log('serveer', this.server);
   }
 
   handleDisconnect(client: Socket) {
