@@ -62,6 +62,7 @@ export class PosSettingsController {
 
   @Post('link/connect')
   connectPosLink(@Body() connectPosLinkDto: ConnectPosLinkDto) {
+    console.log('connectPosLink');
     return this.posLinkService.connectPosLink(connectPosLinkDto);
   }
 
