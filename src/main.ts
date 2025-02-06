@@ -9,13 +9,21 @@ import * as fs from 'fs';
 import * as https from 'https';
 import * as http from 'http';
 import { IoAdapter } from '@nestjs/platform-socket.io';
-import { AppWsModule } from './app-ws.module';
 import * as dotenv from 'dotenv';
 import path from 'path';
 dotenv.config();
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // const app = await NestFactory.create(AppModule);
+
+  const httpsOptions = {
+    cert: fs.readFileSync(process.env.SSL_CERT_PATH!),
+    key: fs.readFileSync(process.env.SSL_KEY_PATH!),
+  };
+  const app = await NestFactory.create(AppModule, {
+    httpsOptions,
+  });
+
   const configService = app.get(ConfigService<EnvironmentVariables>);
 
   const port = configService.get('PORT', { infer: true })!;
@@ -38,26 +46,8 @@ async function bootstrap() {
 
   app.useWebSocketAdapter(new IoAdapter(app));
 
-  app.init();
-
-  if (configService.get('NODE_ENV') === 'development') {
-    await app.listen(port);
-    console.log(`Server http is running on ${port}`);
-  } else {
-    console.log('process.env.SSL_CERT_PATH', process.env.SSL_CERT_PATH);
-    console.log('process.env.SSL_KEY_PATH', process.env.SSL_KEY_PATH);
-
-    const httpsOptions = {
-      cert: fs.readFileSync(process.env.SSL_CERT_PATH!),
-      key: fs.readFileSync(process.env.SSL_KEY_PATH!),
-    };
-    const app = await NestFactory.create(AppWsModule, {
-      httpsOptions,
-    });
-
-    await app.listen(port);
-    console.log(`Server https is running on ${port}`);
-  }
+  await app.listen(port);
+  console.log(`Server http is running on ${port}`);
 }
 
 bootstrap();
