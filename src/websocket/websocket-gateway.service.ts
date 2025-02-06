@@ -130,16 +130,9 @@ export class WebSocketGatewayService implements OnGatewayConnection, OnGatewayDi
       throw new Error('❌ No se ha inicializado el servidor de WebSockets.');
     }
 
-    console.log('this.server:', this.server);
-    console.log('Sockets conectados:', Array.from((this.server as any)?.sockets?.keys()));
-
-    const socket = (this.server as any).sockets.get(socketId);
-
-    console.log('socket:', socket);
-
-    if (socket) {
+    if (socketId) {
       console.log(`✅ Emitiendo evento ${event} a ${socketId}`, data);
-      socket.emit(event, data);
+      this.server.to(socketId).emit(event, data);
     } else {
       console.log(`⚠️ No se encontró un socket activo para el usuario con ID: ${socketId}`);
     }
