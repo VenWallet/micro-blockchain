@@ -108,11 +108,13 @@ export class WebSocketGatewayService implements OnGatewayConnection, OnGatewayDi
         return;
       }
 
-      await this.posLinkRepository.update(posLink.id, { socketId: client.id });
+      posLink.socketId = client.id;
+
+      posLink.save();
 
       console.log('emit pos-link:connected', posLink);
 
-      client.emit('pos-link:connected', await this.posLinkRepository.findOne(bodyData.posLinkId));
+      client.emit('pos-link:connected', posLink);
     } catch (error) {
       console.error('Error handlePaymentRequestPay:', error);
       client.emit('pos-link:error', {
@@ -123,16 +125,16 @@ export class WebSocketGatewayService implements OnGatewayConnection, OnGatewayDi
   }
 
   emitEvent(socketId: string, event: string, data: any) {
-    console.log(`Intentando emitir evento ${event} a ${socketId}`);
+    console.log(`🔄 Intentando emitir evento ${event} a ${socketId}`);
 
     if (!this.server) {
-      throw new Error('No se ha inicializado el servidor de WebSockets.');
+      throw new Error('❌ No se ha inicializado el servidor de WebSockets.');
     }
 
     console.log('this.server:', this.server);
-    console.log('this.server.of("/socket").sockets:', this.server.of('/socket').sockets);
+    console.log('Sockets conectados:', Array.from((this.server as any)?.sockets?.keys()));
 
-    const socket = this.server.of('/socket').sockets.get(socketId);
+    const socket = (this.server as any).sockets.get(socketId);
 
     if (socket) {
       console.log(`✅ Emitiendo evento ${event} a ${socketId}`, data);
