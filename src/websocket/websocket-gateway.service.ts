@@ -86,6 +86,8 @@ export class WebSocketGatewayService implements OnGatewayConnection, OnGatewayDi
   @SubscribeMessage('pos-link:connect')
   async handlePosLinkConnect(@MessageBody() body: any, @ConnectedSocket() client: Socket) {
     try {
+      console.log('pos-link:connect');
+      console.log(body);
       const bodyData = JSON.parse(body);
 
       if (!bodyData?.posLinkId) {
@@ -108,6 +110,8 @@ export class WebSocketGatewayService implements OnGatewayConnection, OnGatewayDi
 
       await this.posLinkRepository.update(posLink.id, { socketId: client.id });
 
+      console.log('emit pos-link:connected', posLink);
+
       client.emit('pos-link:connected', posLink);
     } catch (error) {
       console.error('Error handlePaymentRequestPay:', error);
@@ -119,6 +123,7 @@ export class WebSocketGatewayService implements OnGatewayConnection, OnGatewayDi
   }
 
   emitEvent(socketId: string, event: string, data: any) {
+    console.log(`Emitiendo evento ${event} a ${socketId}`);
     if (socketId) {
       this.server.to(socketId).emit(event, data);
     } else {
