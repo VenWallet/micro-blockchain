@@ -112,7 +112,7 @@ export class WebSocketGatewayService implements OnGatewayConnection, OnGatewayDi
 
       console.log('emit pos-link:connected', posLink);
 
-      client.emit('pos-link:connected', posLink);
+      client.emit('pos-link:connected', await this.posLinkRepository.findOne(bodyData.posLinkId));
     } catch (error) {
       console.error('Error handlePaymentRequestPay:', error);
       client.emit('pos-link:error', {
@@ -124,6 +124,7 @@ export class WebSocketGatewayService implements OnGatewayConnection, OnGatewayDi
 
   emitEvent(socketId: string, event: string, data: any) {
     console.log(`Emitiendo evento ${event} a ${socketId}`);
+    console.log(data);
     if (socketId) {
       this.server.to(socketId).emit(event, data);
     } else {
