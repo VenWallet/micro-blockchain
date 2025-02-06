@@ -75,7 +75,12 @@ export class PosLinkDto extends CreatePosLinkDto {
   image: string;
 }
 
-export class UpdatePosLinkDto extends PartialType(PosLinkDto) {}
+export class UpdatePosLinkDto extends PartialType(PosLinkDto) {
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  userLinked: string;
+}
 
 export class ConnectPosLinkDto {
   @ApiProperty()
