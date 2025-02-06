@@ -33,7 +33,7 @@ import * as fs from 'fs';
 import { OrderTypeEnum } from 'src/modules/spotMarket/enums/orderType.enum';
 import { BinanceApiService } from 'src/providers/binance-api/binance-api.service';
 import { DepositAddressEnum } from 'src/modules/spotMarket/enums/depositAddress.enum';
-import { WebSocketGatewayService } from 'src/websocket/websocket-gateway.service';
+import { WebSocketGatewayService } from 'src/websocket/websocket.service';
 
 // const filePath = path.resolve(process.cwd(), 'exchangeInfo.json');
 // const exchangeInfo = fs.readFileSync(filePath, 'utf8');

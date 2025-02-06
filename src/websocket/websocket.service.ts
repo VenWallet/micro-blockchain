@@ -16,13 +16,12 @@ import { PaymentRequestRepository } from 'src/modules/pos/repositories/paymentRe
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-@WebSocketGateway({
-  namespace: '/socket',
-  cors: { origin: '*' },
-})
+// @WebSocketGateway({
+//   namespace: '/socket',
+//   cors: { origin: '*' },
+// })
 @Injectable()
-export class WebSocketGatewayService implements OnGatewayConnection, OnGatewayDisconnect {
-  @WebSocketServer()
+export class WebsocketService {
   server: Server;
 
   constructor(
@@ -30,28 +29,35 @@ export class WebSocketGatewayService implements OnGatewayConnection, OnGatewayDi
     private readonly paymentRequestRepository: PaymentRequestRepository,
   ) {}
 
-  handleConnection(client: Socket) {
-    console.log(`Cliente conectado: ${client.id}`);
+  setup(server: Server) {
+    this.server = server;
 
-    client.on('ping', () => {
-      console.log(`Ping received from client: ${client.id}`);
-      client.emit('pong');
+    server.on('connection', (socket) => {
+      console.log(`🔗 New WebSocket connection: ${socket.id}`);
+
+      socket.on('payment-request:pay', (data) => {
+        this.handlePaymentRequestPay(data, socket);
+      });
+
+      socket.on('pos-link:connect', (data) => {
+        this.handlePosLinkConnect(data, socket);
+      });
+
+      socket.on('disconnect', () => {
+        console.log(`❌ WebSocket disconnected: ${socket.id}`);
+      });
     });
   }
 
-  handleDisconnect(client: Socket) {
-    console.log(`Cliente desconectado: ${client.id}`);
-  }
-
-  @SubscribeMessage('payment-request:pay')
-  async handlePaymentRequestPay(@MessageBody() body: any, @ConnectedSocket() client: Socket) {
+  // @SubscribeMessage('payment-request:pay')
+  async handlePaymentRequestPay(body: any, socket: Socket) {
     try {
       console.log('payment-request:pay');
       console.log(body);
       const bodyData = JSON.parse(body);
 
       if (!bodyData?.paymentRequestId) {
-        client.emit('payment-request:error', {
+        socket.emit('payment-request:error', {
           status: 'error',
           message: 'No se envió el ID de la solicitud de pago.',
         });
@@ -62,36 +68,36 @@ export class WebSocketGatewayService implements OnGatewayConnection, OnGatewayDi
 
       if (!paymentRequest) {
         console.log('payment-request:error');
-        client.emit('payment-request:error', {
+        socket.emit('payment-request:error', {
           status: 'error',
           message: 'No se encontró la solicitud de pago.',
         });
         return;
       }
 
-      await this.paymentRequestRepository.update(paymentRequest.id, { socketId: client.id });
+      await this.paymentRequestRepository.update(paymentRequest.id, { socketId: socket.id });
 
       console.log('payment-request:pay-status', paymentRequest.status);
 
-      client.emit('payment-request:pay-status', paymentRequest);
+      socket.emit('payment-request:pay-status', paymentRequest);
     } catch (error) {
       console.error('Error handlePaymentRequestPay:', error);
-      client.emit('payment-request:error', {
+      socket.emit('payment-request:error', {
         status: 'error',
         message: 'No se pudo crear la solicitud de pago.',
       });
     }
   }
 
-  @SubscribeMessage('pos-link:connect')
-  async handlePosLinkConnect(@MessageBody() body: any, @ConnectedSocket() client: Socket) {
+  // @SubscribeMessage('pos-link:connect')
+  async handlePosLinkConnect(body: any, socket: Socket) {
     try {
       console.log('pos-link:connect');
       console.log(body);
       const bodyData = JSON.parse(body);
 
       if (!bodyData?.posLinkId) {
-        client.emit('pos-link:error', {
+        socket.emit('pos-link:error', {
           status: 'error',
           message: 'No se envió el ID del PosLink.',
         });
@@ -101,23 +107,23 @@ export class WebSocketGatewayService implements OnGatewayConnection, OnGatewayDi
       const posLink = await this.posLinkRepository.findOne(bodyData.posLinkId);
 
       if (!posLink) {
-        client.emit('pos-link:error', {
+        socket.emit('pos-link:error', {
           status: 'error',
           message: 'No se encontró el PosLink.',
         });
         return;
       }
 
-      posLink.socketId = client.id;
+      posLink.socketId = socket.id;
 
       posLink.save();
 
       console.log('emit pos-link:connected', posLink);
 
-      client.emit('pos-link:connected', posLink);
+      socket.emit('pos-link:connected', posLink);
     } catch (error) {
       console.error('Error handlePaymentRequestPay:', error);
-      client.emit('pos-link:error', {
+      socket.emit('pos-link:error', {
         status: 'error',
         message: 'Error in handlePosLinkConnect.' + error?.message || error,
       });

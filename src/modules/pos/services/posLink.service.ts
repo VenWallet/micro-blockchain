@@ -13,13 +13,13 @@ import { ExceptionHandler } from 'src/helpers/handlers/exception.handler';
 import { PosLinkRepository } from '../repositories/posLink.repository';
 import { PosLinkEntity } from '../entities/posLink.entity';
 import { ConnectPosLinkDto, PosLinkDto, UpdatePosLinkDto } from '../dto/pos.dto';
-import { WebSocketGatewayService } from 'src/websocket/websocket-gateway.service';
+import { WebsocketService } from 'src/websocket/websocket.service';
 
 @Injectable()
 export class PosLinkService {
   constructor(
     private readonly posLinkRepository: PosLinkRepository,
-    private readonly socketService: WebSocketGatewayService,
+    private readonly socketService: WebsocketService,
   ) {}
 
   async createPosLink(posLinkDto: PosLinkDto) {
