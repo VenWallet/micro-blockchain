@@ -64,8 +64,6 @@ export class PosTask {
         }
       }
 
-      return;
-
       const allDeposits = await this.binanceApiService.getDeposits();
 
       const deposits = this.filterDeposits(allDeposits);

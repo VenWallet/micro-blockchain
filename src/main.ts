@@ -38,6 +38,8 @@ async function bootstrap() {
 
   app.useWebSocketAdapter(new IoAdapter(app));
 
+  app.init();
+
   if (configService.get('NODE_ENV') === 'development') {
     await app.listen(port);
     console.log(`Server http is running on ${port}`);

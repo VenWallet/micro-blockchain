@@ -18,7 +18,7 @@ import { TasksModule } from './tasks/tasks.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PosModule } from './modules/pos/pos.module';
 import { WebsocketModule } from './websocket/websocket.module';
-import { WebSocketGatewayService } from './websocket/websocket-gateway.service';
+
 @Module({
   imports: [
     AppConfigModule,

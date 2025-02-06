@@ -10,8 +10,8 @@ export class EnvironmentVariables {
   @IsEnum(NearEnvEnum)
   NEAR_ENV: NearEnvEnum;
 
-  @IsInt()
-  PORT_WS!: number;
+  // @IsInt()
+  // PORT_WS!: number;
 
   @IsInt()
   PORT!: number;
