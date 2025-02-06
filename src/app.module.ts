@@ -36,6 +36,7 @@ import { WebSocketGatewayService } from './websocket/websocket-gateway.service';
     ExternalModule,
     SpotMarketModule,
     PosModule,
+    WebsocketModule,
   ],
   controllers: [AppController],
   providers: [],
