@@ -132,6 +132,7 @@ export class WebSocketGatewayService implements OnGatewayConnection, OnGatewayDi
       return;
     }
 
+    console.log('server', this.server);
     console.log('🔍 Estado del servidor:', this.server.sockets.sockets.size, 'sockets conectados.');
 
     // Verificar si el socketId es válido
