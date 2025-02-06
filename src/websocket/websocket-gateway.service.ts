@@ -132,7 +132,9 @@ export class WebSocketGatewayService implements OnGatewayConnection, OnGatewayDi
 
     if (socketId) {
       console.log(`✅ Emitiendo evento ${event} a ${socketId}`, data);
-      this.server.to(socketId).emit(event, data);
+      const hola = this.server.to(socketId).emit(event, data);
+
+      console.log('hola', hola);
     } else {
       console.log(`⚠️ No se encontró un socket activo para el usuario con ID: ${socketId}`);
     }
