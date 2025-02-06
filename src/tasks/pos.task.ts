@@ -18,7 +18,7 @@ import { PaymentStatusEnum } from 'src/modules/pos/enums/paymentStatus.enum';
 import { NetworksEnum } from 'src/modules/network/enums/networks.enum';
 import { from } from 'form-data';
 import { OrderTypeEnum } from 'src/modules/spotMarket/enums/orderType.enum';
-import { WebSocketGatewayService } from 'src/websocket/websocket-gateway.service';
+import { WebsocketService } from 'src/websocket/websocket.service';
 
 @Injectable()
 export class PosTask {
@@ -28,7 +28,7 @@ export class PosTask {
     private readonly posSettingsRepository: PosSettingsRepository,
     private readonly walletRepository: WalletRepository,
     private readonly binanceApiService: BinanceApiService,
-    private readonly socketService: WebSocketGatewayService,
+    private readonly socketService: WebsocketService,
   ) {}
 
   @Cron('*/1 * * * *')
