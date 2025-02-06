@@ -60,7 +60,7 @@ export class PosTask {
       if (toCancel.length) {
         for (const payment of toCancel) {
           console.log('Canceling payment', payment.id);
-          // await this.paymentRequestRepository.update(payment.id, { status: PaymentStatusEnum.CANCELED });
+          await this.paymentRequestRepository.update(payment.id, { status: PaymentStatusEnum.CANCELED });
         }
       }
 
