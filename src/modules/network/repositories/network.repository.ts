@@ -50,14 +50,14 @@ export class NetworkRepository {
   async update(id: string, updateData: Partial<NetworkEntity>): Promise<void> {
     const updateResult = await this.repository.update({ id }, updateData);
     if (updateResult.affected === 0) {
-      throw new NotFoundException('Network not found');
+      throw new NotFoundException('Red no encontrada');
     }
   }
 
   async remove(id: string): Promise<void> {
     const deleteResult = await this.repository.delete({ id });
     if (deleteResult.affected === 0) {
-      throw new NotFoundException('Network not found');
+      throw new NotFoundException('Red no encontrada');
     }
   }
 }
