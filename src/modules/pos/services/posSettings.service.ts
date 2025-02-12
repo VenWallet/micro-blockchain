@@ -28,7 +28,7 @@ export class PosSettingsService {
       const network = await this.networkRepository.findOneByIndex(createPosSettingsDto.network as IndexEnum);
 
       if (!network) {
-        throw new NotFoundException('Network not found');
+        throw new NotFoundException('Red no encontrada');
       }
 
       const posSettingsDto = {

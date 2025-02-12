@@ -38,7 +38,7 @@ export class NetworkService {
       const networkFound = await this.networkRepository.findOne(id);
 
       if (!networkFound) {
-        throw new NotFoundException('Network not found');
+        throw new NotFoundException('Red no encontrada');
       }
 
       return networkFound;
@@ -52,7 +52,7 @@ export class NetworkService {
       const networkFound = await this.networkRepository.findOneByIndex(index);
 
       if (!networkFound) {
-        throw new NotFoundException('Network not found');
+        throw new NotFoundException('Red no encontrada');
       }
 
       return networkFound;

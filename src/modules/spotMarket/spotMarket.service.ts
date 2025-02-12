@@ -114,15 +114,15 @@ export class SpotMarketService {
       const fromNetworkConfig = fromCoinConfig.networkList.find((n) => n.network === networkSymbol);
 
       if (!fromNetworkConfig) {
-        throw new NotFoundException('Network not found');
+        throw new NotFoundException('Red no encontrada');
       }
 
       if (!fromNetworkConfig.depositEnable) {
-        throw new NotFoundException('Deposit not enabled');
+        throw new NotFoundException('Depósito no habilitado');
       }
 
       if (createSpotMarketDto.amount < fromNetworkConfig.depositDust) {
-        throw new NotFoundException('Amount is less than deposit dust');
+        throw new NotFoundException('El monto es menor que el depósito mínimo');
       }
 
       ///////////////////////////////////////////////////
@@ -135,11 +135,11 @@ export class SpotMarketService {
       const toNetworkConfig = toCoinConfig.networkList.find((n) => n.network === toNetworkSymbol);
 
       if (!toNetworkConfig) {
-        throw new NotFoundException('Network not found');
+        throw new NotFoundException('Red no encontrada');
       }
 
       if (!toNetworkConfig.withdrawEnable) {
-        throw new NotFoundException('Withdraw not enabled');
+        throw new NotFoundException('Retiro no habilitado');
       }
 
       const feeWithdraw = Number(toNetworkConfig.withdrawFee);
@@ -155,19 +155,19 @@ export class SpotMarketService {
         );
 
         if (!symbol?.symbol) {
-          throw new NotFoundException('Pair not found');
+          throw new NotFoundException('Par no encontrado');
         }
 
         if (!symbol.orderTypes.includes(createSpotMarketDto.typeOrder)) {
-          throw new NotFoundException('Order type not found');
+          throw new NotFoundException('Tipo de pedido no encontrado');
         }
 
         if (!symbol?.symbol) {
-          throw new NotFoundException('Pair not found');
+          throw new NotFoundException('Par no encontrado');
         }
 
         if (symbol.status !== 'TRADING') {
-          throw new NotFoundException('Pair not available');
+          throw new NotFoundException('Par no disponible');
         }
 
         const pair = symbol.symbol;
@@ -253,7 +253,7 @@ export class SpotMarketService {
         const amountReceived = quantity - feeTotal;
 
         if (amountReceived < Number(toNetworkConfig.withdrawMin)) {
-          throw new NotFoundException('Amount is less than withdraw min, after fees');
+          throw new NotFoundException('El monto es menor que el mínimo de retiro, después de las tarifas');
         }
       } else {
         const feeWallet = createSpotMarketDto.amount * 0.001;
@@ -263,11 +263,11 @@ export class SpotMarketService {
         const amountReceived = createSpotMarketDto.amount - feeTotal;
 
         if (amountReceived < Number(toNetworkConfig.withdrawMin)) {
-          throw new NotFoundException('Amount is less than withdraw min, after fees');
+          throw new NotFoundException('El monto es menor que el mínimo de retiro, después de las tarifas');
         }
 
         if (amountReceived > Number(toNetworkConfig.withdrawMax)) {
-          throw new NotFoundException('Amount is greater than withdraw max');
+          throw new NotFoundException('El monto es mayor que el máximo de retiro');
         }
       }
 
@@ -412,15 +412,15 @@ export class SpotMarketService {
       const fromNetworkConfig = fromCoinConfig.networkList.find((n) => n.network === networkSymbol);
 
       if (!fromNetworkConfig) {
-        throw new NotFoundException('Network not found');
+        throw new NotFoundException('Red no encontrada');
       }
 
       if (!fromNetworkConfig.depositEnable) {
-        throw new NotFoundException('Deposit not enabled');
+        throw new NotFoundException('Depósito no habilitado');
       }
 
       if (previewSpotMarketDto.amount < fromNetworkConfig.depositDust) {
-        throw new NotFoundException('Amount is less than deposit dust');
+        throw new NotFoundException('El monto es menor que el depósito mínimo');
       }
 
       ///////////////////////////////////////////////////
@@ -433,11 +433,11 @@ export class SpotMarketService {
       const toNetworkConfig = toCoinConfig.networkList.find((n) => n.network === toNetworkSymbol);
 
       if (!toNetworkConfig) {
-        throw new NotFoundException('Network not found');
+        throw new NotFoundException('Red no encontrada');
       }
 
       if (!toNetworkConfig.withdrawEnable) {
-        throw new NotFoundException('Withdraw not enabled');
+        throw new NotFoundException('Retiro no habilitado');
       }
 
       if (exchangeType !== ExchangeTypeEnum.BRIDGE) {
@@ -451,15 +451,15 @@ export class SpotMarketService {
         );
 
         if (!symbol?.symbol) {
-          throw new NotFoundException('Pair not found');
+          throw new NotFoundException('Par no encontrado');
         }
 
         if (!symbol.orderTypes.includes(previewSpotMarketDto.typeOrder)) {
-          throw new NotFoundException('Order type not found');
+          throw new NotFoundException('Tipo de pedido no encontrado');
         }
 
         if (symbol.status !== 'TRADING') {
-          throw new NotFoundException('Pair not available');
+          throw new NotFoundException('Par no disponible');
         }
       } else {
         if (previewSpotMarketDto.amount < Number(toNetworkConfig.withdrawMin)) {
@@ -467,7 +467,7 @@ export class SpotMarketService {
         }
 
         if (previewSpotMarketDto.amount > Number(toNetworkConfig.withdrawMax)) {
-          throw new NotFoundException('Amount is greater than withdraw max');
+          throw new NotFoundException('El monto es mayor que el máximo de retiro');
         }
       }
 
@@ -519,7 +519,7 @@ export class SpotMarketService {
         const amountReceived = previewSpotMarketDto.amount - feeTotal;
 
         if (amountReceived < Number(toNetworkConfig.withdrawMin)) {
-          throw new NotFoundException('Amount is less than withdraw min, after fees');
+          throw new NotFoundException('El monto es menor que el mínimo de retiro, después de las tarifas');
         }
 
         return { amountReceived, fees };
@@ -534,7 +534,7 @@ export class SpotMarketService {
         );
 
         if (!symbol?.symbol) {
-          throw new NotFoundException('Pair not found');
+          throw new NotFoundException('Par no encontrado');
         }
 
         const pair = symbol.symbol;
@@ -567,7 +567,7 @@ export class SpotMarketService {
         const amountReceived = quantity - feeTotal;
 
         if (amountReceived < Number(toNetworkConfig.withdrawMin)) {
-          throw new NotFoundException('Amount is less than withdraw min, after fees');
+          throw new NotFoundException('El monto es menor que el mínimo de retiro, después de las tarifas');
         }
 
         if (OrderTypeEnum.LIMIT && previewSpotMarketDto.price) {

@@ -57,7 +57,7 @@ export class PaymentRequestService {
       const network = await this.networkRepository.findOneByIndex(createPaymentRequestDto.network as IndexEnum);
 
       if (!network) {
-        throw new NotFoundException('Network not found');
+        throw new NotFoundException('Red no encontrada');
       }
 
       let refId: string = '';
@@ -203,15 +203,15 @@ export class PaymentRequestService {
       const fromNetworkConfig = fromCoinConfig.networkList.find((n) => n.network === networkSymbol);
 
       if (!fromNetworkConfig) {
-        throw new NotFoundException('Network not found');
+        throw new NotFoundException('Red no encontrada');
       }
 
       if (!fromNetworkConfig.depositEnable) {
-        throw new NotFoundException('Deposit not enabled');
+        throw new NotFoundException('Depósito no habilitado');
       }
 
       if (paymentRequest.amount < fromNetworkConfig.depositDust) {
-        throw new NotFoundException('Amount is less than deposit dust');
+        throw new NotFoundException('El monto es menor que el depósito mínimo');
       }
 
       ///////////////////////////////////////////////////
@@ -224,11 +224,11 @@ export class PaymentRequestService {
       const toNetworkConfig = toCoinConfig.networkList.find((n) => n.network === toNetworkSymbol);
 
       if (!toNetworkConfig) {
-        throw new NotFoundException('Network not found');
+        throw new NotFoundException('Red no encontrada');
       }
 
       if (!toNetworkConfig.withdrawEnable) {
-        throw new NotFoundException('Withdraw not enabled');
+        throw new NotFoundException('Retiro no habilitado');
       }
 
       const feeWithdraw = Number(toNetworkConfig.withdrawFee);
@@ -244,19 +244,19 @@ export class PaymentRequestService {
         );
 
         if (!symbol?.symbol) {
-          throw new NotFoundException('Pair not found');
+          throw new NotFoundException('Par no encontrado');
         }
 
         if (!symbol.orderTypes.includes('MARKET')) {
-          throw new NotFoundException('Order type not found');
+          throw new NotFoundException('Tipo de pedido no encontrado');
         }
 
         if (!symbol?.symbol) {
-          throw new NotFoundException('Pair not found');
+          throw new NotFoundException('Par no encontrado');
         }
 
         if (symbol.status !== 'TRADING') {
-          throw new NotFoundException('Pair not available');
+          throw new NotFoundException('Par no disponible');
         }
 
         const pair = symbol.symbol;
@@ -280,7 +280,7 @@ export class PaymentRequestService {
         const amountReceived = quantity - feeTotal;
 
         if (amountReceived < Number(toNetworkConfig.withdrawMin)) {
-          throw new NotFoundException('Amount is less than withdraw min, after fees');
+          throw new NotFoundException('El monto es menor que el mínimo de retiro, después de las tarifas');
         }
       } else {
         const feeWallet = Number(paymentRequest.amount) * 0.001;
@@ -290,11 +290,11 @@ export class PaymentRequestService {
         const amountReceived = Number(paymentRequest.amount) - feeTotal;
 
         if (amountReceived < Number(toNetworkConfig.withdrawMin)) {
-          throw new NotFoundException('Amount is less than withdraw min, after fees');
+          throw new NotFoundException('El monto es menor que el mínimo de retiro, después de las tarifas');
         }
 
         if (amountReceived > Number(toNetworkConfig.withdrawMax)) {
-          throw new NotFoundException('Amount is greater than withdraw max');
+          throw new NotFoundException('El monto es mayor que el máximo de retiro');
         }
       }
 
@@ -420,15 +420,15 @@ export class PaymentRequestService {
       const fromNetworkConfig = fromCoinConfig.networkList.find((n) => n.network === networkSymbol);
 
       if (!fromNetworkConfig) {
-        throw new NotFoundException('Network not found');
+        throw new NotFoundException('Red no encontrada');
       }
 
       if (!fromNetworkConfig.depositEnable) {
-        throw new NotFoundException('Deposit not enabled');
+        throw new NotFoundException('Depósito no habilitado');
       }
 
       if (paymentRequest.amount < fromNetworkConfig.depositDust) {
-        throw new NotFoundException('Amount is less than deposit dust');
+        throw new NotFoundException('El monto es menor que el depósito mínimo');
       }
 
       ///////////////////////////////////////////////////
@@ -441,11 +441,11 @@ export class PaymentRequestService {
       const toNetworkConfig = toCoinConfig.networkList.find((n) => n.network === toNetworkSymbol);
 
       if (!toNetworkConfig) {
-        throw new NotFoundException('Network not found');
+        throw new NotFoundException('Red no encontrada');
       }
 
       if (!toNetworkConfig.withdrawEnable) {
-        throw new NotFoundException('Withdraw not enabled');
+        throw new NotFoundException('Retiro no habilitado');
       }
 
       const feeWithdraw = Number(toNetworkConfig.withdrawFee);
@@ -461,19 +461,19 @@ export class PaymentRequestService {
         );
 
         if (!symbol?.symbol) {
-          throw new NotFoundException('Pair not found');
+          throw new NotFoundException('Par no encontrado');
         }
 
         if (!symbol.orderTypes.includes('MARKET')) {
-          throw new NotFoundException('Order type not found');
+          throw new NotFoundException('Tipo de pedido no encontrado');
         }
 
         if (!symbol?.symbol) {
-          throw new NotFoundException('Pair not found');
+          throw new NotFoundException('Par no encontrado');
         }
 
         if (symbol.status !== 'TRADING') {
-          throw new NotFoundException('Pair not available');
+          throw new NotFoundException('Par no disponible');
         }
 
         const pair = symbol.symbol;
@@ -497,7 +497,7 @@ export class PaymentRequestService {
         const amountReceived = quantity - feeTotal;
 
         if (amountReceived < Number(toNetworkConfig.withdrawMin)) {
-          throw new NotFoundException('Amount is less than withdraw min, after fees');
+          throw new NotFoundException('El monto es menor que el mínimo de retiro, después de las tarifas');
         }
       } else {
         const feeWallet = Number(paymentRequest.amount) * 0.001;
@@ -507,11 +507,11 @@ export class PaymentRequestService {
         const amountReceived = Number(paymentRequest.amount) - feeTotal;
 
         if (amountReceived < Number(toNetworkConfig.withdrawMin)) {
-          throw new NotFoundException('Amount is less than withdraw min, after fees');
+          throw new NotFoundException('El monto es menor que el mínimo de retiro, después de las tarifas');
         }
 
         if (amountReceived > Number(toNetworkConfig.withdrawMax)) {
-          throw new NotFoundException('Amount is greater than withdraw max');
+          throw new NotFoundException('El monto es mayor que el máximo de retiro');
         }
       }
 
@@ -645,7 +645,7 @@ export class PaymentRequestService {
       const network = await this.networkRepository.findOneByIndex(getAmountMinMaxDto.network as IndexEnum);
 
       if (!network) {
-        throw new NotFoundException('Network not found');
+        throw new NotFoundException('Red no encontrada');
       }
 
       const isNative: boolean = getAmountMinMaxDto.token ? false : true;
@@ -731,11 +731,11 @@ export class PaymentRequestService {
       const fromNetworkConfig = fromCoinConfig.networkList.find((n) => n.network === networkSymbol);
 
       if (!fromNetworkConfig) {
-        throw new NotFoundException('Network not found');
+        throw new NotFoundException('Red no encontrada');
       }
 
       if (!fromNetworkConfig.depositEnable) {
-        throw new NotFoundException('Deposit not enabled');
+        throw new NotFoundException('Depósito no habilitado');
       }
 
       data.depositDust = fromNetworkConfig.depositDust;
@@ -751,11 +751,11 @@ export class PaymentRequestService {
       const toNetworkConfig = toCoinConfig.networkList.find((n) => n.network === toNetworkSymbol);
 
       if (!toNetworkConfig) {
-        throw new NotFoundException('Network not found');
+        throw new NotFoundException('Red no encontrada');
       }
 
       if (!toNetworkConfig.withdrawEnable) {
-        throw new NotFoundException('Withdraw not enabled');
+        throw new NotFoundException('Retiro no habilitado');
       }
 
       if (exchangeType !== ExchangeTypeEnum.BRIDGE && exchangeType !== ExchangeTypeEnum.SAME) {
@@ -769,15 +769,15 @@ export class PaymentRequestService {
         );
 
         if (!symbol?.symbol) {
-          throw new NotFoundException('Pair not found');
+          throw new NotFoundException('Par no encontrado');
         }
 
         if (!symbol.orderTypes.includes(OrderTypeEnum.MARKET)) {
-          throw new NotFoundException('Order type not found');
+          throw new NotFoundException('Tipo de pedido no encontrado');
         }
 
         if (symbol.status !== 'TRADING') {
-          throw new NotFoundException('Pair not available');
+          throw new NotFoundException('Par no disponible');
         }
 
         data.withdrawMin = Number(toNetworkConfig.withdrawMin) + 1;

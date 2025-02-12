@@ -97,7 +97,7 @@ export class BlockchainService {
         const network = networks.find((network) => network.index === credential.index);
 
         if (!network) {
-          throw new HttpException('Network not found', HttpStatus.NOT_FOUND);
+          throw new HttpException('Red no encontrada', HttpStatus.NOT_FOUND);
         }
 
         const walletFound = wallets.find(
@@ -142,7 +142,7 @@ export class BlockchainService {
         const network = networks.find((network) => network.index === credential.index);
 
         if (!network) {
-          throw new HttpException('Network not found', HttpStatus.NOT_FOUND);
+          throw new HttpException('Red no encontrada', HttpStatus.NOT_FOUND);
         }
 
         const walletFound = wallets.find(
