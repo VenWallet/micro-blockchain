@@ -252,6 +252,10 @@ export class SpotMarketService {
 
         const amountReceived = quantity - feeTotal;
 
+        console.log('quantity', quantity);
+        console.log('feeTotal', feeTotal);
+        console.log('amountReceived', amountReceived);
+
         if (amountReceived < Number(toNetworkConfig.withdrawMin)) {
           throw new NotFoundException('El monto es menor que el mínimo de retiro, después de las tarifas');
         }
@@ -261,6 +265,9 @@ export class SpotMarketService {
         const feeTotal = feeWithdraw + feeWallet;
 
         const amountReceived = createSpotMarketDto.amount - feeTotal;
+
+        console.log('feeTotal', feeTotal);
+        console.log('amountReceived', amountReceived);
 
         if (amountReceived < Number(toNetworkConfig.withdrawMin)) {
           throw new NotFoundException('El monto es menor que el mínimo de retiro, después de las tarifas');
@@ -565,6 +572,10 @@ export class SpotMarketService {
         const feeTotal = feeWithdraw + feeWallet;
 
         const amountReceived = quantity - feeTotal;
+
+        console.log('quantity', quantity);
+        console.log('feeTotal', feeTotal);
+        console.log('amountReceived', amountReceived);
 
         if (amountReceived < Number(toNetworkConfig.withdrawMin)) {
           throw new NotFoundException('El monto es menor que el mínimo de retiro, después de las tarifas');
