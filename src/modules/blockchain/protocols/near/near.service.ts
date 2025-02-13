@@ -207,9 +207,9 @@ export class NearService implements ProtocolInterface {
 
       const account = new AccountService(near.connection, fromAddress);
 
-      const activated = await this.nearUtils.activateAccount(account, fromAddress, toAddress, srcToken.contract, near);
+      await this.nearUtils.activateAccount(account, fromAddress, toAddress, srcToken.contract, near);
 
-      if (!activated) throw new Error(`Error: To activated account`);
+      // if (!activated) throw new Error(`Error: To activated account`);
 
       let value = Math.pow(10, srcToken.decimals);
       let srcAmount = Math.round(amount * value);
