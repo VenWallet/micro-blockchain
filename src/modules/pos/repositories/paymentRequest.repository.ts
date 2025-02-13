@@ -97,6 +97,24 @@ export class PaymentRequestRepository {
     });
   }
 
+  async findByFilters(filters: { userId: string; startDate?: string; endDate?: string }) {
+    const query = this.repository.createQueryBuilder('paymentRequest').where('paymentRequest.userId = :userId', {
+      userId: filters.userId,
+    });
+
+    if (filters.startDate && filters.endDate) {
+      query.andWhere('paymentRequest.createdAt BETWEEN :startDate AND :endDate', {
+        startDate: filters.startDate,
+        endDate: filters.endDate,
+      });
+    } else if (filters.startDate) {
+      query.andWhere('paymentRequest.createdAt >= :startDate', { startDate: filters.startDate });
+    } else if (filters.endDate) {
+      query.andWhere('paymentRequest.createdAt <= :endDate', { endDate: filters.endDate });
+    }
+
+    return await query.getMany();
+  }
   async findOneByRefId(refId: string): Promise<PaymentRequestEntity | null> {
     return await this.repository.findOne({
       where: { refId },

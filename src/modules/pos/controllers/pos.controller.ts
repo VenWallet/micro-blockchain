@@ -10,6 +10,7 @@ import {
   HttpStatus,
   ParseBoolPipe,
   Delete,
+  Res,
 } from '@nestjs/common';
 import { ApiProperty, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { PosSettingsService } from '../services/posSettings.service';
@@ -25,6 +26,7 @@ import {
 } from '../dto/pos.dto';
 import { PosLinkService } from '../services/posLink.service';
 import { PaymentRequestService } from '../services/paymentRequest.service';
+import { Response } from 'express';
 
 @ApiTags('Pos')
 @Controller('pos')
@@ -102,7 +104,38 @@ export class PosSettingsController {
   }
 
   @Get('payment-request/:userId')
-  getPaymentRequestByUserId(@Param('userId') userId: string) {
-    return this.paymentRequestService.getPaymentRequestByUserId(userId);
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Fecha de inicio',
+    example: '2024-12-01T17:20:48.111Zs o 2024-12-01',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'Fecha de fin',
+    example: '2024-12-01T17:20:48.111Zs o 2024-12-01',
+  })
+  @ApiQuery({ name: 'csv', required: false, type: Boolean, description: 'Exportar a CSV', example: 'true' })
+  async getPaymentRequestByUserId(
+    @Res() res: Response,
+    @Param('userId') userId: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('csv') csv?: boolean,
+  ) {
+    const data = await this.paymentRequestService.findByFilters({ userId, startDate, endDate });
+
+    if (csv) {
+      if (!data.length) {
+        return res.status(HttpStatus.NO_CONTENT).send('No data found');
+      }
+
+      return this.paymentRequestService.convertToCsv(data, res);
+    }
+
+    res.json(data);
   }
 }
