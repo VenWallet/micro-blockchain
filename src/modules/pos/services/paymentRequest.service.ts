@@ -34,7 +34,8 @@ import { OrderTypeEnum } from 'src/modules/spotMarket/enums/orderType.enum';
 import { BinanceApiService } from 'src/providers/binance-api/binance-api.service';
 import { DepositAddressEnum } from 'src/modules/spotMarket/enums/depositAddress.enum';
 import { WebsocketService } from 'src/websocket/websocket.service';
-
+import { parse } from 'json2csv';
+import { Response } from 'express';
 // const filePath = path.resolve(process.cwd(), 'exchangeInfo.json');
 // const exchangeInfo = fs.readFileSync(filePath, 'utf8');
 
@@ -804,6 +805,35 @@ export class PaymentRequestService {
       return await this.paymentRequestRepository.findByUserId(userId);
     } catch (error) {
       throw new ExceptionHandler(error);
+    }
+  }
+
+  async findByFilters(filters: { userId: string; startDate?: string; endDate?: string }) {
+    try {
+      return await this.paymentRequestRepository.findByFilters(filters);
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async convertToCsv(data: any, res: Response): Promise<void> {
+    try {
+      if (!Array.isArray(data) || data.length === 0) {
+        throw new Error('No data available to convert to CSV.');
+      }
+
+      const fields = Object.keys(data[0]);
+      const opts = { fields };
+
+      const csv = parse(data, opts);
+
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename="spot_markets.csv"');
+
+      res.send(csv);
+    } catch (error) {
+      console.error('Error converting to CSV:', error);
+      throw new Error('Failed to convert data to CSV.');
     }
   }
 }
