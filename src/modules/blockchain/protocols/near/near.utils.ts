@@ -72,6 +72,7 @@ export class NearUtils {
 
       return createTransaction(userAddress, publicKey, receiverId, nonce, actions, blockHash);
     } catch (error) {
+      console.log(error);
       throw new Error('Error in createTransactionFn');
     }
   }
