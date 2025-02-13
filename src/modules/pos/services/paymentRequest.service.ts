@@ -828,7 +828,7 @@ export class PaymentRequestService {
       const csv = parse(data, opts);
 
       res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', 'attachment; filename="spot_markets.csv"');
+      res.setHeader('Content-Disposition', 'attachment; filename="payments.csv"');
 
       res.send(csv);
     } catch (error) {
