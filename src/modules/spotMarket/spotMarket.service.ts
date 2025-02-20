@@ -557,6 +557,9 @@ export class SpotMarketService {
             ? previewSpotMarketDto.price
             : await this.binanceApiService.getTickerPrice(pair);
 
+        console.log('price', price);
+        console.log('previewSpotMarketDto.amount', previewSpotMarketDto.amount);
+
         const side = previewSpotMarketDto.fromCoin === symbol.baseAsset ? 'SELL' : 'BUY';
 
         let quantity = side === 'SELL' ? previewSpotMarketDto.amount * price : previewSpotMarketDto.amount / price;
