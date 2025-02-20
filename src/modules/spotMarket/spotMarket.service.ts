@@ -561,7 +561,6 @@ export class SpotMarketService {
         console.log('previewSpotMarketDto.amount', previewSpotMarketDto.amount);
 
         const side = previewSpotMarketDto.fromCoin === symbol.baseAsset ? 'SELL' : 'BUY';
-
         let quantity = side === 'SELL' ? previewSpotMarketDto.amount * price : previewSpotMarketDto.amount / price;
 
         console.log('quantity before', quantity);
@@ -570,7 +569,11 @@ export class SpotMarketService {
 
         console.log('stepSize', stepSize);
 
-        quantity = Math.floor(quantity / stepSize) * stepSize;
+        // Determinar la cantidad de decimales permitidos según el stepSize
+        const stepSizeDecimals = stepSize.toString().split('.')[1]?.length || 0;
+
+        // Ajustar quantity para que sea múltiplo exacto de stepSize
+        quantity = Number((Math.floor(quantity / stepSize) * stepSize).toFixed(stepSizeDecimals));
 
         console.log('quantity', quantity);
 
