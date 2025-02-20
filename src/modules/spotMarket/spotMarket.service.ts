@@ -573,7 +573,7 @@ export class SpotMarketService {
         const stepSizeDecimals = stepSize.toString().split('.')[1]?.length || 0;
 
         // Ajustar quantity para que sea múltiplo exacto de stepSize
-        quantity = Number((Math.floor(quantity / stepSize) * stepSize).toFixed(stepSizeDecimals));
+        quantity = Number((Math.round(quantity / stepSize) * stepSize).toFixed(stepSizeDecimals));
 
         console.log('quantity', quantity);
 
