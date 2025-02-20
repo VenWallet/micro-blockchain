@@ -257,7 +257,9 @@ export class SpotMarketService {
         console.log('amountReceived', amountReceived);
 
         if (amountReceived < Number(toNetworkConfig.withdrawMin)) {
-          throw new NotFoundException('El monto es menor que el mínimo de retiro, después de las tarifas');
+          throw new NotFoundException(
+            `El monto final es menor que el mínimo de retiro de ${toNetworkConfig.withdrawMin} ${toNetworkConfig.coin}`,
+          );
         }
       } else {
         const feeWallet = createSpotMarketDto.amount * 0.001;
@@ -270,7 +272,9 @@ export class SpotMarketService {
         console.log('amountReceived', amountReceived);
 
         if (amountReceived < Number(toNetworkConfig.withdrawMin)) {
-          throw new NotFoundException('El monto es menor que el mínimo de retiro, después de las tarifas');
+          throw new NotFoundException(
+            `El monto final es menor que el mínimo de retiro de ${toNetworkConfig.withdrawMin} ${toNetworkConfig.coin}`,
+          );
         }
 
         if (amountReceived > Number(toNetworkConfig.withdrawMax)) {
@@ -526,7 +530,9 @@ export class SpotMarketService {
         const amountReceived = previewSpotMarketDto.amount - feeTotal;
 
         if (amountReceived < Number(toNetworkConfig.withdrawMin)) {
-          throw new NotFoundException('El monto es menor que el mínimo de retiro, después de las tarifas');
+          throw new NotFoundException(
+            `El monto final es menor que el mínimo de retiro de ${toNetworkConfig.withdrawMin} ${toNetworkConfig.coin}`,
+          );
         }
 
         return { amountReceived, fees };
@@ -578,7 +584,9 @@ export class SpotMarketService {
         console.log('amountReceived', amountReceived);
 
         if (amountReceived < Number(toNetworkConfig.withdrawMin)) {
-          throw new NotFoundException('El monto es menor que el mínimo de retiro, después de las tarifas');
+          throw new NotFoundException(
+            `El monto final es menor que el mínimo de retiro de ${toNetworkConfig.withdrawMin} ${toNetworkConfig.coin}`,
+          );
         }
 
         if (OrderTypeEnum.LIMIT && previewSpotMarketDto.price) {
