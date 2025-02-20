@@ -564,7 +564,11 @@ export class SpotMarketService {
 
         let quantity = side === 'SELL' ? previewSpotMarketDto.amount * price : previewSpotMarketDto.amount / price;
 
+        console.log('quantity before', quantity);
+
         const stepSize = parseFloat(symbol.filters.find((f) => f.filterType === 'LOT_SIZE')?.stepSize || '0.1');
+
+        console.log('stepSize', stepSize);
 
         quantity = Math.floor(quantity / stepSize) * stepSize;
 
