@@ -209,14 +209,21 @@ export class SpotMarketService {
 
         const side = createSpotMarketDto.fromCoin === symbol.baseAsset ? 'SELL' : 'BUY';
 
-        const stepSize = parseFloat(symbol.filters.find((f) => f.filterType === 'LOT_SIZE')?.stepSize || '0.1');
-
         let quantity = side === 'SELL' ? createSpotMarketDto.amount * price : createSpotMarketDto.amount / price;
 
-        quantity = Math.floor(quantity / stepSize) * stepSize;
+        console.log('quantity before', quantity);
+
+        const stepSize = parseFloat(symbol.filters.find((f) => f.filterType === 'LOT_SIZE')?.stepSize || '0.1');
+
+        console.log('stepSize', stepSize);
+
+        // Determinar la cantidad de decimales permitidos según el stepSize
+        const stepSizeDecimals = stepSize.toString().split('.')[1]?.length || 0;
+
+        // Ajustar quantity para que sea múltiplo exacto de stepSize
+        quantity = Number((Math.round(quantity / stepSize) * stepSize).toFixed(stepSizeDecimals));
 
         console.log('quantity', quantity);
-
         // 📌 Extraer filtros dinámicamente desde symbol
         const minNotional = parseFloat(symbol.filters.find((f) => f.filterType === 'NOTIONAL')?.minNotional || '0');
         const lotSizeFilter = symbol.filters.find((f) => f.filterType === 'LOT_SIZE');
