@@ -19,6 +19,7 @@ import {
   SwapDto,
   ImportWalletsFromMnemonicDto,
   TransferNftDto,
+  FtTransferDto,
 } from './blockchain.dto';
 import { CryptShared } from 'src/shared/utils/crypt.shared';
 import { IndexEnum } from '../network/enums/index.enum';
@@ -558,6 +559,33 @@ export class BlockchainService {
         index: wallet.network.index,
         hash: txHash,
         txLink: service.getLinkTransaction(txHash),
+      };
+    } catch (error) {
+      throw new ExceptionHandler(error);
+    }
+  }
+
+  async ftTransfer(ftTransferDto: FtTransferDto) {
+    try {
+      const wallet = await this.walletService.findOneByUserIdAndIndex(ftTransferDto.userId, IndexEnum.NEAR);
+
+      const service = this.protocolIndex.getProtocolService(IndexEnum.NEAR);
+
+      const txHash = await service.transferToken(
+        wallet.address,
+        ftTransferDto.privateKey,
+        ftTransferDto.toAddress,
+        ftTransferDto.amount,
+        'offerv2.dagro.near',
+        6,
+      );
+
+      return {
+        network: wallet.network.name,
+        index: wallet.network.index,
+        token: 'OFFER',
+        tokenName: 'Offer',
+        hash: txHash,
       };
     } catch (error) {
       throw new ExceptionHandler(error);

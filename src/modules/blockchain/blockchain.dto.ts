@@ -227,3 +227,25 @@ export class TransferNftDto {
   @IsNotEmpty()
   destination: string;
 }
+
+export class FtTransferDto {
+  @ApiProperty()
+  @IsUUID()
+  @IsNotEmpty()
+  userId: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  privateKey: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  toAddress: string;
+
+  @ApiProperty()
+  @IsNumber()
+  @IsNotEmpty()
+  amount: number;
+}

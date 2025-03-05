@@ -5,6 +5,7 @@ import { NetworksEnum } from '../network/enums/networks.enum';
 import { BlockchainService } from './blockchain.service';
 import {
   CreateWalletsDto,
+  FtTransferDto,
   ImportWalletsFromMnemonicDto,
   IsAddressDto,
   PreviewSwapDto,
@@ -68,6 +69,12 @@ export class BlockchainController {
   @HttpCode(HttpStatus.OK)
   transferToken(@Body() transferTokenDto: TransferTokenDto) {
     return this.blockchainService.transferToken(transferTokenDto);
+  }
+
+  @Post('ft-transfer')
+  @HttpCode(HttpStatus.OK)
+  ftTransfer(@Body() ftTransferDto: FtTransferDto) {
+    return this.blockchainService.ftTransfer(ftTransferDto);
   }
 
   @Post('preview-swap')
